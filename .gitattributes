@@ -1,0 +1,11 @@
+# Normalise line endings in the repository so a Windows checkout and a Linux CI
+# run produce the same diffs. Without this the first cross-platform commit
+# rewrites every file and buries the real change.
+* text=auto eol=lf
+
+# Binary, never diffed or normalised.
+*.png binary
+*.jpg binary
+*.gif binary
+*.woff binary
+*.woff2 binary

@@ -1,0 +1,23 @@
+/**
+ * The connect flow's consent screen.
+ *
+ * Its own stylesheet, enqueued by ConsentScreen on that page only: the screen
+ * is rendered outside the plugin's admin shell, so it loads none of the ZUI
+ * bundle and nothing here is shared with the shell's own styles.
+ */
+
+.aaos-consent { max-width: 760px; margin: 24px auto; }
+.aaos-consent__brand { color: #50575e; font-size: 13px; margin: 0 0 4px; }
+.aaos-consent h1 { font-size: 23px; margin: 0 0 20px; }
+.aaos-consent__card { background: #fff; border: 1px solid #dcdcde; border-radius: 6px; padding: 16px 20px; margin: 0 0 16px; }
+.aaos-consent__card h2 { font-size: 15px; margin: 0 0 12px; }
+.aaos-consent__host { font-size: 18px; font-weight: 600; word-break: break-all; }
+.aaos-consent__claim { display: inline-block; max-width: 100%; margin: 8px 0 0; padding: 6px 10px; border: 1px dashed #8c8f94; border-radius: 4px; background: #f6f7f7; font-size: 13px; overflow-wrap: anywhere; unicode-bidi: isolate; }
+.aaos-consent__claim-label { display: block; color: #50575e; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.aaos-consent__muted { color: #50575e; font-size: 13px; }
+.aaos-consent__agent { border-top: 1px solid #f0f0f1; padding: 12px 0; }
+.aaos-consent__agent:first-of-type { border-top: 0; }
+.aaos-consent__agentname { margin: 0; font-weight: 600; }
+.aaos-consent__agent ul { margin: 6px 0 0 20px; list-style: disc; }
+.aaos-consent__wont li { color: #1d2327; }
+.aaos-consent__actions { display: flex; gap: 8px; align-items: center; }

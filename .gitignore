@@ -1,0 +1,67 @@
+# What this repository tracks is what WordPress loads at runtime: the plugin
+# file, includes/, lib/ (the bundled bridge), vendor-bundled/, assets/,
+# languages/, readme.txt, changelog.txt and uninstall.php. Everything else is
+# ignored, so the repository mirrors the distributed plugin. This list is kept
+# in step with .distignore; when a file is added at the plugin root the rule is
+# the same: if WordPress does not read it, it belongs here.
+
+# Dependency trees, resolved from lockfiles. Note that vendor-bundled/ ships
+# and is deliberately not matched here.
+/node_modules/
+/vendor/
+
+# Local environment.
+.env
+.env.local
+*.log
+
+# Built release archives and run artefacts.
+/*.zip
+.phpunit.result.cache
+
+# Scripts at the plugin root.
+/*.mjs
+
+# Editor and OS noise.
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local environment and packaging configuration.
+/.wp-env.json
+/.distignore
+
+# Tests, tooling and CI.
+/tests/
+/bin/
+/.github/
+/package.json
+/package-lock.json
+/composer.json
+/composer.lock
+/phpcs.xml.dist
+/phpunit.xml.dist
+
+# Internal documentation.
+/docs/
+/README.md
+/CLAUDE.md
+/CHANGELOG.md
+/WPORG-REVIEW-FIX-PLAN.md
+/lib/zorem-agent-bridge/README.md
+/lib/zorem-agent-brain/README.md
+/assets/zui/ALL-ZUI-IMPLEMENTATION-GUIDE.md
+/assets/zui/CHANGELOG.md
+
+# The bundled MCP Adapter's own Composer manifest: build metadata, never read
+# at runtime.
+/vendor-bundled/mcp-adapter/composer.json
+
+# ZUI catalogue material, which nothing in this plugin requires: a brand
+# registry carrying a "PRO" badge for six of the author's plugins, the
+# ecosystem panel that lists them by name, and its artwork. Nothing includes
+# these files, so leaving them out changes nothing on screen.
+/assets/zui/brand.php
+/assets/zui/eco-plugins.php
+/assets/zui/images/eco/

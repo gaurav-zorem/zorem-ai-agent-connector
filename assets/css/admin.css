@@ -1,0 +1,1585 @@
+/* Plugin admin styles. Scoped under .zui-scope; ZUI tokens only (CS-CSS-1, CS-CSS-2). */
+
+/*
+ * No negative margin here: the gutter rule below already zeroes #wpcontent's
+ * padding. Doing both pulled the whole screen 20px under the admin menu, so
+ * the header and cards sat against the menu with no space.
+ */
+.zui-scope.aaos-app {
+	background: var(--zui-bg, #f6f7f9);
+	min-height: calc(100vh - 32px);
+}
+
+.zui-scope .aaos-body {
+	max-width: 960px;
+	padding: 24px;
+}
+
+.zui-scope .zorem-agent-bridge-diagnostics {
+	margin: 0;
+	display: grid;
+}
+
+.zui-scope .zorem-agent-bridge-diagnostics > div {
+	display: grid;
+	grid-template-columns: minmax(180px, 1fr) 2fr;
+	gap: 16px;
+	padding-block: 10px;
+	border-block-start: 1px solid var(--zui-border, #e2e6ec);
+}
+
+.zui-scope .zorem-agent-bridge-diagnostics dt {
+	color: var(--zui-text-muted, #566074);
+}
+
+.zui-scope .zorem-agent-bridge-diagnostics dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.zui-scope .aaos-body > .zui-card + .zui-card{
+	margin-block-start: 16px;
+}
+
+@media ( max-width: 782px ) {
+	.zui-scope .zorem-agent-bridge-diagnostics > div {
+		grid-template-columns: 1fr;
+		gap: 2px;
+	}
+}
+
+/* ------------------------------------------------------------------
+   1. Native <button> reset inside the scope.
+
+   ZUI's reset.css normalises box-sizing and typography but never touches
+   `button`, because the library is written for consumers that build their
+   tabs out of `<a>` elements. This plugin uses `<button>` — a tab that is not a destination should
+   not be a link, and an `<a href>` in a tab strip navigates instead of
+   switching, which the guide itself warns about.
+
+   The consequence is that wp-admin's own `button` rule wins: grey gradient,
+   1px border, radius, fixed height. On the first screenshot every tab looked
+   like a cut-off form button sitting in the strip.
+
+   → upstream: this belongs in reset.css. Until then it lives here.
+   ------------------------------------------------------------------ */
+
+.zui-scope button.zui-tabs__item,
+.zui-scope button.zui-sidebar__item,
+.zui-scope button.zui-sidebar__close {
+	appearance: none;
+	background: none;
+	border: 0;
+	box-shadow: none;
+	margin: 0;
+	font: inherit;
+	line-height: inherit;
+	cursor: pointer;
+	text-align: start;
+}
+
+/*
+ * `border-radius` is deliberately NOT in the reset above.
+ *
+ * It used to be — `border-radius: 0` alongside the rest — and it silently
+ * flattened the sidebar. `sidebar.css` gives `.zui-sidebar__item` a
+ * `--zui-radius-lg` corner, and this rule's extra element selector
+ * (`button.zui-sidebar__item`, one class more specific) beat it, so every nav
+ * item rendered square. The active item's tint was correct, its shape was not,
+ * and the whole sidebar looked subtly unlike every other ZUI screen in the
+ * family without any single thing being obviously wrong.
+ *
+ * Found by measuring, not by looking: computed `border-radius: 0px` where the
+ * library resolves `--zui-radius-lg` to 8px. That is the argument for reading a
+ * computed style rather than squinting at a screenshot — the whole defect was
+ * eight pixels of corner on five elements, and it is invisible until you put it
+ * beside a screen that has them.
+ *
+ * The tab strip does want square corners, because its active state is an
+ * underline rather than a pill, so it asks for that on its own.
+ */
+.zui-scope button.zui-tabs__item {
+	border-radius: 0;
+	border-block-end: 2px solid transparent;
+}
+
+/* Secondary text under a value — provenance, caveats, "we could not look". */
+.zui-scope .aaos-muted {
+	margin-block-start: 4px;
+	color: var(--zui-text-muted);
+	font-size: 12px;
+	line-height: 1.5;
+}
+
+.zui-scope .aaos-muted code {
+	font-size: 11px;
+	word-break: break-all;
+}
+
+/* An empty state inside a card. ZUI has no empty-state component. */
+.zui-scope .aaos-empty {
+	padding: 32px 24px;
+	text-align: center;
+}
+
+.zui-scope .aaos-empty__text {
+	margin: 0;
+	color: var(--zui-text-soft);
+	font-weight: 600;
+}
+
+.zui-scope .aaos-empty__hint {
+	margin: 6px 0 0;
+	color: var(--zui-text-muted);
+	font-size: 12px;
+}
+
+/* A value with no control, in a form row. */
+.zui-scope .aaos-readonly-value {
+	color: var(--zui-text-soft);
+	font-variant-numeric: tabular-nums;
+}
+
+/*
+ * A disabled primary button still looked live.
+ *
+ * `button.css` styles `.zui-btn-primary` but not its `:disabled` state, because
+ * the library's consumers hide buttons they do not want pressed rather than
+ * disabling them. Here
+ * the Ask button is disabled whenever the assistant cannot answer — which is
+ * the normal state on a site with no provider — so it needs to look it, or the
+ * screen invites a click it will ignore.
+ *
+ * → upstream: same family as the `<button>` reset. A disabled state belongs
+ *   with the component, not with each consumer.
+ */
+.zui-scope .zui-btn:disabled,
+.zui-scope .zui-btn-primary:disabled,
+.zui-scope .zui-btn-secondary:disabled,
+.zui-scope .zui-btn-danger:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+	box-shadow: none;
+}
+
+/* ---- The policy checklist ---- */
+
+.zui-scope [data-aaos-policy-selected-only].is-active {
+	background: var(--zui-bg);
+	color: var(--zui-primary-600);
+}
+
+/* ------------------------------------------------------------------
+   The admin content gutter.
+
+   WordPress core sets `#wpcontent { padding-left: 20px }` (and the mirror
+   `padding-right` in RTL). That is right for an ordinary settings page, whose
+   content should not touch the collapsed-menu edge — and wrong for this one,
+   because `.zui-header` is a full-bleed bar and the gutter leaves a 20px strip
+   of admin background down its left side.
+
+   Scoped with `:has(.zui-scope)` rather than the page's body class, which is
+   the usual approach and looks like this:
+
+       .some_page_slug #wpcontent { padding-left: 0 }
+
+   Both work. `:has()` is better here for two reasons. It keys off the thing that
+   is actually on the page rather than off a slug — `AdminMenu::MENU_SLUG` is a
+   PHP constant, and a CSS selector naming it would silently stop matching if it
+   ever changed. And it is the pattern the library already uses one rule away, in
+   `reset.css`:
+
+       body:has(.zui-scope) #wpcontent { background: #f8fafc; }
+
+   Both physical properties are zeroed rather than a logical one, because core
+   sets physical properties in both directions and only one of them is the
+   gutter at a time. Verified in core: `common.css` sets `padding-left: 20px`
+   and `common-rtl.css` sets `padding-right: 20px`, both on a bare `#wpcontent`
+   — specificity (1,0,0), against this rule's (1,1,1), so it wins either way
+   without `!important`.
+
+   The collapsed menu is unaffected: `.folded #wpcontent` shifts the column with
+   `margin`, not padding, so nothing here touches it.
+
+   Checked at 1440, 960, 782, 600 and 380px. Nothing reaches the viewport edge
+   at any of them — `.zui-layout` carries its own gutter, which is what made the
+   core one redundant rather than merely inconvenient.
+
+   → upstream: this belongs beside that background rule. The library already
+     decided `#wpcontent` is its business on a page carrying `.zui-scope`; it
+     zeroed the background and left the padding, and every consumer will hit the
+     same strip. Added to the list as A16.
+   ------------------------------------------------------------------ */
+
+body:has(.zui-scope) #wpcontent {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+/* A ZUI card with a heading and no body still closes with the card's padding. */
+.zui-scope.aaos-app .zui-card > .zui-card__head:last-child {
+	padding-block-end: 24px;
+}
+
+/*
+ * An agent's own MCP address card: the same strip as "This agent's address"
+ * in the connect guide (aaos-guide__url), with the address taking the free
+ * width and Copy / New address kept together at the end.
+ */
+.zui-scope .aaos-addressbar {
+	flex-wrap: nowrap;
+}
+
+.zui-scope .aaos-addressbar__url {
+	flex: 1 1 auto;
+	min-width: 0;
+	background: var( --zui-surface );
+	padding: 6px 10px;
+}
+
+.zui-scope .aaos-addressbar__actions {
+	display: inline-flex;
+	flex: 0 0 auto;
+	gap: 8px;
+}
+
+@media ( max-width: 782px ) {
+	.zui-scope .aaos-addressbar {
+		flex-wrap: wrap;
+	}
+
+	.zui-scope .aaos-addressbar__url {
+		flex-basis: 100%;
+	}
+}
+
+/* A secondary button whose action cannot be undone from here. */
+.zui-scope .zui-btn.aaos-btn--danger {
+	color: var( --zui-danger );
+}
+
+.zui-scope .zui-btn.aaos-btn--danger:hover {
+	background: var( --zui-danger-bg );
+	border-color: var( --zui-danger );
+}
+
+/* The Token card's field, where a newly issued token is shown once. */
+.zui-scope .aaos-tokenbox[hidden] {
+	display: none;
+}
+
+.zui-scope .aaos-tokenbox__token {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	margin: 0 0 8px;
+}
+
+.zui-scope .aaos-tokenbox__value {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-family: var( --zui-font-mono );
+	font-size: var( --zui-fs-xs );
+}
+
+/* ---- Buttons, in the design's shapes ---- */
+
+.zui-scope .aaos-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 9px 16px;
+	border-radius: 10px;
+	border: 1px solid transparent;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.2;
+	text-decoration: none;
+	cursor: pointer;
+	white-space: nowrap;
+	flex: 0 0 auto;
+	transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.zui-scope .aaos-btn .zui-icon {
+	width: 15px;
+	height: 15px;
+	flex: none;
+}
+
+.zui-scope .aaos-btn--primary {
+	background: var(--zui-primary);
+	color: #fff;
+	box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+}
+
+.zui-scope .aaos-btn--primary:hover {
+	background: var(--zui-primary-600);
+	color: #fff;
+}
+
+.zui-scope .aaos-btn--ghost {
+	background: var(--zui-surface);
+	border-color: var(--zui-border);
+	color: var(--zui-text-soft);
+}
+
+.zui-scope .aaos-btn--ghost:hover {
+	background: var(--zui-bg);
+	color: var(--zui-text);
+}
+
+.zui-scope .aaos-btn--ghost .zui-icon {
+	color: var(--zui-text-muted);
+}
+
+.zui-scope .aaos-btn--sm {
+	padding: 6px 11px;
+	font-size: 12px;
+	border-radius: 8px;
+}
+
+.zui-scope .aaos-btn.is-disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+/* ---- The table card ---- */
+
+.zui-scope .aaos-tablecard {
+	background: var(--zui-surface);
+	border: 1px solid var(--zui-border);
+	border-radius: 14px;
+
+	/*
+	 * This is the line the design comparison was about.
+	 *
+	 * Without it the thead tint's square corners sit outside the card's rounded
+	 * border, so the radius appears not to clip. It is one property and it is
+	 * easy to leave out, because on a card with no tinted child nothing looks
+	 * wrong.
+	 */
+	overflow: hidden;
+}
+
+.zui-scope .aaos-tablecard__toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	flex-wrap: wrap;
+	padding: 16px 20px;
+	border-block-end: 1px solid var(--zui-border);
+}
+
+.zui-scope .aaos-tablecard__scroll {
+	overflow-x: auto;
+}
+
+/* ---- The search box ---- */
+
+.zui-scope .aaos-search {
+	position: relative;
+	width: 320px;
+	max-width: 100%;
+}
+
+.zui-scope .aaos-search__icon {
+	position: absolute;
+	inset-inline-start: 12px;
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	color: var(--zui-text-muted);
+	pointer-events: none;
+}
+
+.zui-scope .aaos-search__icon .zui-icon {
+	width: 15px;
+	height: 15px;
+}
+
+.zui-scope .aaos-search__input {
+	width: 100%;
+	padding: 9px 14px 9px 36px;
+	border: 1px solid var(--zui-border);
+	border-radius: 10px;
+	background: var(--zui-bg);
+	font-size: 13px;
+	color: var(--zui-text);
+	line-height: 1.3;
+}
+
+.zui-scope .aaos-search__input:focus {
+	background: var(--zui-surface);
+	border-color: var(--zui-primary);
+	outline: none;
+	box-shadow: 0 0 0 3px rgb(37 99 235 / 12%);
+}
+
+/* ---- The table itself ---- */
+
+.zui-scope .aaos-atable {
+	width: 100%;
+	border-collapse: collapse;
+	text-align: start;
+	font-size: 13px;
+}
+
+.zui-scope .aaos-atable thead tr {
+	background: var(--zui-bg);
+	border-block-end: 1px solid var(--zui-border);
+}
+
+.zui-scope .aaos-atable th {
+	padding: 13px 16px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--zui-text-muted);
+	text-align: start;
+	white-space: nowrap;
+}
+
+.zui-scope .aaos-atable td {
+	padding: 15px 16px;
+	vertical-align: middle;
+	color: var(--zui-text);
+}
+
+.zui-scope .aaos-atable tbody tr + tr {
+	border-block-start: 1px solid var(--zui-border);
+}
+
+.zui-scope .aaos-atable tbody tr:hover {
+	background: color-mix(in srgb, var(--zui-bg) 60%, transparent);
+}
+
+.zui-scope .aaos-atable th:first-child,
+.zui-scope .aaos-atable td:first-child {
+	padding-inline-start: 20px;
+}
+
+.zui-scope .aaos-atable__actions {
+	text-align: end;
+	white-space: nowrap;
+	padding-inline-end: 20px;
+}
+
+.zui-scope .aaos-atable__actions .aaos-btn {
+	margin-inline-end: 10px;
+}
+
+.zui-scope .aaos-atable__noresults td {
+	padding: 44px 20px;
+	text-align: center;
+	color: var(--zui-text-muted);
+	font-style: italic;
+}
+
+/* ---- Status pill, with its dot ---- */
+
+.zui-scope .aaos-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border-radius: 999px;
+	border: 1px solid transparent;
+	font-size: 12px;
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+.zui-scope .aaos-pill__dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: currentcolor;
+	flex: none;
+}
+
+/*
+ * The design pulses the active dot. Honoured, and turned off for anyone who
+ * asked not to be animated at.
+ */
+.zui-scope .aaos-pill--active .aaos-pill__dot {
+	animation: aaos-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.zui-scope .aaos-pill--active .aaos-pill__dot {
+		animation: none;
+	}
+}
+
+@keyframes aaos-pulse {
+
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.4;
+	}
+}
+
+/* ---- Customer-data tag ---- */
+
+.zui-scope .aaos-tag {
+	display: inline-flex;
+	align-items: center;
+	padding: 3px 10px;
+	border-radius: 6px;
+	border: 1px solid transparent;
+	font-size: 12px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+/* ---- The header card ---- */
+
+.zui-scope .aaos-agenthead {
+	padding: 20px 24px 22px;
+}
+
+.zui-scope .aaos-agenthead__title {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.zui-scope .aaos-agenthead__name {
+	margin: 0;
+	font-size: 22px;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	color: var(--zui-text);
+}
+
+.zui-scope .aaos-agenthead__meta {
+	margin: 8px 0 0;
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--zui-text-muted);
+}
+
+.zui-scope .aaos-agenthead__meta code {
+	font-size: 11px;
+	color: var(--zui-text-soft);
+	background: var(--zui-bg);
+	border: 1px solid var(--zui-border);
+	border-radius: 4px;
+	padding: 1px 5px;
+}
+
+.zui-scope .aaos-agenthead__sep {
+	margin-inline: 5px;
+	color: var(--zui-border);
+}
+
+/* ---- Toolbar actions cluster ---- */
+
+.zui-scope .aaos-tablecard__actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+/*
+ * A disabled Save is the honest signal that there is nothing to write, so it
+ * has to look disabled — the design greys it to slate rather than dimming the
+ * brand colour, which reads as "loading" instead of "nothing to do".
+ */
+.zui-scope .aaos-btn--primary:disabled {
+	background: var(--zui-bg);
+	border-color: var(--zui-border);
+	color: var(--zui-text-muted);
+	box-shadow: none;
+	cursor: not-allowed;
+}
+
+/* ---- The matrix table ---- */
+
+.zui-scope .aaos-mtable {
+	table-layout: fixed;
+	width: 100%;
+}
+
+.zui-scope .aaos-mtable th:nth-child(1),
+.zui-scope .aaos-mtable td:nth-child(1) {
+	width: auto;
+}
+
+.zui-scope .aaos-mtable th:nth-child(2),
+.zui-scope .aaos-mtable td:nth-child(2) {
+	width: 140px;
+}
+
+.zui-scope .aaos-mtable th:nth-child(3),
+.zui-scope .aaos-mtable td:nth-child(3) {
+	width: 300px;
+}
+
+/* The Grant heading over the controls it names, not at the far side of them. */
+.zui-scope .aaos-mtable th:nth-child(3) {
+	text-align: end;
+}
+
+.zui-scope .aaos-mtable td {
+	vertical-align: top;
+}
+
+/* --------------------------------------------------------------------------
+   Collapsible sections in the permission matrix.
+
+   The band now carries a button that fills it, so the whole strip is the hit
+   target rather than the few pixels of the label. The tinting and type stay on
+   the `td` — the button is transparent and inherits, so opening a section
+   cannot make the band look different from a closed one.
+   -------------------------------------------------------------------------- */
+
+.zui-scope .aaos-mtable__toggle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	margin: -9px -20px;          /* Cancel the td padding so the row is clickable edge to edge. */
+	padding: 9px 20px;
+	background: none;
+	border: 0;
+	cursor: pointer;
+	/* Inherit rather than restate: one definition of what this band looks like. */
+	font: inherit;
+	letter-spacing: inherit;
+	text-transform: inherit;
+	color: inherit;
+	text-align: start;
+}
+
+.zui-scope .aaos-mtable__toggle:focus-visible {
+	outline: 2px solid var(--zui-primary);
+	outline-offset: -2px;
+}
+
+.zui-scope .aaos-mtable__chev {
+	display: inline-flex;
+	flex: none;
+	transition: transform var(--zui-dur) var(--zui-ease);
+}
+
+.zui-scope .aaos-mtable__toggle[aria-expanded='true'] .aaos-mtable__chev {
+	transform: rotate(90deg);
+}
+
+/*
+ * The name no longer grows. It grew to push the tally to the far end of the
+ * toggle; the tally now lives outside the toggle, and growing only pushed the
+ * subtitle away from the name it qualifies.
+ */
+.zui-scope .aaos-mtable__sectionname {
+	flex: none;
+}
+
+/*
+ * The tally is the reason a closed section is still informative: "0 of 12
+ * granted" answers the question without opening anything. Granted sections
+ * carry weight so the eye finds them among a column of zeroes.
+ */
+.zui-scope .aaos-mtable__tally {
+	flex: none;
+	font-weight: 500;
+	letter-spacing: 0;
+	text-transform: none;
+	color: var(--zui-text-faint);
+}
+
+.zui-scope .aaos-mtable__tally.is-granted {
+	font-weight: 700;
+	color: var(--zui-primary);
+}
+
+/* A tinted band, not a card boundary. */
+.zui-scope .aaos-mtable__section td {
+	/* 14px, so the band stands clear of the ability rows it heads. */
+	padding: 14px 20px;
+	background: var(--zui-bg);
+	border-block: 1px solid var(--zui-border);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--zui-text-soft);
+}
+
+.zui-scope .aaos-mtable__section + tr {
+	border-block-start: 0;
+}
+
+.zui-scope .aaos-mtable__head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.zui-scope .aaos-mtable__name {
+	font-weight: 600;
+	color: var(--zui-text);
+}
+
+.zui-scope .aaos-mtable__slug {
+	display: inline-block;
+	margin-block-start: 5px;
+	padding: 1px 6px;
+	border: 1px solid var(--zui-border);
+	border-radius: 4px;
+	background: var(--zui-bg);
+	font-size: 11px;
+	color: var(--zui-text-soft);
+	overflow-wrap: anywhere;
+}
+
+.zui-scope .aaos-mtable__desc {
+	margin: 6px 0 0;
+	font-size: 12px;
+	line-height: 1.5;
+	color: var(--zui-text-muted);
+}
+
+/*
+ * "Capabilities undeterminable" sits beside the name, not under the row.
+ *
+ * It is a caveat about *this* ability, and the design's placement makes that
+ * unmistakable — under the description it reads as a footnote about the table.
+ */
+.zui-scope .aaos-flag {
+	display: inline-flex;
+	align-items: center;
+	padding: 1px 7px;
+	border-radius: 4px;
+	border: 1px solid #fde68a;
+	background: #fffbeb;
+	color: #b45309;
+	font-size: 10px;
+	font-weight: 500;
+	white-space: nowrap;
+	cursor: help;
+}
+
+/* ---- Risk badges ---- */
+
+.zui-scope .aaos-risk {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	border-radius: 4px;
+	border: 1px solid transparent;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+}
+
+.zui-scope .aaos-risk[title] {
+	cursor: help;
+}
+
+/* ---- The grant control ---- */
+
+.zui-scope .aaos-grant {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 5px;
+}
+
+.zui-scope .aaos-seg {
+	display: inline-flex;
+	padding: 3px;
+	border: 1px solid var(--zui-border);
+	border-radius: 10px;
+	background: var(--zui-bg);
+}
+
+.zui-scope .aaos-seg__item {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 5px 12px;
+	border: 0;
+	border-radius: 7px;
+	background: none;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--zui-text-soft);
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.zui-scope .aaos-seg__item:hover:not( :disabled ):not( .is-active ) {
+	color: var(--zui-text);
+}
+
+.zui-scope .aaos-seg__item.is-active {
+	background: var(--zui-primary);
+	color: #fff;
+	box-shadow: 0 1px 2px rgb(15 23 42 / 10%);
+}
+
+.zui-scope .aaos-seg__item:disabled {
+	color: var(--zui-text-muted);
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+/*
+ * The lock is on the option, not on the group.
+ *
+ * A locked segmented control where only the labels grey out reads as a styling
+ * accident. The padlock says the state is deliberate, which is the difference
+ * between "off" and "not available to you right now".
+ */
+.zui-scope .aaos-seg__item .zui-icon {
+	width: 11px;
+	height: 11px;
+	flex: none;
+}
+
+.zui-scope .aaos-seg__item.is-active:disabled {
+	background: var(--zui-primary);
+	color: #fff;
+	opacity: 1;
+	cursor: default;
+}
+
+.zui-scope .aaos-grant__note {
+	max-width: 280px;
+	font-size: 11px;
+	line-height: 1.45;
+	color: var(--zui-text-muted);
+	text-align: end;
+}
+
+/*
+ * The locked note must wrap.
+ *
+ * `.aaos-atable__actions` sets `white-space: nowrap` so a segmented control
+ * never breaks across lines — and the note inherits it, so the sentence ran off
+ * the right edge of the cell and was clipped by the scroll container. It read
+ * "Destructive abilities are off for this agent. Enable them" and stopped, which
+ * is a truncated explanation of a disabled control: the exact thing the note
+ * exists to prevent.
+ */
+.zui-scope .aaos-grant__note {
+	white-space: normal;
+}
+
+/*
+ * The gap under a page-header card.
+ *
+ * `.zui-layout` sets `gap: 16px` for the sidebar-to-content space and
+ * `padding: 0` deliberately — its comment says the page gutter lives on
+ * `.zui-tab-panel` instead. Neither of them puts anything between a header card
+ * and the row below it, because the library expects the layout to be the first
+ * thing in the panel, with no header card above it.
+ *
+ * 16px rather than an arbitrary number: it is the same gap the layout uses
+ * between the sidebar and the content, so the vertical rhythm matches the
+ * horizontal one instead of merely looking "about right".
+ *
+ * Only `.aaos-agenthead`. The agents list already separates its header from
+ * the table below by other means; adding this there measured 32px, which is the
+ * failure mode of fixing a symptom on both screens because they look alike.
+ */
+.zui-scope .aaos-agenthead {
+	margin-block-end: 16px;
+}
+
+/*
+ * The sidebar is as tall as its own items, not as tall as the panel beside it.
+ *
+ * `sidebar.css` asks for `align-self: stretch`, which overrides the
+ * `align-items: flex-start` its own `.zui-layout` sets. That is a deliberate
+ * choice upstream — a full-height rail reads well when the nav has a dozen
+ * entries and the content is short. Here it is the other way round: five items
+ * ending 235px down inside an 880px box, so most of the sidebar is an empty
+ * bordered rectangle whose height is decided by an unrelated column.
+ *
+ * Measured before: sidebar 880px, last item ending at 235px.
+ *
+ * → upstream: this belongs on a modifier rather than on the base component,
+ *   because both behaviours are wanted by different screens. Recorded in
+ *   ZUI-USAGE.md alongside A6.
+ */
+.zui-scope .zui-layout > .zui-sidebar {
+	align-self: flex-start;
+}
+
+/*
+ * A settings form stacks like the section it replaced.
+ *
+ * `.zui-section` is `display: flex; flex-direction: column; gap: 16px`, and
+ * that gap is what gives every panel in the plugin its vertical rhythm. It
+ * applies to the section's own children — so the moment a screen wraps its
+ * contents in a `<form>`, the section has exactly one child and every card
+ * inside the form is flush against the next.
+ *
+ * That is how it shipped: Settings had 0px between its header and its first
+ * card, the agent Connection panel had 0px at three joins, and Storefront's
+ * only gap came from a `margin-block-end` on the stats grid — a local patch on
+ * one screen for a defect that was on five.
+ *
+ * Measured before: 0, 0, 0, 0, 0. The forms were introduced when the save
+ * buttons were moved inside them, which is also why this appeared everywhere
+ * at once.
+ *
+ * The form takes the same display and the same gap, so wrapping content in one
+ * stops changing how it stacks.
+ */
+.zui-scope form.aaos-settings-form {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+/* ---- Status: the list under "Needs attention" ---- */
+
+.zui-scope .aaos-warnings {
+	margin: 0;
+	padding-inline-start: 20px;
+}
+
+.zui-scope .aaos-warnings li + li {
+	margin-block-start: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   Connect this agent — Connection tab.
+
+   The instructions for wiring an agent into a client used to exist only in
+   the one-time token modal. Dismissing it left an admin with the endpoint and
+   no way back to the rest, so they live on the tab now.
+
+   Note the classes this leans on are the library's real ones: `zui-card__sub`,
+   not `__desc`; `zui-card__body`, which carries the card's own gutter. There
+   is no small-button variant in the library, hence `.aaos-btn--sm` below.
+   -------------------------------------------------------------------------- */
+
+.zui-scope .aaos-connect__body {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.zui-scope .aaos-connect__title {
+	margin: 8px 0 0;
+	font-size: var( --zui-fs-sm );
+	font-weight: var( --zui-fw-semibold );
+	color: var( --zui-text );
+}
+
+.zui-scope .aaos-connect__title:first-child {
+	margin-top: 0;
+}
+
+.zui-scope .aaos-connect__lede {
+	margin: 0;
+	font-size: var( --zui-fs-sm );
+	color: var( --zui-text-faint );
+}
+
+/*
+ * Each step is one line of instruction that may carry a code span and a
+ * button, so the row wraps rather than forcing a horizontal scroll on a
+ * narrow screen.
+ */
+
+.zui-scope .aaos-connect__code {
+	font-family: var( --zui-font-mono );
+	font-size: var( --zui-fs-xs );
+	background: var( --zui-surface-alt );
+	border: 1px solid var( --zui-border );
+	border-radius: var( --zui-radius-sm );
+	padding: 3px 8px;
+	/* A long endpoint must not push the card wider than the layout. */
+	max-width: 100%;
+	overflow-wrap: anywhere;
+}
+
+/*
+ * The "why" line belongs to the step above it, so it takes the full row and
+ * reads as a note rather than as another instruction.
+ */
+
+.zui-scope .aaos-connect__notice {
+	margin: 4px 0 0;
+}
+
+/*
+ * No small-button variant exists in the library, and these sit inline with a
+ * line of text where the full-size control is too heavy.
+ */
+.zui-scope .aaos-btn--sm {
+	padding: 4px 10px;
+	font-size: var( --zui-fs-xs );
+}
+
+/* ---- The connect guide: the agent's address, then steps per app ---- */
+
+.zui-scope .aaos-guide__url {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 12px;
+	align-items: center;
+	padding: 12px 16px;
+	border: 1px solid var( --zui-border );
+	border-radius: 10px;
+	background: var( --zui-surface-alt );
+}
+
+.zui-scope .aaos-guide__urllabel {
+	font-size: var( --zui-fs-xs );
+	font-weight: var( --zui-fw-semibold );
+	color: var( --zui-text-faint );
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.zui-scope .aaos-guide {
+	display: grid;
+	grid-template-columns: repeat( 2, minmax( 0, 1fr ) );
+	gap: 16px;
+}
+
+.zui-scope .aaos-guide__app {
+	display: flex;
+	flex-direction: column;
+	padding: 20px 24px;
+	border: 1px solid var( --zui-border );
+	border-radius: 12px;
+	background: var( --zui-surface );
+}
+
+.zui-scope .aaos-guide__head {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	align-items: center;
+	padding-block-end: 16px;
+	margin-block-end: 16px;
+	border-block-end: 1px solid var( --zui-border );
+}
+
+.zui-scope .aaos-guide__badge {
+	padding: 6px 14px;
+	border-radius: 999px;
+	color: #fff;
+	font-size: var( --zui-fs-sm );
+	font-weight: var( --zui-fw-semibold );
+	line-height: 1.2;
+}
+
+.zui-scope .aaos-guide__badge--claude {
+	background: #1e1b2e;
+}
+
+.zui-scope .aaos-guide__badge--chatgpt {
+	background: #0f7b5f;
+}
+
+.zui-scope .aaos-guide__sub {
+	color: var( --zui-text-soft, #566074 );
+	font-size: var( --zui-fs-sm );
+}
+
+/* Numbered steps joined by a line, as a path to follow. */
+.zui-scope .aaos-guide__steps {
+	display: grid;
+	gap: 18px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: aaos-guide;
+}
+
+.zui-scope .aaos-guide__steps > li {
+	position: relative;
+	padding-inline-start: 44px;
+	min-height: 28px;
+	font-size: var( --zui-fs-sm );
+	line-height: 1.6;
+	color: var( --zui-text );
+	counter-increment: aaos-guide;
+}
+
+.zui-scope .aaos-guide__steps > li::before {
+	content: counter( aaos-guide );
+	position: absolute;
+	inset-inline-start: 0;
+	top: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	background: #1e1b2e;
+	color: #fff;
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.zui-scope .aaos-guide__app:nth-child(2) .aaos-guide__steps > li::before {
+	background: #0f7b5f;
+}
+
+.zui-scope .aaos-guide__steps > li:not(:last-child)::after {
+	content: "";
+	position: absolute;
+	inset-inline-start: 13px;
+	top: 32px;
+	bottom: -16px;
+	width: 2px;
+	background: var( --zui-border );
+}
+
+.zui-scope .aaos-guide__done {
+	margin: auto 0 0;
+	padding-block-start: 16px;
+	border-block-start: 1px dashed var( --zui-border );
+	color: #067647;
+	font-size: var( --zui-fs-sm );
+	font-weight: var( --zui-fw-semibold );
+}
+
+.zui-scope .aaos-guide__steps + .aaos-guide__done {
+	margin-block-start: 20px;
+}
+
+.zui-scope .aaos-guide__note {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	padding: 14px 16px;
+	border: 1px solid var( --zui-border );
+	border-radius: 10px;
+	background: var( --zui-surface-alt );
+	font-size: var( --zui-fs-sm );
+	color: var( --zui-text );
+}
+
+.zui-scope .aaos-guide__note--info {
+	border-color: color-mix( in srgb, var( --zui-primary-600, #2563eb ) 25%, transparent );
+	background: color-mix( in srgb, var( --zui-primary-600, #2563eb ) 5%, var( --zui-surface, #fff ) );
+}
+
+.zui-scope .aaos-guide__note > .dashicons {
+	flex: 0 0 auto;
+	margin-block-start: 1px;
+	color: var( --zui-text-faint );
+}
+
+.zui-scope .aaos-guide__note--info > .dashicons {
+	color: var( --zui-primary-600, #2563eb );
+}
+
+.zui-scope .aaos-guide__note > div {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	min-width: 0;
+}
+
+.zui-scope .aaos-guide__note p {
+	flex-basis: 100%;
+	margin: 0;
+}
+
+.zui-scope .aaos-guide__cmd {
+	max-width: 100%;
+	padding: 4px 8px;
+	border-radius: var( --zui-radius-sm );
+	background: #0f172a;
+	color: #e2e8f0;
+	font-family: var( --zui-font-mono );
+	font-size: var( --zui-fs-xs );
+	overflow-wrap: anywhere;
+}
+
+.zui-scope .aaos-guide__fine {
+	color: var( --zui-text-soft, #566074 );
+	font-size: var( --zui-fs-xs );
+}
+
+@media ( max-width: 1100px ) {
+	.zui-scope .aaos-guide {
+		grid-template-columns: 1fr;
+	}
+}
+
+/*
+ * The section band: name and subtitle at one end, tally and bulk controls at
+ * the other. A wrapper inside the cell rather than the cell itself, because a
+ * `td` set to `display: flex` leaves the table's box model and stops honouring
+ * `colspan` — which ended the band at the ability column and left a rule down
+ * the middle of a full-width row.
+ */
+.zui-scope .aaos-mtable__band {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+/*
+ * The toggle stretches so the whole left of the band is clickable, and gives
+ * up its negative right margin: that existed to cancel the cell's padding
+ * when it was the only thing in the cell, and now it would slide under the
+ * controls to its right.
+ */
+.zui-scope .aaos-mtable__band .aaos-mtable__toggle {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin: -14px 0 -14px -20px;
+	padding: 14px 20px;
+}
+
+/*
+ * One control at the end of the band, not three buttons.
+ *
+ * Three separately bordered boxes read as three unrelated actions and drew
+ * more attention than the section name they sit beside. The border, the
+ * rounding and the surface belong to the group; each button contributes only
+ * a hairline between itself and the last.
+ */
+.zui-scope .aaos-mtable__bulk {
+	display: inline-flex;
+	flex: 0 0 auto;
+	gap: 0;
+	padding: 2px;
+	background: var( --zui-surface );
+	border: 1px solid var( --zui-border );
+	border-radius: var( --zui-radius-md );
+	box-shadow: 0 1px 1px rgba( 15, 23, 42, 0.04 );
+}
+
+.zui-scope .aaos-mtable__bulk .aaos-bulk {
+	padding: 4px 10px;
+	background: none;
+	border: 0;
+	border-radius: var( --zui-radius-sm );
+	font-weight: var( --zui-fw-medium );
+	color: var( --zui-text-muted );
+}
+
+.zui-scope .aaos-mtable__bulk .aaos-bulk + .aaos-bulk {
+	box-shadow: inset 1px 0 0 var( --zui-divider );
+}
+
+.zui-scope .aaos-mtable__bulk .aaos-bulk:hover {
+	background: var( --zui-primary-50, var( --zui-bg ) );
+	box-shadow: none;
+	color: var( --zui-primary );
+}
+
+/* The bulk choice the rows currently match (paintBulkState in agents.js). */
+.zui-scope .aaos-mtable__bulk .aaos-bulk.is-active,
+.zui-scope .aaos-mtable__bulk .aaos-bulk.is-active:hover {
+	background: var( --zui-primary-50, var( --zui-bg ) );
+	color: var( --zui-primary );
+	font-weight: var( --zui-fw-semibold );
+	box-shadow: inset 0 0 0 1px var( --zui-primary );
+}
+
+/*
+ * Only the divider after an active button goes: in a section of read-only
+ * abilities "Grant all" and "All read" are both active, and the second must
+ * keep its outline.
+ */
+.zui-scope .aaos-mtable__bulk .aaos-bulk.is-active + .aaos-bulk:not( .is-active ) {
+	box-shadow: none;
+}
+
+/* The toolbar's "All abilities" control: the section buttons, for every section. */
+.zui-scope .aaos-matrix-all {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	margin-inline-start: auto;
+}
+
+.zui-scope .aaos-matrix-all__label {
+	font-size: var( --zui-fs-xs );
+	font-weight: var( --zui-fw-semibold );
+	color: var( --zui-text-faint );
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+/* The neighbour's hairline would otherwise sit on the hovered button's fill. */
+.zui-scope .aaos-mtable__bulk .aaos-bulk:hover + .aaos-bulk:not( .is-active ) {
+	box-shadow: none;
+}
+
+.zui-scope .aaos-mtable__sectionsub {
+	margin-inline-start: 6px;
+	font-size: var( --zui-fs-xs );
+	font-weight: 400;
+	letter-spacing: 0;
+	text-transform: none;
+	color: var( --zui-text-faint );
+}
+
+.zui-scope .aaos-bulk {
+	padding: 3px 9px;
+	background: var( --zui-surface );
+	border: 1px solid var( --zui-border );
+	border-radius: var( --zui-radius-sm );
+	cursor: pointer;
+	font: inherit;
+	font-size: var( --zui-fs-xs );
+	letter-spacing: 0;
+	text-transform: none;
+	color: var( --zui-text );
+}
+
+.zui-scope .aaos-bulk:hover {
+	border-color: var( --zui-primary );
+	color: var( --zui-primary );
+}
+
+.zui-scope .aaos-bulk:focus-visible {
+	outline: 2px solid var( --zui-primary );
+	outline-offset: 1px;
+}
+
+.zui-scope .aaos-bulk {
+	white-space: nowrap;
+}
+
+/* ---- A group heading in the section sidebar ---- */
+
+.zui-scope .zui-sidebar__heading {
+	display: block;
+	margin: 14px 0 4px;
+	padding-inline: 12px;
+	font-size: var( --zui-fs-xs );
+	font-weight: var( --zui-fw-semibold );
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var( --zui-text-faint );
+}
+
+/* A manual is read in full before it is approved, so it keeps its line breaks. */
+
+.zui-scope [data-aaos-wc-keys] .zui-list li {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+}
+
+/* The key's row menu sits at the end of its line. */
+.zui-scope [data-aaos-wc-keys] .zui-list li .zui-actions {
+	margin-inline-start: auto;
+}
+
+/*
+ * Row action menus. A link in the menu (Configure on the Agents list) looks
+ * like the buttons beside it: no underline, and the same full-width box.
+ * → upstream: ZUI's actions-menu.css styles only buttons.
+ */
+.zui-scope a.zui-actions-item {
+	box-sizing: border-box;
+	text-decoration: none;
+}
+
+.zui-scope a.zui-actions-item:focus {
+	box-shadow: none;
+}
+
+/* Near the edges the label opens inwards, so it is not cut off by the card. */
+
+.zui-scope .aaos-tablecard + .aaos-tablecard,
+.zui-scope .zui-card + .aaos-tablecard {
+	margin-block-start: 16px;
+}
+
+/*
+ * A table's scroll box would clip an open row menu, or grow a scrollbar for it
+ * when the table has one or two rows. So would the card around it, which hides
+ * overflow to keep its rounded corners over the tinted header: the last row's
+ * menu was cut off at the card's bottom edge. While a menu is open, all three
+ * let it overflow.
+ */
+.zui-scope .aaos-tablecard__scroll:has(.zui-actions-menu:not([hidden])),
+.zui-scope .aaos-tablecard:has(.zui-actions-menu:not([hidden])){
+	overflow: visible;
+}
+
+/* ------------------------------------------------------------------
+   Status tab: header, four tiles, needs attention, grouped details.
+   ------------------------------------------------------------------ */
+
+.zui-scope .aaos-status {
+	/* Same edges as the other tabs: their panel already pads it, so no padding or width cap of its own. */
+	max-width: none;
+	padding: 0;
+	display: grid;
+	gap: 16px;
+}
+
+.zui-scope .aaos-status > .zui-card + .zui-card {
+	margin-block-start: 0;
+}
+
+.zui-scope .aaos-status__tiles {
+	display: grid;
+	grid-template-columns: repeat( 4, minmax( 0, 1fr ) );
+	gap: 16px;
+}
+
+.zui-scope .aaos-status__tiles .zui-stat {
+	padding: 20px;
+	margin: 0;
+}
+
+.zui-scope .aaos-status__tiles .zui-stat__value {
+	font-size: 22px;
+	overflow-wrap: anywhere;
+}
+
+.zui-scope .aaos-status .zui-card__title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.zui-scope .aaos-status .zui-card__title .zui-icon {
+	width: 16px;
+	height: 16px;
+	color: var(--zui-primary-600, #2563eb);
+}
+
+.zui-scope .aaos-status__attention {
+	border-inline-start: 3px solid var(--zui-warning, #f59e0b);
+}
+
+.zui-scope .aaos-status__attention .zui-card__title .zui-icon {
+	color: var(--zui-warning, #f59e0b);
+}
+
+.zui-scope .aaos-status__groups {
+	display: grid;
+	grid-template-columns: repeat( 2, minmax( 0, 1fr ) );
+	gap: 16px;
+	/* The two cards in a row share its height, so the row reads as one band. */
+	align-items: stretch;
+}
+
+.zui-scope .aaos-status__group {
+	margin: 0;
+}
+
+/* The bridge's rows are long lists: give that group the full width. */
+.zui-scope .aaos-status__group:last-child {
+	grid-column: 1 / -1;
+}
+
+.zui-scope .aaos-status__rows {
+	margin: 0;
+	padding: 0 20px 8px;
+}
+
+.zui-scope .aaos-status__row {
+	display: grid;
+	grid-template-columns: 160px minmax( 0, 1fr ) auto;
+	gap: 12px;
+	align-items: start;
+	padding: 12px 0;
+}
+
+.zui-scope .aaos-status__row + .aaos-status__row {
+	border-block-start: 1px solid var(--zui-border, #e5e7eb);
+}
+
+.zui-scope .aaos-status__row dt {
+	margin: 0;
+	font-size: 13px;
+	color: var(--zui-text-muted, #6b7280);
+}
+
+.zui-scope .aaos-status__row dd {
+	margin: 0;
+	display: grid;
+	gap: 6px;
+	font-size: 13px;
+	color: var(--zui-text, #111827);
+	min-width: 0;
+}
+
+.zui-scope .aaos-status__codes {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.zui-scope .aaos-status__codes code {
+	padding: 2px 6px;
+	background: var(--zui-bg, #f6f7f9);
+	border: 1px solid var(--zui-border, #e5e7eb);
+	border-radius: 4px;
+	font-size: 12px;
+	color: var(--zui-text-soft, #374151);
+	overflow-wrap: anywhere;
+}
+
+.zui-scope .aaos-status__note {
+	font-size: 12px;
+	line-height: 1.5;
+	color: var(--zui-text-muted, #6b7280);
+	overflow-wrap: anywhere;
+}
+
+.zui-scope .aaos-status__badge {
+	min-width: 56px;
+	justify-self: end;
+	text-align: center;
+}
+
+@media ( max-width: 1100px ) {
+	.zui-scope .aaos-status__tiles {
+		grid-template-columns: repeat( 2, minmax( 0, 1fr ) );
+	}
+
+	.zui-scope .aaos-status__groups {
+		grid-template-columns: minmax( 0, 1fr );
+	}
+}
+
+@media ( max-width: 782px ) {
+	.zui-scope .aaos-status__row {
+		grid-template-columns: minmax( 0, 1fr ) auto;
+	}
+
+	.zui-scope .aaos-status__row dt {
+		grid-column: 1 / -1;
+	}
+}
+
+/* A tile's note is a quiet line; the accent bar carries the colour. */
+.zui-scope .aaos-status__tiles .zui-stat__delta {
+	color: var(--zui-text-muted, #6b7280);
+	font-size: 12px;
+}
+
+.zui-scope .aaos-mtable .aaos-seg__item:disabled.is-active {
+	opacity: 1;
+	cursor: default;
+}
