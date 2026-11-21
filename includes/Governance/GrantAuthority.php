@@ -14,10 +14,10 @@ use AiAgentOs\Governance\CapMaps\CapMapLoader;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * A person may give an agent only what they could do themselves.
+ * A person may give the agent only what they could do themselves.
  *
  * `manage_agent_os` can be handed to a Shop Manager (decision D-7). Without
- * this check that person could grant an agent any ability on the site, and the
+ * this check that person could grant the agent any ability on the site, and the
  * ability would then run with capabilities the Shop Manager does not hold.
  *
  * The rule: an administrator (`manage_options`) may grant anything. Anyone

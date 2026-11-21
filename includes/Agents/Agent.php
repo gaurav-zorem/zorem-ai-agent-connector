@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  * An AI agent: an identity that is not a person.
  *
  * Immutable. Persistence lives in AgentRepository; this class only answers
- * questions about a single agent's state.
+ * questions about the agent's state.
  */
 final class Agent {
 
@@ -25,17 +25,16 @@ final class Agent {
 	public const TYPE_EXTERNAL = 'external';
 
 	/**
-	 * Who the agent acts for: the one question that decides what an agent may
+	 * Who the agent acts for: the one question that decides what the agent may
 	 * read and whether it sees customer data. There used to be a separate
 	 * "type" (internal / external) as well; two answers to nearly the same
-	 * question once let a storefront agent read internal knowledge, so only
-	 * this one is kept.
+	 * question could disagree, so only this one is kept.
 	 */
 	public const ACTS_FOR_ADMIN   = AgentRef::ACTS_FOR_ADMIN;
 	public const ACTS_FOR_PUBLIC  = AgentRef::ACTS_FOR_PUBLIC;
 	public const ACTS_FOR_PARTNER = AgentRef::ACTS_FOR_PARTNER;
 
-	/** The prefix of an agent's reference on the bridge and in the Brain. */
+	/** The prefix of the agent's reference on the bridge and in the Brain. */
 	public const REF_PREFIX = 'agent:';
 
 	public const STATUS_ACTIVE    = 'active';
@@ -247,7 +246,7 @@ final class Agent {
 	/**
 	 * A valid acts_for value. An unknown or empty one falls back to the given
 	 * default, which is the least trusted choice (the public) unless a caller
-	 * that is creating an agent on purpose says otherwise.
+	 * that is creating the agent on purpose says otherwise.
 	 *
 	 * @param string $acts_for Stored or requested value.
 	 * @param string $fallback What an unknown or empty value becomes.
@@ -431,7 +430,7 @@ final class Agent {
 	 * Whether customer personal data should be masked in responses.
 	 *
 	 * Defaults by who the agent acts for rather than to a single global
-	 * default: an agent acting for a partner or the public starts masked; one
+	 * default: the agent acting for a partner or the public starts masked; one
 	 * acting for the store administrator does not.
 	 */
 	public function masks_pii(): bool {

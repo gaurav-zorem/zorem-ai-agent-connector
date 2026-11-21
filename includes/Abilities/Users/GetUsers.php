@@ -25,7 +25,7 @@ use AiAgentOs\Governance\RiskClassifier;
  * (`user_email`, `display_name`).
  *
  * Search looks at the display name and the URL slug only. Searching by email
- * would let an agent whose results are masked confirm whether an address it
+ * would let the agent whose results are masked confirm whether an address it
  * already has belongs to a user.
  */
 final class GetUsers {
@@ -43,7 +43,7 @@ final class GetUsers {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Get users', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'See the user list', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Lists site users by display name, with ID, email and roles. Useful for choosing a post author.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-users',
 			'input_schema'        => Schema::input(

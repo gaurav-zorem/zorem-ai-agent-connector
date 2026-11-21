@@ -68,7 +68,7 @@ final class Routes {
 	}
 
 	/**
-	 * The agent code in this request's address, when it is an agent's own address; otherwise ''.
+	 * The address code in this request's URL, when it is the agent's MCP address; otherwise ''.
 	 *
 	 * Read from the request URL as WordPress will route it, before dispatch.
 	 */
@@ -77,7 +77,7 @@ final class Routes {
 	}
 
 	/**
-	 * Whether a REST route is one of this plugin's MCP addresses: an agent's own.
+	 * Whether a REST route is one of this plugin's MCP addresses: the agent's own.
 	 *
 	 * @param string $route REST route.
 	 */
@@ -105,10 +105,32 @@ final class Routes {
 		$home = strtolower( rtrim( (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH ), '/' ) );
 
 		/*
+		 * Only the front controller serves REST. admin-ajax, admin-post and
+		 * XML-RPC say so before WordPress loads, and none of them may treat a
+		 * bearer token as a sign-in, whatever the URL looks like.
+		 */
+		if ( ( defined( 'DOING_AJAX' ) && DOING_AJAX ) || ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) || ( defined( 'WP_ADMIN' ) && WP_ADMIN ) ) {
+			return '';
+		}
+
+		/*
+		 * The web server resolves `..` and `.` segments to pick the script it
+		 * runs, but PHP still sees the raw URI. So
+		 * `/wp-json/ai-agent-os/v1/mcp/agent/x/../../../../wp-comments-post.php`
+		 * runs another file while its path starts with the MCP route. WordPress
+		 * never routes such a path to REST, so it is no MCP request. A backslash
+		 * or a NUL byte is refused for the same reason on servers that treat
+		 * them as separators.
+		 */
+		if ( preg_match( '#(^|/)\.{1,2}(/|$)#', $path ) || false !== strpos( $path, '\\' ) || false !== strpos( $path, "\0" ) ) {
+			return '';
+		}
+
+		/*
 		 * `rest_route` from the request, in WordPress's own order. WP::parse_request()
 		 * takes it from POST, then GET, and only then from the permalink, so a
 		 * parameter beats the path: `/wp-json/ai-agent-os/v1/mcp?rest_route=/wp/v2/users/me`
-		 * is dispatched to `/wp/v2/users/me`. Reading the path alone let an agent
+		 * is dispatched to `/wp/v2/users/me`. Reading the path alone let the agent
 		 * credential authenticate on any REST route that way.
 		 */
 		// phpcs:disable WordPress.Security.NonceVerification, WordPress.CSRF.NonceVerification -- Read-only inspection of the request target, not state-changing.

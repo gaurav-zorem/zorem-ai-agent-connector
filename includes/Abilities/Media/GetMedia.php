@@ -36,7 +36,7 @@ final class GetMedia {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Get media', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'See the media library', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Lists media library files, newest first, with URL, MIME type, title, alt text, caption, dimensions and the post each is attached to.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-media',
 			'input_schema'        => Schema::input(

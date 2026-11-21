@@ -36,7 +36,7 @@ final class CreateTag {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Create tag', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Add a blog tag', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Creates a post tag with name, slug and description. Fails if a tag with that name already exists; use get-tags to find it.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-content',
 			'input_schema'        => Schema::input( TermWriter::properties( false ), array( 'name' ) ),

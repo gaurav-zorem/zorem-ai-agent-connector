@@ -39,6 +39,13 @@ final class TransportPermission {
 	private ActivityRecorder $activity;
 
 	/**
+	 * The most recent refusal, kept for the admin screens.
+	 *
+	 * @var LastRefusal
+	 */
+	private LastRefusal $last;
+
+	/**
 	 * Whether this request's transport refusal has already been recorded.
 	 *
 	 * WordPress calls a route's permission callback more than once per request:
@@ -67,9 +74,11 @@ final class TransportPermission {
 	 * Constructor.
 	 *
 	 * @param ActivityRecorder $activity Audit trail.
+	 * @param LastRefusal      $last     The most recent refusal, kept for the admin screens.
 	 */
-	public function __construct( ActivityRecorder $activity ) {
+	public function __construct( ActivityRecorder $activity, LastRefusal $last ) {
 		$this->activity = $activity;
+		$this->last     = $last;
 	}
 
 	/**
@@ -88,9 +97,13 @@ final class TransportPermission {
 			 * No agent resolved: either no credentials were presented, or the
 			 * ones presented were rejected. Either way this is a refusal, and
 			 * it is logged so an admin can see failed connection attempts
-			 * rather than only successful ones.
+			 * rather than only successful ones, with the reason the
+			 * authenticator recorded: no header at all, an unknown or expired
+			 * token, or one issued for another address.
 			 */
-			$this->record_refusal( null, 'invalid_token' );
+			$reason = AgentContext::credential_problem();
+
+			$this->record_refusal( null, '' !== $reason ? $reason : Decision::INVALID_TOKEN );
 
 			return false;
 		}
@@ -105,17 +118,16 @@ final class TransportPermission {
 	}
 
 	/**
-	 * An agent's own address: the same checks, and only for the agent it belongs to.
+	 * The MCP address: the same checks, and the address must be the agent's current one.
 	 *
-	 * This is the isolation between agents' addresses. A token (or a Claude
-	 * sign-in) still decides who is calling; at an agent's own address only
-	 * that agent may call. Another agent's valid token is refused and logged
-	 * as `wrong_agent_address`, so a connector for one agent can never act as
-	 * another, even with a credential copied from it.
+	 * A token (or a sign-in from an AI app) still decides who is calling. An
+	 * address that has been replaced is refused and logged as
+	 * `replaced_address`, so a replaced address stops working at once even
+	 * for a client that still holds a valid credential.
 	 *
 	 * @param mixed $request The REST request.
 	 */
-	public function check_agent( $request = null ): bool {
+	public function check_address( $request = null ): bool {
 		if ( ! $this->check( $request ) ) {
 			return false;
 		}
@@ -148,7 +160,10 @@ final class TransportPermission {
 
 		$this->refusal_logged_for = $request_id;
 
-		if ( null === $agent && ! self::anonymous_row_allowed() ) {
+		// Kept whatever the throttle below decides: LastRefusal limits its own writes.
+		$this->last->record( $reason );
+
+		if ( null === $agent && ! self::anonymous_row_allowed( $reason ) ) {
 			return;
 		}
 
@@ -158,15 +173,18 @@ final class TransportPermission {
 	/**
 	 * Whether a refusal with no agent behind it may write a row.
 	 *
-	 * Anyone can send a bad token, as fast as they like. One row per address
-	 * per minute, and at most ANONYMOUS_PER_MINUTE rows a minute for the site
-	 * however many addresses there are, keeps the log about agents rather
-	 * than about whoever is knocking.
+	 * Anyone can send a bad token, as fast as they like. One row per IP
+	 * address and reason per minute, and at most ANONYMOUS_PER_MINUTE rows a
+	 * minute for the site however many IP addresses there are, keeps the log
+	 * about the agent rather than about whoever is knocking. Per reason, so a
+	 * burst of one kind of refusal cannot hide another.
+	 *
+	 * @param string $reason Block reason code.
 	 */
-	private static function anonymous_row_allowed(): bool {
+	private static function anonymous_row_allowed( string $reason ): bool {
 		$minute  = (int) floor( time() / MINUTE_IN_SECONDS );
 		$address = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) ) : '';
-		$mine    = 'aaos_anon_' . md5( $address . '|' . $minute );
+		$mine    = 'aaos_anon_' . md5( $address . '|' . $reason . '|' . $minute );
 		$site    = 'aaos_anon_site_' . $minute;
 		$count   = (int) get_transient( $site );
 

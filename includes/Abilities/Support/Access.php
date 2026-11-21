@@ -45,7 +45,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * ## The agent is not exempt
  *
- * An agent runs as its own user with the capabilities `CapabilityBridge` lends
+ * The agent runs as its own user with the capabilities `CapabilityBridge` lends
  * for the duration of one call, so these checks apply to it as well — which is
  * the point. A grant on the Permissions screen says the agent may use the
  * tool; this says what the tool may touch.
@@ -243,6 +243,27 @@ final class Access {
 	 */
 	public static function can_read_taxonomy( string $taxonomy ): bool {
 		$object = get_taxonomy( $taxonomy );
+
+		if ( ! $object instanceof \WP_Taxonomy ) {
+			return false;
+		}
+
+		return current_user_can( (string) $object->cap->assign_terms );
+	}
+
+	/**
+	 * Whether the caller may edit the post the input names and assign terms
+	 * in the taxonomy it names.
+	 *
+	 * @param mixed $input Ability input with `id` and `taxonomy`.
+	 */
+	public static function can_assign_terms( $input ): bool {
+		if ( ! self::can_edit_post( $input ) ) {
+			return false;
+		}
+
+		$taxonomy = is_array( $input ) ? sanitize_key( (string) ( $input['taxonomy'] ?? '' ) ) : '';
+		$object   = '' === $taxonomy ? null : get_taxonomy( $taxonomy );
 
 		if ( ! $object instanceof \WP_Taxonomy ) {
 			return false;

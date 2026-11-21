@@ -21,10 +21,10 @@ use AiAgentOs\Governance\PermissionResolver;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * What an agent may do, asked by another plugin: the same resolver the gate uses.
+ * What the agent may do, asked by another plugin: the same resolver the gate uses.
  *
- * An identity that is not one of this plugin's agents gets a refusal
- * (`not_an_agent`) and an empty tool set: Core decides for its agents and for
+ * An identity that is not this plugin's agent gets a refusal
+ * (`not_an_agent`) and an empty tool set: Core decides for its agent and for
  * nobody else.
  */
 final class CorePermissionAuthority implements PermissionAuthorityInterface {
@@ -33,7 +33,7 @@ final class CorePermissionAuthority implements PermissionAuthorityInterface {
 	public const NOT_AN_AGENT = 'not_an_agent';
 
 	/**
-	 * The agents.
+	 * Agent storage.
 	 *
 	 * @var AgentRepository
 	 */
@@ -49,7 +49,7 @@ final class CorePermissionAuthority implements PermissionAuthorityInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param AgentRepository    $agents   The agents.
+	 * @param AgentRepository    $agents   Agent storage.
 	 * @param PermissionResolver $resolver The resolver.
 	 */
 	public function __construct( AgentRepository $agents, PermissionResolver $resolver ) {
@@ -58,7 +58,7 @@ final class CorePermissionAuthority implements PermissionAuthorityInterface {
 	}
 
 	/**
-	 * Whether an agent may use an ability at a level.
+	 * Whether the agent may use an ability at a level.
 	 *
 	 * @param AgentRef $agent   The agent.
 	 * @param string   $ability Ability name.
@@ -106,6 +106,6 @@ final class CorePermissionAuthority implements PermissionAuthorityInterface {
 			return null;
 		}
 
-		return $this->agents->find_by_uuid( substr( $agent->ref(), strlen( Agent::REF_PREFIX ) ) );
+		return $this->agents->get_by_ref( $agent->ref() );
 	}
 }

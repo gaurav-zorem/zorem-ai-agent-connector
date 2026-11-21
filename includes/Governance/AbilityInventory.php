@@ -79,9 +79,9 @@ final class AbilityInventory {
 	}
 
 	/**
-	 * Abilities that may be exposed to agents at all.
+	 * Abilities that may be exposed to the agent at all.
 	 *
-	 * Some abilities should never reach an agent regardless of grants — the MCP
+	 * Some abilities should never reach the agent regardless of grants — the MCP
 	 * adapter's own execute-ability meta-tool being the obvious example, since
 	 * it would let a caller run anything by name and route straight around a
 	 * per-tool allow-list.
@@ -135,7 +135,7 @@ final class AbilityInventory {
 	 */
 	public function is_hidden( string $ability_name ): bool {
 		/**
-		 * Filters the abilities that no agent may ever be granted.
+		 * Filters the abilities that may never be granted to the agent.
 		 *
 		 * @param array<int, string> $hidden Ability names.
 		 */
@@ -182,7 +182,7 @@ final class AbilityInventory {
 		 * Check first. wp_get_ability() on an unregistered name routes through
 		 * WP_Abilities_Registry::get_registered(), which treats it as developer
 		 * error and calls _doing_it_wrong(). Ability names reaching this method
-		 * come off the wire — an agent naming a tool that does not exist is an
+		 * come off the wire — the agent naming a tool that does not exist is an
 		 * ordinary, expected event, and the adversarial case besides. Letting
 		 * it raise a core notice would fill the debug log on demand from an
 		 * unauthenticated-shaped input.
@@ -223,7 +223,7 @@ final class AbilityInventory {
 
 			$descriptors[ $name ] = array(
 				'name'          => $name,
-				'label'         => $ability->get_label(),
+				'label'         => AbilityLabels::ability( $ability->get_name(), (string) $ability->get_label() ),
 				'description'   => $ability->get_description(),
 				'category'      => $ability->get_category(),
 				'risk'          => $this->risk->classify( $ability ),
@@ -270,9 +270,62 @@ final class AbilityInventory {
 			$groups[ $category ]['abilities'][] = $descriptor;
 		}
 
-		ksort( $groups );
+		uksort( $groups, fn( string $a, string $b ): int => $this->compare_categories( $a, $b, $groups ) );
+
+		// Inside a section, by the name people read, not the ability's technical name.
+		foreach ( $groups as &$group ) {
+			usort( $group['abilities'], static fn( array $x, array $y ): int => strnatcasecmp( (string) $x['label'], (string) $y['label'] ) );
+		}
+		unset( $group );
 
 		return $groups;
+	}
+
+	/**
+	 * The fixed place of known sections on the permission matrix, first to last.
+	 *
+	 * WordPress basics first, then this plugin's tools in everyday-use order,
+	 * then WooCommerce. A section not listed here (another plugin's) comes
+	 * after all of these, alphabetically by its label.
+	 */
+	private const CATEGORY_ORDER = array(
+		'site',
+		'user',
+		'ai-agent-os-content',
+		'ai-agent-os-pages',
+		'ai-agent-os-media',
+		'ai-agent-os-comments',
+		'ai-agent-os-cpt',
+		'ai-agent-os-menus',
+		'ai-agent-os-site-building',
+		'ai-agent-os-users',
+		'ai-agent-os-site',
+		'ai-agent-os',
+		'woocommerce',
+		'woocommerce-rest',
+	);
+
+	/**
+	 * Order two sections: known ones by CATEGORY_ORDER, the rest after them by label.
+	 *
+	 * @param string                              $a      Category slug.
+	 * @param string                              $b      Category slug.
+	 * @param array<string, array<string, mixed>> $groups The groups, for their labels.
+	 */
+	private function compare_categories( string $a, string $b, array $groups ): int {
+		$rank_a = array_search( $a, self::CATEGORY_ORDER, true );
+		$rank_b = array_search( $b, self::CATEGORY_ORDER, true );
+		$last   = count( self::CATEGORY_ORDER );
+		$rank_a = false === $rank_a ? $last : (int) $rank_a;
+		$rank_b = false === $rank_b ? $last : (int) $rank_b;
+
+		if ( $rank_a !== $rank_b ) {
+			return $rank_a <=> $rank_b;
+		}
+
+		$by_label = strnatcasecmp( (string) $groups[ $a ]['label'], (string) $groups[ $b ]['label'] );
+
+		return 0 !== $by_label ? $by_label : strcmp( $a, $b );
 	}
 
 	/**
@@ -285,11 +338,11 @@ final class AbilityInventory {
 			$category = wp_get_ability_category( $slug );
 
 			if ( $category && method_exists( $category, 'get_label' ) ) {
-				return (string) $category->get_label();
+				return AbilityLabels::category( $slug, (string) $category->get_label() );
 			}
 		}
 
-		return ucwords( str_replace( array( '-', '_' ), ' ', $slug ) );
+		return AbilityLabels::category( $slug, ucwords( str_replace( array( '-', '_' ), ' ', $slug ) ) );
 	}
 
 	/**

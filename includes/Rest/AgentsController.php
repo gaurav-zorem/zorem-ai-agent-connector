@@ -10,7 +10,7 @@ declare( strict_types=1 );
 namespace AiAgentOs\Rest;
 
 use AiAgentOs\Agents\Agent;
-use AiAgentOs\Agents\AgentFactory;
+use AiAgentOs\Agents\AgentLifecycle;
 use AiAgentOs\Agents\AgentRepository;
 use AiAgentOs\Governance\AbilityInventory;
 use AiAgentOs\Governance\GrantAuthority;
@@ -19,7 +19,7 @@ use AiAgentOs\Governance\PermissionRepository;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The site's agent: its settings, its permissions and its token.
+ * The agent: its settings, its permissions and its token.
  *
  * `manage_agent_os` reaches every route here, and that capability can be handed
  * to a Shop Manager (decision D-7). So the routes that would widen what the
@@ -50,7 +50,7 @@ final class AgentsController extends AbstractAdminController {
 
 		register_rest_route(
 			$this->namespace(),
-			'/agents/(?P<id>\d+)',
+			'/agent',
 			array(
 				array(
 					'methods'             => \WP_REST_Server::READABLE,
@@ -92,7 +92,7 @@ final class AgentsController extends AbstractAdminController {
 
 		register_rest_route(
 			$this->namespace(),
-			'/agents/(?P<id>\d+)/permissions',
+			'/agent/permissions',
 			array(
 				array(
 					'methods'             => \WP_REST_Server::READABLE,
@@ -115,7 +115,7 @@ final class AgentsController extends AbstractAdminController {
 
 		register_rest_route(
 			$this->namespace(),
-			'/agents/(?P<id>\d+)/revoke',
+			'/agent/revoke',
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'revoke_agent' ),
@@ -125,7 +125,7 @@ final class AgentsController extends AbstractAdminController {
 
 		register_rest_route(
 			$this->namespace(),
-			'/agents/(?P<id>\d+)/rotate-token',
+			'/agent/rotate-token',
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'rotate_token' ),
@@ -135,7 +135,17 @@ final class AgentsController extends AbstractAdminController {
 
 		register_rest_route(
 			$this->namespace(),
-			'/agents/(?P<id>\d+)/mcp-address',
+			'/agent/sign-ins/(?P<grant>[A-Fa-f0-9-]{36})',
+			array(
+				'methods'             => \WP_REST_Server::DELETABLE,
+				'callback'            => array( $this, 'disconnect_app' ),
+				'permission_callback' => $permission,
+			)
+		);
+
+		register_rest_route(
+			$this->namespace(),
+			'/agent/mcp-address',
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'replace_mcp_address' ),
@@ -145,7 +155,7 @@ final class AgentsController extends AbstractAdminController {
 
 		register_rest_route(
 			$this->namespace(),
-			'/agents/(?P<id>\d+)/revoke-all-permissions',
+			'/agent/revoke-all-permissions',
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'revoke_all_permissions' ),
@@ -179,14 +189,14 @@ final class AgentsController extends AbstractAdminController {
 				$agent->to_array(),
 				array(
 					'permission_counts' => $permissions->count_grants( $agent->get_id() ),
-					'endpoint'          => $this->service( \AiAgentOs\Mcp\AgentAddress::class )->url( $agent ),
+					'endpoint'          => $this->service( \AiAgentOs\Mcp\AgentAddress::class )->url(),
 				)
 			)
 		);
 	}
 
 	/**
-	 * Update an agent.
+	 * Update the agent.
 	 *
 	 * @param \WP_REST_Request $request The request.
 	 * @return \WP_REST_Response|\WP_Error
@@ -254,8 +264,25 @@ final class AgentsController extends AbstractAdminController {
 			}
 		}
 
+		/*
+		 * Reactivating the agent or removing or extending its expiry restores
+		 * access to every grant it holds, so it needs the same authority as
+		 * issuing it a credential.
+		 */
+		$widens = ( isset( $data['status'] ) && Agent::STATUS_ACTIVE === $data['status'] && Agent::STATUS_ACTIVE !== $agent->get_status() )
+			|| ( array_key_exists( 'expires_at', $data ) && null !== $agent->get_expires_at()
+				&& ( null === $data['expires_at'] || strtotime( (string) $data['expires_at'] . ' UTC' ) > strtotime( (string) $agent->get_expires_at() . ' UTC' ) ) );
+
+		if ( $widens ) {
+			$allowed = $this->authority_over( $agent );
+
+			if ( is_wp_error( $allowed ) ) {
+				return $allowed;
+			}
+		}
+
 		if ( $data ) {
-			$agents->update( $agent->get_id(), $data );
+			$agents->update( $data );
 		}
 
 		$meta_changes = array();
@@ -269,17 +296,17 @@ final class AgentsController extends AbstractAdminController {
 		}
 
 		if ( $meta_changes ) {
-			$agents->update_meta( $agent->get_id(), $meta_changes );
+			$agents->update_meta( $meta_changes );
 		}
 
 		$agents->flush_cache();
-		$updated = $agents->find( $agent->get_id() );
+		$updated = $agents->get();
 
 		return rest_ensure_response( $updated instanceof Agent ? $updated->to_array() : array() );
 	}
 
 	/**
-	 * The permission matrix for an agent.
+	 * The agent's permission matrix.
 	 *
 	 * @param \WP_REST_Request $request The request.
 	 * @return \WP_REST_Response|\WP_Error
@@ -306,7 +333,6 @@ final class AgentsController extends AbstractAdminController {
 
 		return rest_ensure_response(
 			array(
-				'agent_id'   => $agent->get_id(),
 				'grants'     => $permissions->get_grants( $agent->get_id() ),
 				'categories' => $inventory->grouped_descriptors(),
 			)
@@ -367,7 +393,7 @@ final class AgentsController extends AbstractAdminController {
 
 			/*
 			 * Refuse to store a grant for an ability that does not exist or is
-			 * hidden from every agent. Otherwise the matrix could accumulate
+			 * hidden from the agent. Otherwise the matrix could accumulate
 			 * rows that look like access but can never resolve to any.
 			 */
 			if ( ! $inventory->has( $ability_name ) || $inventory->is_hidden( $ability_name ) ) {
@@ -399,7 +425,7 @@ final class AgentsController extends AbstractAdminController {
 	}
 
 	/**
-	 * Revoke an agent.
+	 * Revoke the agent.
 	 *
 	 * @param \WP_REST_Request $request The request.
 	 * @return \WP_REST_Response|\WP_Error
@@ -412,13 +438,13 @@ final class AgentsController extends AbstractAdminController {
 		}
 
 		/**
-		 * Agent factory.
+		 * Agent lifecycle.
 		 *
-		 * @var AgentFactory $factory
+		 * @var AgentLifecycle $lifecycle
 		 */
-		$factory = $this->service( AgentFactory::class );
+		$lifecycle = $this->service( AgentLifecycle::class );
 
-		return rest_ensure_response( array( 'revoked' => $factory->revoke( $agent ) ) );
+		return rest_ensure_response( array( 'revoked' => $lifecycle->revoke( $agent ) ) );
 	}
 
 	/**
@@ -441,13 +467,13 @@ final class AgentsController extends AbstractAdminController {
 		}
 
 		/**
-		 * Agent factory.
+		 * Agent lifecycle.
 		 *
-		 * @var AgentFactory $factory
+		 * @var AgentLifecycle $lifecycle
 		 */
-		$factory = $this->service( AgentFactory::class );
+		$lifecycle = $this->service( AgentLifecycle::class );
 
-		$token = $factory->rotate_token( $agent );
+		$token = $lifecycle->rotate_token( $agent );
 
 		if ( is_wp_error( $token ) ) {
 			return $token;
@@ -456,14 +482,63 @@ final class AgentsController extends AbstractAdminController {
 		return rest_ensure_response(
 			array(
 				'token'      => $token,
-				'endpoint'   => $this->service( \AiAgentOs\Mcp\AgentAddress::class )->url( $agent ),
+				'endpoint'   => $this->service( \AiAgentOs\Mcp\AgentAddress::class )->url(),
 				'token_note' => __( 'Copy this token now. It cannot be shown again. The previous token stopped working immediately.', 'zorem-ai-agent-connector' ),
 			)
 		);
 	}
 
 	/**
-	 * Give an agent a new MCP address of its own. The old one stops working at once.
+	 * Disconnect one signed-in app: delete the credentials of that one approval.
+	 *
+	 * @param \WP_REST_Request $request The request; `grant` names the approval.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function disconnect_app( \WP_REST_Request $request ) {
+		$agent = $this->find_agent( $request );
+
+		if ( is_wp_error( $agent ) ) {
+			return $agent;
+		}
+
+		$allowed = $this->authority_over( $agent );
+
+		if ( true !== $allowed ) {
+			return $allowed;
+		}
+
+		/**
+		 * Sign-in credentials.
+		 *
+		 * @var \AiAgentOs\OAuth\OAuthStore $store
+		 */
+		$store = $this->service( \AiAgentOs\OAuth\OAuthStore::class );
+		$grant = strtolower( (string) $request['grant'] );
+
+		if ( ! $store->grant_belongs_to( $agent->get_id(), $grant ) ) {
+			return $this->error( 'ai_agent_os_not_found', __( 'That app is not signed in as this agent.', 'zorem-ai-agent-connector' ), 404 );
+		}
+
+		// Every access and refresh token from that one approval; other apps stay signed in.
+		/*
+		 * Disconnecting also forgets "Don't ask again" for that app on this
+		 * agent; otherwise the app would sign straight back in unasked.
+		 */
+		$client_id = (string) ( $store->signed_in_apps()[ $agent->get_id() ][ $grant ]['client_id'] ?? '' );
+		$trusted   = (array) $agent->meta( \AiAgentOs\OAuth\ConsentScreen::TRUST_META, array() );
+
+		if ( '' !== $client_id && isset( $trusted[ $client_id ] ) ) {
+			unset( $trusted[ $client_id ] );
+			$this->service( \AiAgentOs\Agents\AgentRepository::class )->update_meta( array( \AiAgentOs\OAuth\ConsentScreen::TRUST_META => $trusted ) );
+		}
+
+		$store->delete_grant( $grant );
+
+		return rest_ensure_response( array( 'disconnected' => true ) );
+	}
+
+	/**
+	 * Give the agent a new MCP address. The old one stops working at once.
 	 *
 	 * @param \WP_REST_Request $request The request.
 	 * @return \WP_REST_Response|\WP_Error
@@ -488,22 +563,12 @@ final class AgentsController extends AbstractAdminController {
 		 */
 		$addresses = $this->service( \AiAgentOs\Mcp\AgentAddress::class );
 
-		$addresses->replace( $agent );
-
-		/**
-		 * Agent repository.
-		 *
-		 * @var \AiAgentOs\Agents\AgentRepository $agents
-		 */
-		$agents = $this->service( \AiAgentOs\Agents\AgentRepository::class );
-		$agents->flush_cache();
-
-		$fresh = $agents->find( $agent->get_id() );
+		$addresses->replace();
 
 		return rest_ensure_response(
 			array(
-				'url'  => $fresh ? $addresses->url( $fresh ) : '',
-				'note' => __( 'This agent has a new MCP address. Clients using the old one must be given the new one; the old address stopped working immediately.', 'zorem-ai-agent-connector' ),
+				'url'  => $addresses->url(),
+				'note' => __( 'The agent has a new MCP address. Clients using the old one must be given the new one; the old address stopped working immediately.', 'zorem-ai-agent-connector' ),
 			)
 		);
 	}
@@ -535,7 +600,7 @@ final class AgentsController extends AbstractAdminController {
 	 * Whether the current user may hand out the agent's existing authority.
 	 *
 	 * `GrantAuthority` stops a delegated agent manager granting an ability they
-	 * could not perform themselves. Issuing a credential for an agent that
+	 * could not perform themselves. Issuing a credential for the agent that
 	 * already holds such a grant, or giving it a fresh address to sign in at,
 	 * reaches the same end by another route: the grant is not changed, but the
 	 * person now holds a key to it. So both are held to the same rule — you may
@@ -575,12 +640,14 @@ final class AgentsController extends AbstractAdminController {
 	}
 
 	/**
-	 * Load the agent named in the route.
+	 * The site's agent, or a 404 before it has been set up.
 	 *
 	 * @param \WP_REST_Request $request The request.
 	 * @return Agent|\WP_Error
 	 */
 	private function find_agent( \WP_REST_Request $request ) {
+		unset( $request );
+
 		/**
 		 * Agent repository.
 		 *
@@ -588,12 +655,12 @@ final class AgentsController extends AbstractAdminController {
 		 */
 		$agents = $this->service( AgentRepository::class );
 
-		$agent = $agents->find( (int) $request->get_param( 'id' ) );
+		$agent = $agents->get();
 
 		if ( ! $agent instanceof Agent ) {
 			return $this->error(
 				'ai_agent_os_agent_not_found',
-				__( 'That agent does not exist.', 'zorem-ai-agent-connector' ),
+				__( 'The agent has not been set up yet. Open the WordPress admin as an administrator to set it up.', 'zorem-ai-agent-connector' ),
 				404
 			);
 		}

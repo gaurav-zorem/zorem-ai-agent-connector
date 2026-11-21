@@ -37,12 +37,12 @@ final class AssignPostTerms {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Assign post terms', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Set a post’s categories and tags', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Sets a blog post\'s terms in one taxonomy (for example "category" or "post_tag"), replacing them unless append is true.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-content',
 			'input_schema'        => self::input_schema( __( 'The post ID, from get-posts.', 'zorem-ai-agent-connector' ) ),
 			'output_schema'       => self::output_schema(),
-			'permission_callback' => static fn( $input = null ): bool => Access::can_edit_post( $input ),
+			'permission_callback' => static fn( $input = null ): bool => Access::can_assign_terms( $input ),
 			'execute_callback'    => array( self::class, 'execute' ),
 			'meta'                => Schema::meta( RiskClassifier::RISK_WRITE, self::CAPS ),
 		);

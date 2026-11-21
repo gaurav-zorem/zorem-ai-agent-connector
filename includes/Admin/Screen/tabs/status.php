@@ -42,7 +42,7 @@ $ai_agent_os_problems = count( $ai_agent_os_warnings )
  * can act at all and what it is called — the rest of the story is on its own
  * tab, which is where someone goes next.
  */
-$ai_agent_os_agent = ai_agent_os_service( \AiAgentOs\Agents\AgentRepository::class )->current();
+$ai_agent_os_agent = ai_agent_os_service( \AiAgentOs\Agents\AgentRepository::class )->get();
 
 if ( ! $ai_agent_os_agent instanceof \AiAgentOs\Agents\Agent ) {
 	$ai_agent_os_agent_tile = array(
@@ -94,6 +94,12 @@ $ai_agent_os_tiles = array(
 			? __( 'Reachable by an AI app', 'zorem-ai-agent-connector' )
 			: __( 'Closed — no app can connect', 'zorem-ai-agent-connector' ),
 		'accent' => $ai_agent_os_mcp_on ? 'success' : 'warning',
+	),
+	array(
+		'label'  => __( 'Website Brain', 'zorem-ai-agent-connector' ),
+		'value'  => __( 'PRO', 'zorem-ai-agent-connector' ),
+		'note'   => __( 'In AI Agent OS PRO', 'zorem-ai-agent-connector' ),
+		'accent' => 'info',
 	),
 	array(
 		'label'  => __( 'Health', 'zorem-ai-agent-connector' ),

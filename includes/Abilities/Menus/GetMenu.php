@@ -36,7 +36,7 @@ final class GetMenu {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Get menu', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Open a menu', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Returns one navigation menu\'s items in display order: title, URL, what each links to, and parent_id (0 for a top-level item).', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-menus',
 			'input_schema'        => Schema::input(

@@ -20,7 +20,7 @@ use AiAgentOs\Governance\RiskClassifier;
 /**
  * Downloads an image from a public URL into the media library.
  *
- * The URL is attacker-steerable text (an agent reads the web), so the
+ * The URL is attacker-steerable text (the agent reads the web), so the
  * download is treated as a request someone else chose:
  *
  *   - http or https only, and wp_http_validate_url() must accept it, which
@@ -66,7 +66,7 @@ final class UploadImageFromUrl {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Upload image from URL', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Add an image from a web link', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Downloads a JPEG, PNG, GIF, WebP or AVIF image (up to 10 MB) from a public web address into the media library, optionally attached to a post or page.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-media',
 			'input_schema'        => Schema::input(

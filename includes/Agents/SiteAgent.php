@@ -19,7 +19,7 @@ use AiAgentOs\Governance\PermissionRepository;
 use AiAgentOs\Governance\RiskClassifier;
 
 /**
- * Sets up the site's "Admin Assistant" agent the first time the plugin is activated.
+ * The site's agent, the "Admin Assistant", and its one-time setup.
  *
  * Activation only marks it as due: abilities register later than activation
  * runs, and a grant names an ability. The agent is set up on the next admin
@@ -46,11 +46,18 @@ final class SiteAgent {
 	public const OPTION = 'ai_agent_os_first_agent';
 
 	/**
-	 * Agent provisioning.
+	 * Agent storage.
 	 *
-	 * @var AgentFactory
+	 * @var AgentRepository
 	 */
-	private AgentFactory $factory;
+	private AgentRepository $agents;
+
+	/**
+	 * The agent's WordPress account.
+	 *
+	 * @var ShadowUserManager
+	 */
+	private ShadowUserManager $shadow_users;
 
 	/**
 	 * The grantable abilities.
@@ -69,14 +76,16 @@ final class SiteAgent {
 	/**
 	 * Constructor.
 	 *
-	 * @param AgentFactory         $factory     Agent provisioning.
-	 * @param AbilityInventory     $inventory   The grantable abilities.
-	 * @param PermissionRepository $permissions Grants.
+	 * @param AgentRepository      $agents       Agent storage.
+	 * @param ShadowUserManager    $shadow_users The agent's WordPress account.
+	 * @param AbilityInventory     $inventory    The grantable abilities.
+	 * @param PermissionRepository $permissions  Grants.
 	 */
-	public function __construct( AgentFactory $factory, AbilityInventory $inventory, PermissionRepository $permissions ) {
-		$this->factory     = $factory;
-		$this->inventory   = $inventory;
-		$this->permissions = $permissions;
+	public function __construct( AgentRepository $agents, ShadowUserManager $shadow_users, AbilityInventory $inventory, PermissionRepository $permissions ) {
+		$this->agents       = $agents;
+		$this->shadow_users = $shadow_users;
+		$this->inventory    = $inventory;
+		$this->permissions  = $permissions;
 	}
 
 	/**
@@ -94,38 +103,90 @@ final class SiteAgent {
 	 * Register hooks.
 	 */
 	public function register(): void {
-		add_action( 'admin_init', array( $this, 'maybe_provision' ) );
+		add_action( 'admin_init', array( $this, 'maybe_set_up' ) );
 	}
 
 	/**
 	 * Set the agent up when it is due and an administrator is here to own the grants.
 	 *
-	 * @return Agent|null The agent, or null when nothing was due or it failed.
+	 * @return Agent|null The agent, or null when nothing was due or setup failed.
 	 */
-	public function maybe_provision(): ?Agent {
+	public function maybe_set_up(): ?Agent {
 		if ( 'pending' !== get_option( self::OPTION ) || ! current_user_can( Capabilities::MANAGE ) ) {
 			return null;
 		}
 
-		$created = $this->factory->provision(
-			array(
-				'name'        => __( 'Admin Assistant', 'zorem-ai-agent-connector' ),
-				'description' => __( 'Set up when this plugin was installed, holding the tools the plugin ships. Change what it may do on its Permissions tab.', 'zorem-ai-agent-connector' ),
-				'acts_for'    => Agent::ACTS_FOR_ADMIN,
-				'issue_token' => false,
-			)
-		);
+		// Already set up (a restored database, say): nothing to create.
+		$agent = $this->agents->get();
 
-		// Left pending on failure, so the next admin page tries again.
-		if ( is_wp_error( $created ) || ! ( $created['agent'] ?? null ) instanceof Agent ) {
+		if ( ! $agent instanceof Agent ) {
+			$agent = $this->create();
+
+			// Left pending on failure, so the next admin page tries again.
+			if ( ! $agent instanceof Agent ) {
+				return null;
+			}
+
+			$this->permissions->set_grants( $agent->get_id(), $this->every_grant(), get_current_user_id() );
+		}
+
+		update_option( self::OPTION, 'done', false );
+
+		return $agent;
+	}
+
+	/**
+	 * Create the agent: its WordPress account and its settings.
+	 *
+	 * It starts with no token. A token is shown exactly once, when it is
+	 * issued, and stored only as a hash, so one minted here would be shown to
+	 * nobody. Nothing can authenticate as the agent until an administrator
+	 * issues a token on its Connection tab, or signs in from an AI app.
+	 */
+	private function create(): ?Agent {
+		$name = __( 'Admin Assistant', 'zorem-ai-agent-connector' );
+		$uuid = wp_generate_uuid4();
+
+		$shadow_user_id = $this->shadow_users->create( $uuid, $name );
+
+		if ( is_wp_error( $shadow_user_id ) ) {
 			return null;
 		}
 
-		$agent = $created['agent'];
+		/*
+		 * Null token columns, not empty strings: `token_hash` carries a UNIQUE
+		 * index, and MySQL exempts NULL from uniqueness.
+		 */
+		$agent = $this->agents->create(
+			array(
+				'uuid'           => $uuid,
+				'name'           => $name,
+				'slug'           => 'admin-assistant',
+				'acts_for'       => Agent::ACTS_FOR_ADMIN,
+				'status'         => Agent::STATUS_ACTIVE,
+				'auth_method'    => 'bearer',
+				'shadow_user_id' => (int) $shadow_user_id,
+				'meta'           => array(
+					'description'         => __( 'Set up when this plugin was installed, holding the tools the plugin ships. Change what it may do on its Permissions tab.', 'zorem-ai-agent-connector' ),
+					'destructive_enabled' => false,
+					'pii_masked'          => false,
+				),
+			)
+		);
 
-		$this->permissions->set_grants( $agent->get_id(), $this->every_grant(), get_current_user_id() );
+		if ( ! $agent instanceof Agent ) {
+			// Do not leave an orphaned user behind when the row failed.
+			$this->shadow_users->delete( (int) $shadow_user_id );
 
-		update_option( self::OPTION, 'done', false );
+			return null;
+		}
+
+		/**
+		 * Fires after the agent is set up.
+		 *
+		 * @param Agent $agent The agent.
+		 */
+		do_action( 'ai_agent_os_agent_created', $agent );
 
 		return $agent;
 	}
@@ -143,7 +204,7 @@ final class SiteAgent {
 	 * opening grants are narrower, and deliberately so: an administrator who
 	 * installs this plugin is agreeing to the tools they can read about in its
 	 * description, not to whatever else happens to be installed. On a
-	 * WooCommerce store the wider set would have handed a brand-new agent
+	 * WooCommerce store the wider set would have handed the newly set-up agent
 	 * `product-delete` and `order-update-status` before anyone had looked at
 	 * the screen.
 	 *

@@ -54,7 +54,7 @@ final class SearchReplace {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Search and replace', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Find and replace text across the site', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Replaces every occurrence of a piece of text in one post\'s, page\'s or item\'s content. The match is exact and case-sensitive. A revision is kept.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-site',
 			'input_schema'        => Schema::input(

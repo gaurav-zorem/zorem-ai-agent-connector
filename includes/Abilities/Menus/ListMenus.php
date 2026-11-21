@@ -32,7 +32,7 @@ final class ListMenus {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'List menus', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'See menus', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Lists the navigation menus with their item counts, and the theme\'s menu locations with the menu assigned to each. Call get-menu for a menu\'s items.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-menus',
 			'input_schema'        => Schema::input( array() ),

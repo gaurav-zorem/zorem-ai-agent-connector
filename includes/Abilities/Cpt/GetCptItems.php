@@ -40,7 +40,7 @@ final class GetCptItems {
 		) + PostReader::list_properties( true );
 
 		return array(
-			'label'               => __( 'Get custom post type items', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'See items of a content type', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Lists items of one post type (published, draft, pending or scheduled), newest first, with title, status, link and excerpt. Call get-cpt-item for the full content.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-cpt',
 			'input_schema'        => Schema::input( $properties, array( 'post_type' ) ),

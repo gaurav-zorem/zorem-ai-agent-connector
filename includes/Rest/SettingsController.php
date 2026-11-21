@@ -135,6 +135,12 @@ final class SettingsController extends AbstractAdminController {
 
 					// What weakens governance and only a person can fix.
 					'safety_warnings' => $this->service( \AiAgentOs\Core\SafetyChecks::class )->warnings(),
+
+					// Whether a bearer token sent to this site reaches PHP; without it no app can use the MCP address.
+					'auth_header'     => $this->service( \AiAgentOs\Mcp\AuthorizationHeaderCheck::class )->result(),
+
+					// When the MCP address last refused a request, and why: the only trace a failed connection leaves.
+					'last_refusal'    => $this->service( \AiAgentOs\Mcp\LastRefusal::class )->get(),
 				)
 			)
 		);

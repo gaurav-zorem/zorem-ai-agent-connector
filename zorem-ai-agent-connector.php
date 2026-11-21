@@ -3,9 +3,11 @@
  * Plugin Name:       Zorem AI Agent Connector
  * Plugin URI:        https://wordpress.org/plugins/zorem-ai-agent-connector/
  * Description:       Connect Claude, ChatGPT and other AI apps to WordPress safely: an AI agent with its own identity and exact permissions, on top of the WordPress Abilities API and the official MCP Adapter.
- * Version:           1.0.1
+ * Version:           1.2
  * Requires at least: 6.9
  * Requires PHP:      8.0
+ * WC requires at least: 5.0
+ * WC tested up to: 11.3.0
  * Author:            zorem
  * Author URI:        https://www.zorem.com/
  * License:           GPL-2.0-or-later
@@ -41,7 +43,7 @@ if ( defined( 'AI_AGENT_OS_FILE' ) ) {
 /** Display name. Not translated here: this file loads before text domains are. */
 define( 'AI_AGENT_OS_NAME', 'Zorem AI Agent Connector' );
 
-define( 'AI_AGENT_OS_VERSION', '1.0.1' );
+define( 'AI_AGENT_OS_VERSION', '1.2' );
 define( 'AI_AGENT_OS_FILE', __FILE__ );
 define( 'AI_AGENT_OS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'AI_AGENT_OS_URL', plugin_dir_url( __FILE__ ) );

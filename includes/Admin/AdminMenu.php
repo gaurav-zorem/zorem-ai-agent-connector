@@ -65,11 +65,9 @@ final class AdminMenu {
 	public function add_menu(): void {
 		$this->hook_suffix = (string) add_menu_page(
 			AI_AGENT_OS_NAME,
-			/*
-			 * Shorter than the plugin's own name on purpose: the admin menu
-			 * column is narrow, and the full name wraps onto three lines
-			 * there. The page itself still says who it is.
-			 */
+			// Shorter than the plugin's own name on purpose: the admin menu column is
+			// narrow, and the full name wraps onto three lines there. The page itself
+			// still says who it is.
 			__( 'AI Agent Connector', 'zorem-ai-agent-connector' ),
 			Capabilities::MANAGE,
 			self::MENU_SLUG,
@@ -98,9 +96,10 @@ final class AdminMenu {
 		 * ZUI components that zui.css keeps out of its imports until a consumer
 		 * ships: these screens render tables, badges, a textarea, filter bars,
 		 * notes, row action menus and the Status tiles. Loaded from
-		 * the same vendored copy, unmodified.
+		 * the same vendored copy, unmodified. Plus the lock card, PRO pill and
+		 * upsell panel of the locked AI Agent OS PRO previews.
 		 */
-		foreach ( array( 'table', 'badge', 'textarea', 'filter-bar', 'note', 'actions-menu', 'stat-card' ) as $component ) {
+		foreach ( array( 'table', 'badge', 'textarea', 'filter-bar', 'note', 'actions-menu', 'stat-card', 'lock-section', 'pro-feature', 'upsell' ) as $component ) {
 			wp_enqueue_style( 'zui-' . $component, $zui_url . 'css/components/' . $component . '.css', array( 'zui' ), $zui_version );
 		}
 
@@ -121,7 +120,7 @@ final class AdminMenu {
 			true
 		);
 
-		foreach ( array( 'agents' ) as $screen ) {
+		foreach ( array( 'agent' ) as $screen ) {
 			wp_enqueue_script(
 				'ai-agent-os-' . $screen,
 				AI_AGENT_OS_URL . 'assets/js/' . $screen . '.js',
@@ -145,7 +144,7 @@ final class AdminMenu {
 			'nonce'       => wp_create_nonce( 'wp_rest' ),
 
 			// The agent's own screen, for a redirect after an action that changes it.
-			'agentsUrl'   => esc_url_raw( admin_url( 'admin.php?page=' . self::MENU_SLUG . '&tab=agents' ) ),
+			'agentUrl'    => esc_url_raw( admin_url( 'admin.php?page=' . self::MENU_SLUG . '&tab=agent' ) ),
 			'pluginName'  => AI_AGENT_OS_NAME,
 			'version'     => AI_AGENT_OS_VERSION,
 			'hasWoo'      => class_exists( 'WooCommerce' ),

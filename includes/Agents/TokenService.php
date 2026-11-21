@@ -96,7 +96,7 @@ final class TokenService {
 	}
 
 	/**
-	 * The portion of a token shown in the admin so an agent's credential is
+	 * The portion of a token shown in the admin so the agent's credential is
 	 * identifiable without being reusable.
 	 *
 	 * @param string $token Plaintext token.

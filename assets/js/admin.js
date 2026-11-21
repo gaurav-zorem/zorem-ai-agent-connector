@@ -36,8 +36,8 @@
 					/*
 					 * One slash between the root and the path, whichever of
 					 * them carries it. The root ends in "/" and callers write
-					 * "/agents/…", and WordPress matches no route for
-					 * "v1//agents/…": every save answered 404 rest_no_route.
+					 * "/agent/…", and WordPress matches no route for
+					 * "v1//agent/…": every save answered 404 rest_no_route.
 					 */
 					url: String( settings.root ).replace( /\/+$/, '' ) + '/' + String( path ).replace( /^\/+/, '' ),
 					method: 'GET',
@@ -180,8 +180,8 @@
 	 * `disabled` and stayed that way, which reads as "nothing to save" rather than
 	 * "this does nothing" — the reason six screenshot reviews went past it.
 	 *
-	 * The endpoint is per-form: most of these write site settings, but the agent
-	 * Connection panel writes one agent. `data-aaos-endpoint` and
+	 * The endpoint is per-form: most of these write site settings, but the agent's
+	 * Connection panel writes the agent. `data-aaos-endpoint` and
 	 * `data-aaos-method` carry that; the default is the old behaviour.
 	 *
 	 * @param {HTMLFormElement} form The settings form.
@@ -314,10 +314,10 @@
 
 	   Every tab panel is rendered into the document on every request and
 	   the library shows and hides them, so switching a tab changes nothing
-	   the browser knows about. The address bar keeps saying `tab=agents
-	   &agent=7` while you are reading the Assistant tab — and a refresh,
-	   a bookmark, or a link sent to somebody else all land back on the
-	   agent you happened to open first.
+	   the browser knows about. The address bar keeps saying `tab=agent`
+	   while you are reading the Status tab — and a refresh, a bookmark, or
+	   a link sent to somebody else all land back on the tab you happened
+	   to open first.
 
 	   `zui.js` dispatches `zui:tab` and `zui:section` on every switch, so
 	   this listens rather than re-implementing the switching. Two
@@ -426,16 +426,6 @@
 		 */
 		let restoring = false;
 
-		/*
-		 * The agent whose detail panel is rendered, if any. Read once from
-		 * the URL the server was given: the panel is built for that id and
-		 * cannot change without a page load, so this stays correct for the
-		 * life of the document.
-		 */
-		const openAgent = new window.URL(
-			window.location.href
-		).searchParams.get( 'agent' );
-
 		const writeUrl = function ( changes, push ) {
 			if ( restoring ) {
 				return;
@@ -519,25 +509,14 @@
 			/*
 			 * `section` is dropped on a tab change because section keys are
 			 * only unique within a tab: carrying `section=connection` from
-			 * an agent onto the Knowledge tab would ask for a section that
-			 * does not exist there, and the restore below would silently do
-			 * nothing while the URL claimed otherwise.
-			 *
-			 * `agent` is dropped for the same reason and restored on the way
-			 * back. It means something only on the agents tab, so
-			 * `tab=storefront&agent=6` describes a context that is not on
-			 * screen. Simply deleting it would trade one mismatch for
-			 * another: the agent detail panel stays rendered, so returning
-			 * to the tab would show that agent while the URL had forgotten
-			 * it — and a refresh would then land on the list instead. So the
-			 * id is remembered here rather than discarded, and put back when
-			 * the agents tab becomes visible again.
+			 * the Agent tab onto the Settings tab would ask for a section
+			 * that does not exist there, and the restore below would silently
+			 * do nothing while the URL claimed otherwise.
 			 */
 			writeUrl(
 				{
 					tab,
 					section: null,
-					agent: 'agents' === tab ? openAgent : null,
 				},
 				true
 			);
@@ -567,12 +546,17 @@
 		 * that here is how the two switchers start disagreeing.
 		 */
 		const restoreSection = function () {
-			const wanted = new window.URL(
+			let wanted = new window.URL(
 				window.location.href
 			).searchParams.get( 'section' );
 
 			if ( ! wanted ) {
 				return;
+			}
+
+			// The agent's Connection section became Connect (old links and bookmarks).
+			if ( 'connection' === wanted ) {
+				wanted = 'connect';
 			}
 
 			const $item = $( '.zui-tab-panel:not([hidden])' )

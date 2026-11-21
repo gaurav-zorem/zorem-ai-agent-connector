@@ -21,15 +21,14 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Who the agent is, for other plugins.
  *
- * This site runs one agent, the Admin Assistant, set up with the plugin and
- * configured by an administrator. Another plugin can ask who it is and whether
- * it is active; it cannot ask for an agent of its own, because there is no
- * second agent for this plugin to set up.
+ * The agent is the Admin Assistant, set up with this plugin and configured by
+ * an administrator. Other plugins can ask who it is and whether it is active,
+ * and are pointed at it when they propose tools they need.
  */
 final class CoreAgentDirectory implements AgentDirectoryInterface {
 
 	/**
-	 * The agents.
+	 * Agent storage.
 	 *
 	 * @var AgentRepository
 	 */
@@ -38,14 +37,14 @@ final class CoreAgentDirectory implements AgentDirectoryInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param AgentRepository $agents The agents.
+	 * @param AgentRepository $agents Agent storage.
 	 */
 	public function __construct( AgentRepository $agents ) {
 		$this->agents = $agents;
 	}
 
 	/**
-	 * An agent by reference, or null.
+	 * The agent by reference, or null.
 	 *
 	 * @param string $ref `agent:<uuid>`.
 	 */
@@ -56,7 +55,7 @@ final class CoreAgentDirectory implements AgentDirectoryInterface {
 	}
 
 	/**
-	 * Whether an agent is active: not pending, rejected, revoked, suspended or expired.
+	 * Whether the agent is active: not pending, rejected, revoked, suspended or expired.
 	 *
 	 * @param AgentRef $agent The agent.
 	 */
@@ -67,23 +66,28 @@ final class CoreAgentDirectory implements AgentDirectoryInterface {
 	}
 
 	/**
-	 * Agents an installing plugin asks to have set up for itself.
+	 * The agent a plugin should use when it proposes the tools it needs.
 	 *
-	 * Not implemented here. This site runs one agent and the administrator
-	 * decides what it may do on its Permissions tab, so there is nothing for a
-	 * proposal to create and nothing to approve. A plugin that needs access
-	 * asks the administrator to grant it to the agent that already exists.
+	 * A proposal is a request, not an instruction: it changes no grant. The
+	 * plugin is given the site's agent, and an administrator decides on its
+	 * Permissions tab which of the proposed tools it may use.
 	 *
 	 * @param ProfileProposal $proposal The proposal.
-	 * @return Refusal
+	 * @return AgentRef|Refusal
 	 */
 	public function ensure_proposed( ProfileProposal $proposal ) {
 		unset( $proposal );
 
-		return new Refusal(
-			'proposals_unsupported',
-			__( 'This site runs one agent, set up with the plugin. Ask the administrator to allow the tools you need on its Permissions tab.', 'zorem-ai-agent-connector' )
-		);
+		$agent = $this->agents->get();
+
+		if ( ! $agent instanceof Agent ) {
+			return new Refusal(
+				'agent_not_set_up',
+				__( 'The agent has not been set up yet. It is set up the first time an administrator opens the WordPress admin after activating the plugin.', 'zorem-ai-agent-connector' )
+			);
+		}
+
+		return $agent->to_agent_ref();
 	}
 
 	/**
@@ -96,6 +100,6 @@ final class CoreAgentDirectory implements AgentDirectoryInterface {
 			return null;
 		}
 
-		return $this->agents->find_by_uuid( substr( $ref, strlen( Agent::REF_PREFIX ) ) );
+		return $this->agents->get_by_ref( $ref );
 	}
 }

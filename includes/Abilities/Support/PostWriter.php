@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  * What it will not do: set an author, a password, a date, a slug of someone
  * else's choosing for another item, or a status other than draft, pending or
  * publish. Private and scheduled items stay a person's decision. Content is
- * passed through wp_kses_post(), and agents never hold `unfiltered_html`, so
+ * passed through wp_kses_post(), and the agent never holds `unfiltered_html`, so
  * WordPress filters it again on save.
  */
 final class PostWriter {

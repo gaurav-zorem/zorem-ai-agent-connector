@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  * The legacy plugin wraps every ability on the site in its own permission
  * gate, and so does this plugin. Two gates would mean two permission
  * authorities, each able to allow what the other denies, with no single place
- * to ask why an agent was refused. So while the legacy plugin runs, this one
+ * to ask why the agent was refused. So while the legacy plugin runs, this one
  * stays inert (decision D-5 in the split plan).
  *
  * Two signals, either of which is enough:

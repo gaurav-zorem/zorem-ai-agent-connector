@@ -1,6 +1,6 @@
 # What this repository tracks is what WordPress loads at runtime: the plugin
 # file, includes/, lib/ (the bundled bridge), vendor-bundled/, assets/,
-# languages/, readme.txt, changelog.txt and uninstall.php. Everything else is
+# languages/, readme.txt and uninstall.php. Everything else is
 # ignored, so the repository mirrors the distributed plugin. This list is kept
 # in step with .distignore; when a file is added at the plugin root the rule is
 # the same: if WordPress does not read it, it belongs here.
@@ -65,3 +65,18 @@ Thumbs.db
 /assets/zui/brand.php
 /assets/zui/eco-plugins.php
 /assets/zui/images/eco/
+
+# ZUI's licence components. This plugin has no licence screen, so no markup
+# here carries their classes. The lock-section, pro-feature and upsell
+# components do ship: the locked AI Agent OS PRO previews and the Go PRO tab
+# use them.
+/assets/zui/css/components/lic-page.css
+/assets/zui/css/components/lic-card.css
+/assets/zui/css/components/lic-active.css
+/assets/zui/css/components/lic-inactive.css
+/assets/zui/css/components/lic-help.css
+/assets/zui/css/components/lic-eco.css
+/assets/zui/css/components/lic-plugin.css
+
+# A changelog banner for zorem.com, which no screen in this plugin renders.
+/assets/images/zorem-changelog-banner.jpg

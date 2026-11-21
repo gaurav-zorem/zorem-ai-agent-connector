@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
  * promise exactly that boundary, so it has to be enforced somewhere. This is
  * that somewhere.
  *
- * It fails closed. For an agent that masks, every ability's result is masked —
+ * It fails closed. For the agent that masks, every ability's result is masked —
  * not only the abilities whose payload we have read — because the ones we
  * have not read are exactly where a customer's details would slip through
  * (Subscriptions, a CRM, `core/get-user-info`, a WooCommerce ability added
@@ -158,7 +158,7 @@ final class PiiRedactor {
 	}
 
 	/**
-	 * Redact an ability's result for an agent that masks.
+	 * Redact an ability's result for the agent that masks.
 	 *
 	 * Every ability, unless the exemption filter names it.
 	 *

@@ -16,11 +16,11 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Creates and hides the WP user that backs the agent.
  *
- * An agent is not a user, but a great deal of WordPress and WooCommerce code
+ * The agent is not a user, but a great deal of WordPress and WooCommerce code
  * assumes somebody is logged in — current_user_can(), post authorship, Woo's
  * own permission callbacks. The shadow user exists purely to satisfy that
  * assumption. It holds no standing privilege: the role grants 'read' and
- * nothing else, and any capability an agent needs is granted at the moment of
+ * nothing else, and any capability the agent needs is granted at the moment of
  * the call by CapabilityBridge and withdrawn immediately after.
  *
  * These users are hidden from the admin, the Users screen included, because
@@ -31,12 +31,17 @@ defined( 'ABSPATH' ) || exit;
 final class ShadowUserManager {
 
 	/**
-	 * Meta key marking a user as an agent's shadow.
+	 * Meta key marking a user as the agent's shadow.
 	 */
 	public const AGENT_META_KEY = 'ai_agent_os_agent_uuid';
 
 	/**
-	 * Cache key for the list of agent account ids.
+	 * Option recording that agent accounts were moved to undeliverable addresses.
+	 */
+	private const EMAIL_MIGRATION_OPTION = 'ai_agent_os_agent_email_v2';
+
+	/**
+	 * Cache key for the agent's account id.
 	 */
 	private const IDS_CACHE_KEY = 'ai_agent_os_shadow_user_ids';
 
@@ -64,7 +69,7 @@ final class ShadowUserManager {
 		add_action( 'ai_agent_os_agent_created', array( self::class, 'flush_agent_user_ids' ) );
 		add_action( 'ai_agent_os_agent_deleted', array( self::class, 'flush_agent_user_ids' ) );
 
-		// An agent that stops acting loses every credential its account holds, not only its token.
+		// The agent that stops acting loses every credential its account holds, not only its token.
 		add_action( 'ai_agent_os_agent_revoked', array( $this, 'drop_credentials' ) );
 		add_action( 'ai_agent_os_agent_deleted', array( $this, 'drop_credentials' ) );
 		add_action(
@@ -80,7 +85,7 @@ final class ShadowUserManager {
 	}
 
 	/**
-	 * Delete the application passwords on an agent's account.
+	 * Delete the application passwords on the agent's account.
 	 *
 	 * Reactivating the agent does not bring them back: whoever needs one
 	 * creates a new one.
@@ -96,11 +101,11 @@ final class ShadowUserManager {
 	}
 
 	/**
-	 * Whether a user is an agent's account, by its link to the agent.
+	 * Whether a user is the agent's account, by its link to the agent.
 	 *
 	 * The link is meta only this plugin writes. The role is not used: an
 	 * administrator, or a plugin, can change a role, and that must not turn
-	 * an agent's account into an ordinary one.
+	 * the agent's account into an ordinary one.
 	 *
 	 * @param int $user_id User id.
 	 */
@@ -109,10 +114,10 @@ final class ShadowUserManager {
 	}
 
 	/**
-	 * The ids of every account that backs an agent.
+	 * The ids of every account that backs the agent.
 	 *
 	 * Read from the meta, not the role, because that is what marks an account
-	 * as an agent's — and because the role can be changed by an administrator
+	 * as the agent's — and because the role can be changed by an administrator
 	 * or by a role-editing plugin. Hiding on the role alone meant a role change
 	 * put the account back in the Users list.
 	 *
@@ -150,7 +155,7 @@ final class ShadowUserManager {
 	}
 
 	/**
-	 * Forget the cached id list. Called when an agent's account is made or removed.
+	 * Forget the cached id list. Called when the agent's account is made or removed.
 	 */
 	public static function flush_agent_user_ids(): void {
 		self::$agent_user_ids = null;
@@ -159,7 +164,7 @@ final class ShadowUserManager {
 	}
 
 	/**
-	 * Create the shadow user for an agent.
+	 * Create the shadow user for the agent.
 	 *
 	 * @param string $agent_uuid Agent uuid.
 	 * @param string $agent_name Agent display name.
@@ -174,15 +179,21 @@ final class ShadowUserManager {
 		}
 
 		/*
-		 * The password is never used: agents authenticate by token, and the
+		 * The password is never used: the agent authenticates by token, and the
 		 * account cannot log in interactively in any meaningful way. It is set
 		 * to a long random value so the account is not passwordless.
+		 *
+		 * `meta_input` is saved before WordPress fires `user_register`, so a
+		 * plugin that reacts to new users (a welcome email, a newsletter or CRM
+		 * sync, an anti-spam notice) can already tell this is the agent's
+		 * account and not a sign-up. The address can never receive mail either
+		 * way (see synthetic_email()).
 		 */
 		$user_id = wp_insert_user(
 			array(
 				'user_login'   => $login,
 				'user_pass'    => wp_generate_password( 64, true, true ),
-				'user_email'   => $this->synthetic_email( $suffix ),
+				'user_email'   => self::synthetic_email( $login ),
 				'display_name' => sprintf(
 					/* translators: %s: agent name. */
 					__( '%s (agent)', 'zorem-ai-agent-connector' ),
@@ -190,6 +201,10 @@ final class ShadowUserManager {
 				),
 				'nickname'     => $agent_name,
 				'role'         => Installer::AGENT_ROLE,
+				'meta_input'   => array(
+					self::AGENT_META_KEY   => $agent_uuid,
+					'show_admin_bar_front' => 'false',
+				),
 			)
 		);
 
@@ -197,14 +212,11 @@ final class ShadowUserManager {
 			return $user_id;
 		}
 
-		update_user_meta( $user_id, self::AGENT_META_KEY, $agent_uuid );
-		update_user_meta( $user_id, 'show_admin_bar_front', 'false' );
-
 		return (int) $user_id;
 	}
 
 	/**
-	 * Delete an agent's shadow user.
+	 * Delete the agent's shadow user.
 	 *
 	 * Refuses to touch anything that is not one of ours.
 	 *
@@ -221,11 +233,11 @@ final class ShadowUserManager {
 	}
 
 	/**
-	 * Who inherits what an agent created when its shadow user is deleted.
+	 * Who inherits what the agent created when its shadow user is deleted.
 	 *
 	 * Without a reassign target, `wp_delete_user()` permanently deletes the
 	 * user's attachments and other author-supporting content (product images
-	 * an agent uploaded, for example) and trashes its posts. The first
+	 * the agent uploaded, for example) and trashes its posts. The first
 	 * administrator keeps them instead. Null only on a site with no
 	 * administrator, where WordPress's own behaviour is the only option.
 	 */
@@ -244,7 +256,7 @@ final class ShadowUserManager {
 	}
 
 	/**
-	 * Whether a user id belongs to an agent.
+	 * Whether a user id belongs to the agent.
 	 *
 	 * @param int $user_id User id.
 	 */
@@ -253,31 +265,78 @@ final class ShadowUserManager {
 	}
 
 	/**
-	 * A deliverable-looking but unroutable address.
+	 * The agent account's email: valid, unique, and impossible to deliver.
 	 *
-	 * WordPress requires an email and enforces uniqueness. Using the site's own
-	 * host with a reserved local part keeps it valid without risking mail to a
-	 * real inbox.
+	 * WordPress requires an email and enforces uniqueness. `.invalid` is
+	 * reserved by RFC 2606 and RFC 6761 so that no address under it can ever
+	 * receive mail. Until 2026-11-19 this used the site's own host
+	 * (`zorem-agent+…@example.com`), which looks like a real sign-up and on a
+	 * domain with a catch-all mailbox could deliver a plugin's welcome or
+	 * newsletter mail to a real inbox. retire_routable_emails() moves existing
+	 * accounts over.
 	 *
-	 * @param string $suffix Short unique fragment.
+	 * @param string $login The account's login, which is unique.
 	 */
-	private function synthetic_email( string $suffix ): string {
-		$host = wp_parse_url( home_url(), PHP_URL_HOST );
-		$host = is_string( $host ) && '' !== $host ? $host : 'example.invalid';
+	public static function synthetic_email( string $login ): string {
+		return sanitize_user( $login, true ) . '@agent.invalid';
+	}
 
-		return 'zorem-agent+' . $suffix . '@' . $host;
+	/**
+	 * Give every existing agent account an undeliverable address, once.
+	 *
+	 * Runs on admin_init from Installer::maybe_upgrade() until it has
+	 * finished. Only accounts marked as an agent's and still on an address
+	 * outside `.invalid` are touched. WordPress's "your email has changed"
+	 * message is switched off while it runs: it would go to the old,
+	 * possibly deliverable, address.
+	 */
+	public static function retire_routable_emails(): void {
+		if ( 'done' === get_option( self::EMAIL_MIGRATION_OPTION ) ) {
+			return;
+		}
+
+		add_filter( 'ai_agent_os_include_shadow_users', '__return_true' );
+		add_filter( 'send_email_change_email', '__return_false' );
+
+		try {
+			$users = get_users(
+				array(
+					// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Once, on an admin request, until it is done.
+					'meta_key' => self::AGENT_META_KEY,
+					'fields'   => array( 'ID', 'user_login', 'user_email' ),
+				)
+			);
+
+			foreach ( $users as $user ) {
+				if ( '.invalid' === substr( strtolower( (string) $user->user_email ), -8 ) ) {
+					continue;
+				}
+
+				wp_update_user(
+					array(
+						'ID'         => (int) $user->ID,
+						'user_email' => self::synthetic_email( (string) $user->user_login ),
+					)
+				);
+			}
+		} finally {
+			remove_filter( 'send_email_change_email', '__return_false' );
+			remove_filter( 'ai_agent_os_include_shadow_users', '__return_true' );
+		}
+
+		update_option( self::EMAIL_MIGRATION_OPTION, 'done', true );
 	}
 
 	/**
 	 * Keep shadow users out of user queries, the Users screen included.
 	 *
-	 * An agent is managed on its own screen, where its account is made and
+	 * The agent is managed on its own screen, where its account is made and
 	 * removed with it; listing the account again among the site's people only
 	 * invites editing it by hand. WP-CLI and our own screens still see them
 	 * through `ai_agent_os_include_shadow_users`.
 	 *
 	 * Excluded two ways, by id and by role. The id list is the one that
-	 * decides: it comes from the meta that marks an account as an agent's, so
+	 * decides: it comes from the meta that marks an account as the agent's, so
 	 * it holds whatever the account's role has since been changed to. The role
 	 * exclusion stays because it costs nothing and still covers an account
 	 * created later in the same request than the id list was read.
@@ -345,7 +404,7 @@ final class ShadowUserManager {
 	}
 
 	/**
-	 * Drop the agents' role from the Users screen's role links, and from the "All" count.
+	 * Drop the agent's role from the Users screen's role links, and from the "All" count.
 	 *
 	 * The links are counted by count_users(), which no query filter reaches,
 	 * so without this the screen would say "All (26)" over 25 rows and offer
@@ -363,7 +422,7 @@ final class ShadowUserManager {
 
 		/*
 		 * Counted from the account list, not from the role tally: an account
-		 * whose role was changed is still an agent's and still hidden from the
+		 * whose role was changed is still the agent's and still hidden from the
 		 * rows, so counting the role would leave "All" one too high above a
 		 * list one row shorter.
 		 */

@@ -155,7 +155,7 @@ final class AuthorizationRequest {
 		}
 
 		if ( ! self::is_our_resource( $params['resource'] ) ) {
-			return $request->client_error( 'invalid_target', 'Sign in at an agent’s own MCP address. Copy it from the agent’s Connection section on this site.' );
+			return $request->client_error( 'invalid_target', 'Sign in at the agent’s MCP address. Copy it from the agent’s Connect page on this site.' );
 		}
 
 		return $request;
@@ -163,7 +163,7 @@ final class AuthorizationRequest {
 
 	/**
 	 * Whether a `resource` value names one of this server's MCP addresses (S6):
-	 * an agent's own, shaped as one. There is no shared address.
+	 * the agent's, shaped as one.
 	 *
 	 * @param string $candidate Requested resource.
 	 */
@@ -172,14 +172,14 @@ final class AuthorizationRequest {
 	}
 
 	/**
-	 * The agent code of the requested resource: the agent whose own address the client signs in to.
+	 * The address code of the requested resource: the agent's MCP address the client signs in to.
 	 */
 	public function agent_code(): string {
 		return OAuthEndpoints::code_of( $this->param( 'resource' ) );
 	}
 
 	/**
-	 * The resource the approval is for: the agent's own address.
+	 * The resource the approval is for: the agent's MCP address.
 	 */
 	public function resource(): string {
 		return OAuthEndpoints::resource( $this->agent_code() );

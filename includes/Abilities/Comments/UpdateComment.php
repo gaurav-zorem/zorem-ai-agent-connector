@@ -38,7 +38,7 @@ final class UpdateComment {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Update comment', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Edit a comment', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Replaces a comment\'s text, for example to fix a typo in a reply or remove a link. The author is left as it is.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-comments',
 			'input_schema'        => Schema::input(

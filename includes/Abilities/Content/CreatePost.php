@@ -36,7 +36,7 @@ final class CreatePost {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Create post', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Write a new blog post (draft)', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Creates a blog post with title, content, excerpt, categories, tags and featured image. It is saved as a draft unless status says otherwise.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-content',
 			'input_schema'        => Schema::input( self::properties(), array( 'title' ) ),

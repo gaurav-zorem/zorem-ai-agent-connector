@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
  * The adapter emits events for server creation, tool registration and request
  * handling, and accepts a handler class per server. That is the natural seam
  * for Pillar 5's MCP Analytics — request volumes, which abilities get used,
- * which agents connect and how often.
+ * when the agent connects and how often.
  *
  * Phase 1 re-broadcasts the events as a WordPress action and stops there. The
  * ability-level audit trail comes from AbilityGate, which sees every call on

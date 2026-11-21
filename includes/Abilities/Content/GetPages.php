@@ -36,9 +36,9 @@ final class GetPages {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Get pages', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'See pages', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Lists pages (published, draft, pending or scheduled), newest first, with title, status, link, parent and excerpt. Call get-page for the full content.', 'zorem-ai-agent-connector' ),
-			'category'            => 'ai-agent-os-content',
+			'category'            => 'ai-agent-os-pages',
 			'input_schema'        => Schema::input( PostReader::list_properties( true ) ),
 			'output_schema'       => Schema::page_of( 'items', PostProjection::summary_schema() ),
 			'permission_callback' => static fn(): bool => Access::can_list( 'page' ),

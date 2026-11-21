@@ -15,12 +15,12 @@ use AiAgentOs\Agents\AgentRepository;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Resolves an agent from a WordPress application password.
+ * Resolves the agent from a WordPress application password.
  *
  * The fallback for clients that cannot send a custom Authorization header and
  * only speak HTTP Basic. WordPress authenticates the application password
  * itself and sets the current user; all we do is recognise that the resulting
- * user is an agent's shadow user and bind the agent.
+ * user is the agent's shadow user and bind the agent.
  *
  * This resolver therefore runs *after* core authentication rather than instead
  * of it, and it never validates a credential of its own.
@@ -70,7 +70,7 @@ final class ApplicationPasswordResolver implements AgentResolverInterface {
 
 		// Identification only. An inactive agent is still returned so its
 		// refusal is attributed to it; TransportPermission decides and logs.
-		$agent = $this->agents->find_by_shadow_user( $user_id );
+		$agent = $this->agents->get_by_shadow_user( $user_id );
 
 		return $agent instanceof Agent ? $agent : null;
 	}

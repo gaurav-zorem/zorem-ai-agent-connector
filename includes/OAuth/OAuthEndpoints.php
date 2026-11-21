@@ -72,10 +72,10 @@ final class OAuthEndpoints {
 	/**
 	 * The protected resource: an MCP address, exactly as a client is given it.
 	 *
-	 * The shared address, or with a code an agent's own address. Each is its
-	 * own resource: a client signs in to one, for one agent.
+	 * The base MCP path, or with a code the agent's MCP address, which is the
+	 * resource a client signs in to.
 	 *
-	 * @param string $code An agent's address code, or '' for the shared address.
+	 * @param string $code The agent's address code, or '' for the base path.
 	 */
 	public static function resource( string $code = '' ): string {
 		if ( '' === $code ) {
@@ -123,7 +123,7 @@ final class OAuthEndpoints {
 	}
 
 	/**
-	 * The agent code of a resource URL, '' for the shared address or anything else.
+	 * The address code of a resource URL, or '' for anything else.
 	 *
 	 * @param string $address Resource as a client named it.
 	 */
@@ -162,7 +162,7 @@ final class OAuthEndpoints {
 	 * RFC 9728 §3.1: the well-known segment goes between the host and the
 	 * resource's path.
 	 *
-	 * @param string $code An agent's address code, or '' for the shared address.
+	 * @param string $code The agent's address code, or '' for the base path.
 	 */
 	public static function resource_metadata_path( string $code = '' ): string {
 		return '/.well-known/oauth-protected-resource' . self::path_of( self::resource( $code ) );
@@ -198,7 +198,7 @@ final class OAuthEndpoints {
 	 * claims. The well-known documents are still served for clients that
 	 * look there first.
 	 *
-	 * @param string $code An agent's address code, or '' for the shared address.
+	 * @param string $code The agent's address code, or '' for the base path.
 	 */
 	public static function resource_metadata_url( string $code = '' ): string {
 		return self::url( '' === $code ? 'protected-resource' : 'protected-resource/' . $code );

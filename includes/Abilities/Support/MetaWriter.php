@@ -1,6 +1,6 @@
 <?php
 /**
- * Writing one post or term meta value for an agent.
+ * Writing one post or term meta value for the agent.
  *
  * @package AiAgentOs
  */
@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * The one meta write path, and the keys it will not touch.
  *
- * A protected key is refused for every caller, administrators' agents
+ * A protected key is refused for every caller, the agent of an administrator
  * included: protected meta is where WordPress and plugins keep their own
  * state (edit locks, the page template, payment and licence data), and an
  * agent that can write it can make a plugin believe things that are not
@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
  * as strict as that plugin made it.
  *
  * Values are stored as text. A structured value cannot be written, so no
- * serialised object is ever created from an agent's input.
+ * serialised object is ever created from the agent's input.
  */
 final class MetaWriter {
 
@@ -65,7 +65,7 @@ final class MetaWriter {
 		}
 
 		if ( is_protected_meta( $key, $type ) ) {
-			return new \WP_Error( 'ai_agent_os_protected_meta', __( 'That meta key is protected and cannot be changed by an agent.', 'zorem-ai-agent-connector' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'ai_agent_os_protected_meta', __( 'That meta key is protected and cannot be changed by the agent.', 'zorem-ai-agent-connector' ), array( 'status' => 403 ) );
 		}
 
 		if ( ! current_user_can( 'edit_' . $type . '_meta', $id, $key ) ) {

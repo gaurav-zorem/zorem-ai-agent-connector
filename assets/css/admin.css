@@ -1441,7 +1441,7 @@ body:has(.zui-scope) #wpcontent {
 
 .zui-scope .aaos-status__tiles {
 	display: grid;
-	grid-template-columns: repeat( 4, minmax( 0, 1fr ) );
+	grid-template-columns: repeat( 5, minmax( 0, 1fr ) );
 	gap: 16px;
 }
 
@@ -1547,9 +1547,11 @@ body:has(.zui-scope) #wpcontent {
 	overflow-wrap: anywhere;
 }
 
+/* The badge is inline-flex (ZUI), so its text is centred with justify-content, not text-align. */
 .zui-scope .aaos-status__badge {
 	min-width: 56px;
 	justify-self: end;
+	justify-content: center;
 	text-align: center;
 }
 
@@ -1582,4 +1584,1978 @@ body:has(.zui-scope) #wpcontent {
 .zui-scope .aaos-mtable .aaos-seg__item:disabled.is-active {
 	opacity: 1;
 	cursor: default;
+}
+
+
+/* --------------------------------------------------------------------------
+   Locked previews of AI Agent OS PRO features (partials/locked.php).
+   The lock card and the dimmed sample come from ZUI's lock-section,
+   pro-feature and upsell components; these rules only space and align them.
+   -------------------------------------------------------------------------- */
+
+.zui-scope .aaos-tab-pro {
+	margin-inline-start: 6px;
+	font-size: 10px;
+	vertical-align: middle;
+}
+
+.zui-scope .aaos-locked-block {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin-block: 24px;
+}
+
+.zui-scope .aaos-locked-preview {
+	overflow: hidden;
+}
+
+.zui-scope .aaos-locked-preview__bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 16px;
+	border-block-end: 1px solid var(--zui-border);
+}
+
+.zui-scope .aaos-locked-preview__title {
+	font-weight: var(--zui-fw-semibold, 600);
+}
+
+.zui-scope .aaos-locked-preview .aaos-mtable__band {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.zui-scope .aaos-locked-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 16px;
+}
+
+.zui-scope .aaos-locked-cards__card {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 20px;
+}
+
+.zui-scope .aaos-locked-cards__card p {
+	margin: 0;
+	color: var(--zui-text-muted, #6b7280);
+}
+
+.zui-scope .aaos-locked-cards__icon {
+	color: var(--zui-primary);
+}
+
+/* The Profiles control on the permission matrix: looks like the select, opens the upgrade page. */
+.zui-scope .aaos-locked-control {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	text-decoration: none;
+	color: var(--zui-text-muted, #6b7280);
+}
+
+.zui-scope .aaos-locked-control__select {
+	display: inline-flex;
+	align-items: center;
+	width: auto;
+	white-space: nowrap;
+	opacity: 0.6;
+}
+
+.zui-scope .aaos-locked-row__control {
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.zui-scope .aaos-locked-settings {
+	margin-block-start: 24px;
+}
+
+.zui-scope .aaos-locked-settings .zui-card__head {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.zui-scope .aaos-locked-settings__cta {
+	margin: 0;
+	padding: 12px 20px 20px;
+}
+
+/* Sample outcomes in the locked Activity Log preview. */
+.zui-scope .aaos-outcome--worked { color: #059669; font-weight: 600; }
+.zui-scope .aaos-outcome--changed { color: #2563eb; font-weight: 600; }
+.zui-scope .aaos-outcome--blocked { color: #dc2626; font-weight: 600; }
+
+/* "Add agent" and "Export all agents" in the agent header open the upgrade page (PRO). */
+.zui-scope .aaos-agenthead__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-block-start: 14px;
+}
+
+.zui-scope .aaos-pro-action__badge {
+	margin-inline-start: 4px;
+	font-size: 10px;
+}
+
+/* --------------------------------------------------------------------------
+   Go PRO tab (tabs/go-pro.php): Advanced Shipment Tracking's Go Pro layout.
+   -------------------------------------------------------------------------- */
+
+.zui-scope .aaos-gp { display: flex; flex-direction: column; gap: 28px; }
+
+.zui-scope .aaos-gp-hero {
+	position: relative;
+	overflow: hidden;
+	border-radius: 18px;
+	padding: 38px 36px 32px;
+	color: #f5f3ff;
+	background: radial-gradient(circle at 18% 12%, #4338ca 0%, transparent 55%),
+				radial-gradient(circle at 82% 88%, #7c3aed 0%, transparent 50%),
+				linear-gradient(135deg, #1e1b4b 0%, #312e81 55%, #4c1d95 100%);
+	box-shadow: 0 18px 40px -22px rgba(76, 29, 149, 0.55);
+}
+.zui-scope .aaos-gp-hero__inner { position: relative; z-index: 2; max-width: 760px; }
+.zui-scope .aaos-gp-hero__orb {
+	position: absolute;
+	border-radius: 999px;
+	filter: blur(60px);
+	opacity: 0.55;
+	pointer-events: none;
+	z-index: 1;
+}
+.zui-scope .aaos-gp-hero__orb--a { width: 280px; height: 280px; background: #a78bfa; top: -90px; right: -60px; }
+.zui-scope .aaos-gp-hero__orb--b { width: 220px; height: 220px; background: #38bdf8; bottom: -100px; left: 30%; opacity: 0.35; }
+.zui-scope .aaos-gp-hero__orb--c { width: 160px; height: 160px; background: #f472b6; top: 40%; right: 20%; opacity: 0.30; }
+
+.zui-scope .aaos-gp-hero__eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 12px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.12);
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #f5f3ff;
+	backdrop-filter: blur(6px);
+}
+.zui-scope .aaos-gp-hero__eyebrow .zui-icon { width: 14px; height: 14px; color: #fde68a; }
+.zui-scope .aaos-gp-hero__title {
+	margin: 16px 0 12px;
+	font-size: 34px;
+	line-height: 1.15;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	color: #ffffff;
+}
+.zui-scope .aaos-gp-hero__lead {
+	margin: 0 0 24px;
+	font-size: 15px;
+	line-height: 1.65;
+	color: rgba(245, 243, 255, 0.85);
+	max-width: 620px;
+}
+.zui-scope .aaos-gp-hero__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; }
+.zui-scope .aaos-gp-hero__trust {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 22px;
+	font-size: 12px;
+	color: rgba(245, 243, 255, 0.75);
+}
+.zui-scope .aaos-gp-hero__trust-item { display: inline-flex; align-items: center; gap: 6px; }
+.zui-scope .aaos-gp-hero__trust-item .zui-icon { width: 14px; height: 14px; color: #a7f3d0; }
+.zui-scope .aaos-gp-hero__badge {
+	position: absolute;
+	top: 22px;
+	right: 24px;
+	z-index: 2;
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 14px;
+	border-radius: 12px;
+	background: rgba(255, 255, 255, 0.10);
+	border: 1px solid rgba(255, 255, 255, 0.20);
+	backdrop-filter: blur(6px);
+}
+.zui-scope .aaos-gp-hero__badge-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 999px;
+	background: #fbbf24;
+	box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.18);
+}
+.zui-scope .aaos-gp-hero__badge-eyebrow {
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: rgba(245, 243, 255, 0.65);
+}
+.zui-scope .aaos-gp-hero__badge-val { font-size: 13px; font-weight: 700; color: #ffffff; }
+
+.zui-scope .aaos-gp-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 11px 20px;
+	border-radius: 10px;
+	font-size: 13.5px;
+	font-weight: 700;
+	line-height: 1;
+	text-decoration: none;
+	border: 1px solid transparent;
+	cursor: pointer;
+	transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.zui-scope .aaos-gp-btn .zui-icon { width: 16px; height: 16px; }
+.zui-scope .aaos-gp-btn--primary { background: #ffffff; color: #4c1d95; box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.35); }
+.zui-scope .aaos-gp-btn--primary:hover { transform: translateY(-1px); box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.45); }
+.zui-scope .aaos-gp-btn--ghost { background: rgba(255, 255, 255, 0.08); color: #ffffff; border-color: rgba(255, 255, 255, 0.25); }
+.zui-scope .aaos-gp-btn--ghost:hover { background: rgba(255, 255, 255, 0.15); }
+.zui-scope .aaos-gp-btn--xl { padding: 14px 28px; font-size: 15px; border-radius: 12px; }
+.zui-scope .aaos-gp-btn--xl .zui-icon { width: 18px; height: 18px; }
+
+.zui-scope .aaos-gp-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.zui-scope .aaos-gp-stat {
+	background: #ffffff;
+	border: 1px solid var(--zui-border);
+	border-radius: 14px;
+	padding: 22px 22px 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	position: relative;
+	overflow: hidden;
+	transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.zui-scope .aaos-gp-stat:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -18px rgba(15, 23, 42, 0.18); }
+.zui-scope .aaos-gp-stat__icon {
+	width: 38px;
+	height: 38px;
+	border-radius: 10px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 4px;
+}
+.zui-scope .aaos-gp-stat__icon .zui-icon { width: 20px; height: 20px; }
+.zui-scope .aaos-gp-stat__num {
+	font-size: 32px;
+	font-weight: 800;
+	color: var(--zui-text-strong);
+	letter-spacing: -0.02em;
+	line-height: 1.1;
+}
+.zui-scope .aaos-gp-stat__label { font-size: 13px; font-weight: 700; color: var(--zui-text-strong); }
+.zui-scope .aaos-gp-stat__sub { font-size: 12px; color: var(--zui-text-muted); }
+
+.zui-scope .aaos-gp-section { display: flex; flex-direction: column; gap: 22px; }
+.zui-scope .aaos-gp-section__head { text-align: center; max-width: 720px; margin: 0 auto; }
+.zui-scope .aaos-gp-section__eyebrow {
+	display: inline-block;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--zui-primary-600);
+	margin-bottom: 8px;
+}
+.zui-scope .aaos-gp-section__title {
+	margin: 0 0 6px;
+	font-size: 24px;
+	font-weight: 800;
+	letter-spacing: -0.01em;
+	color: var(--zui-text-strong);
+}
+.zui-scope .aaos-gp-section__sub { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--zui-text-muted); }
+
+/* Six cards: always full rows — 3 × 2, then 2 × 3, then one column. */
+.zui-scope .aaos-gp-powers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 1100px) {
+	.zui-scope .aaos-gp-powers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+	.zui-scope .aaos-gp-powers { grid-template-columns: minmax(0, 1fr); }
+}
+.zui-scope .aaos-gp-power {
+	background: #ffffff;
+	border: 1px solid var(--zui-border);
+	border-radius: 14px;
+	padding: 22px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	position: relative;
+	transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.zui-scope .aaos-gp-power:hover { transform: translateY(-3px); box-shadow: 0 18px 34px -22px rgba(15, 23, 42, 0.18); border-color: #c4b5fd; }
+.zui-scope .aaos-gp-power__icon {
+	width: 44px;
+	height: 44px;
+	border-radius: 12px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+.zui-scope .aaos-gp-power__icon .zui-icon { width: 22px; height: 22px; }
+.zui-scope .aaos-gp-power__title { margin: 4px 0 0; font-size: 15px; font-weight: 700; color: var(--zui-text-strong); }
+.zui-scope .aaos-gp-power__desc {
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.55;
+	color: var(--zui-text-muted);
+	flex: 1;
+}
+.zui-scope .aaos-gp-power__chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-top: 6px;
+	padding: 4px 10px;
+	border-radius: 999px;
+	background: #ecfdf5;
+	color: #047857;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	width: fit-content;
+}
+.zui-scope .aaos-gp-power__chip .zui-icon { width: 12px; height: 12px; }
+
+.zui-scope .aaos-gp-outcomes { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 820px) {
+	.zui-scope .aaos-gp-outcomes {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+.zui-scope .aaos-gp-outcome {
+	border-radius: 14px;
+	padding: 24px;
+	border: 1px solid var(--zui-border);
+	background: #ffffff;
+	position: relative;
+}
+.zui-scope .aaos-gp-outcome--before { background: linear-gradient(180deg, #fff1f2 0%, #ffffff 65%); border-color: #fecdd3; }
+.zui-scope .aaos-gp-outcome--after { background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 65%); border-color: #a7f3d0; }
+.zui-scope .aaos-gp-outcome__head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.zui-scope .aaos-gp-outcome__icon {
+	width: 38px;
+	height: 38px;
+	border-radius: 10px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+.zui-scope .aaos-gp-outcome--before .aaos-gp-outcome__icon { background: #fee2e2; color: #dc2626; }
+.zui-scope .aaos-gp-outcome--after .aaos-gp-outcome__icon { background: #d1fae5; color: #059669; }
+.zui-scope .aaos-gp-outcome__icon .zui-icon { width: 20px; height: 20px; }
+.zui-scope .aaos-gp-outcome__eyebrow {
+	display: block;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--zui-text-muted);
+}
+.zui-scope .aaos-gp-outcome__title { margin: 2px 0 0; font-size: 17px; font-weight: 800; color: var(--zui-text-strong); }
+.zui-scope .aaos-gp-outcome__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+.zui-scope .aaos-gp-outcome__list li {
+	display: grid;
+	grid-template-columns: 22px 1fr;
+	gap: 10px;
+	align-items: start;
+	font-size: 13px;
+	line-height: 1.55;
+	color: var(--zui-text);
+}
+.zui-scope .aaos-gp-outcome__bullet {
+	width: 22px;
+	height: 22px;
+	border-radius: 999px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+.zui-scope .aaos-gp-outcome--before .aaos-gp-outcome__bullet { background: #fee2e2; color: #dc2626; }
+.zui-scope .aaos-gp-outcome--after .aaos-gp-outcome__bullet { background: #d1fae5; color: #059669; }
+.zui-scope .aaos-gp-outcome__bullet .zui-icon { width: 12px; height: 12px; }
+
+.zui-scope .aaos-gp-cta {
+	position: relative;
+	overflow: hidden;
+	border-radius: 18px;
+	padding: 32px 34px;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+	background: linear-gradient(135deg, #2563eb 0%, #4338ca 50%, #7c3aed 100%);
+	color: #ffffff;
+	box-shadow: 0 18px 40px -22px rgba(67, 56, 202, 0.6);
+}
+.zui-scope .aaos-gp-cta__orb {
+	position: absolute;
+	width: 360px;
+	height: 360px;
+	border-radius: 999px;
+	background: radial-gradient(circle, rgba(255, 255, 255, 0.18) 0%, transparent 60%);
+	right: -120px;
+	top: -140px;
+	pointer-events: none;
+}
+.zui-scope .aaos-gp-cta__content { position: relative; z-index: 2; max-width: 560px; }
+.zui-scope .aaos-gp-cta__eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px 12px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.18);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	margin-bottom: 12px;
+}
+.zui-scope .aaos-gp-cta__eyebrow .zui-icon { width: 14px; height: 14px; }
+.zui-scope .aaos-gp-cta__title {
+	margin: 0 0 8px;
+	font-size: 24px;
+	font-weight: 800;
+	line-height: 1.25;
+	letter-spacing: -0.01em;
+	color: #ffffff;
+}
+.zui-scope .aaos-gp-cta__sub { margin: 0; font-size: 13.5px; line-height: 1.6; color: rgba(255, 255, 255, 0.85); }
+.zui-scope .aaos-gp-cta__action {
+	position: relative;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 8px;
+}
+.zui-scope .aaos-gp-cta__note { font-size: 12px; color: rgba(255, 255, 255, 0.75); }
+
+@media (max-width: 720px) {
+	.zui-scope .aaos-gp-hero { padding: 32px 24px 28px; }
+	.zui-scope .aaos-gp-hero__title { font-size: 26px; }
+	.zui-scope .aaos-gp-hero__badge { position: static; margin-top: 18px; display: inline-flex; }
+	.zui-scope .aaos-gp-cta { padding: 26px 22px; }
+	.zui-scope .aaos-gp-cta__action { align-items: flex-start; }
+}
+
+/* Free vs PRO comparison (not in AST's tab). */
+.zui-scope .aaos-gp-compare {
+	background: #ffffff;
+	border: 1px solid var(--zui-border);
+	border-radius: 14px;
+	overflow: hidden;
+	max-width: 900px;
+	width: 100%;
+	margin: 0 auto;
+}
+.zui-scope .aaos-gp-compare__row {
+	display: grid;
+	grid-template-columns: 1fr 140px 140px;
+	align-items: center;
+	border-block-end: 1px solid var(--zui-divider, #f0f1f3);
+}
+.zui-scope .aaos-gp-compare__row:last-child { border-block-end: 0; }
+.zui-scope .aaos-gp-compare__row > span { padding: 14px 20px; font-size: 13px; color: var(--zui-text); }
+.zui-scope .aaos-gp-compare__row--head { background: #f9fafb; }
+.zui-scope .aaos-gp-compare__row--head > span {
+	font-size: 12px;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--zui-text-strong);
+	text-align: center;
+}
+.zui-scope .aaos-gp-compare__row--head > span:first-child { text-align: start; }
+.zui-scope .aaos-gp-compare__row--head small {
+	display: block;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	color: var(--zui-text-muted);
+}
+.zui-scope .aaos-gp-compare__row--head .is-pro small { color: #059669; }
+.zui-scope .aaos-gp-compare__cell { display: flex; justify-content: center; }
+.zui-scope .aaos-gp-compare .is-pro { background: #f8fdf9; }
+.zui-scope .aaos-gp-compare__yes,
+.zui-scope .aaos-gp-compare__no {
+	width: 24px;
+	height: 24px;
+	border-radius: 999px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+.zui-scope .aaos-gp-compare__yes { background: #d1fae5; color: #059669; }
+.zui-scope .aaos-gp-compare__no { background: #f3f4f6; color: #9ca3af; }
+.zui-scope .aaos-gp-compare__yes .zui-icon,
+.zui-scope .aaos-gp-compare__no .zui-icon { width: 14px; height: 14px; }
+@media (max-width: 720px) {
+	.zui-scope .aaos-gp-compare__row { grid-template-columns: 1fr 70px 70px; }
+	.zui-scope .aaos-gp-compare__row > span { padding: 12px 10px; }
+}
+
+/* --------------------------------------------------------------------------
+   Agent → Connect (agent-connect.php): address, app picker, connected apps,
+   advanced token. One app's guide at a time; full guides live in the docs.
+   -------------------------------------------------------------------------- */
+
+.zui-scope .aaos-cx-addr {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.zui-scope .aaos-cx-addr__field {
+	flex: 1 1 320px;
+	min-width: 0;
+	max-width: none; /* ZUI caps inputs at 520px; the address uses the whole row. */
+	height: 44px;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 13px;
+	background: var( --zui-bg );
+}
+
+.zui-scope .aaos-cx-addr__copy {
+	height: 44px;
+	padding-inline: 20px;
+}
+
+/* ZUI gives some buttons flex: 1; here the address takes the room, buttons keep their size. */
+.zui-scope .aaos-cx .zui-btn {
+	flex: 0 0 auto;
+}
+
+.zui-scope .aaos-cx-more {
+	position: relative;
+}
+
+.zui-scope .aaos-cx-more__toggle,
+.zui-scope .aaos-cx .zui-btn.aaos-cx-more__toggle {
+	width: 32px;
+	height: 32px;
+	min-height: 0;
+	padding: 0;
+	justify-content: center;
+	border-color: transparent;
+	background: transparent;
+	box-shadow: none;
+	color: var( --zui-text-soft );
+}
+
+.zui-scope .aaos-cx-more__toggle:hover,
+.zui-scope .aaos-cx-more__toggle[aria-expanded='true'] {
+	background: var( --zui-bg );
+	color: var( --zui-text );
+}
+
+.zui-scope .aaos-cx-more__toggle svg {
+	width: 16px;
+	height: 16px;
+}
+
+.zui-scope .aaos-cx-more__menu {
+	position: absolute;
+	inset-inline-end: 0;
+	top: calc( 100% + 6px );
+	z-index: 20;
+	width: 280px;
+	padding: 6px;
+	background: var( --zui-surface );
+	border: 1px solid var( --zui-border );
+	border-radius: var( --zui-radius-md );
+	box-shadow: 0 10px 28px rgba( 15, 23, 42, 0.14 );
+}
+
+.zui-scope .aaos-cx-more__menu[hidden] {
+	display: none;
+}
+
+.zui-scope .aaos-cx-more__item {
+	width: 100%;
+	padding: 10px 12px;
+	border: 0;
+	border-radius: var( --zui-radius-sm );
+	background: none;
+	font: inherit;
+	font-size: 13px;
+	font-weight: var( --zui-fw-medium );
+	color: var( --zui-danger, #b32d2e );
+	text-align: start;
+	cursor: pointer;
+}
+
+.zui-scope .aaos-cx-more__item:hover {
+	background: var( --zui-danger-50, #fcf0f1 );
+}
+
+.zui-scope .aaos-cx-more__note {
+	margin: 0;
+	padding: 0 12px 10px;
+	font-size: 12px;
+	color: var( --zui-text-faint );
+}
+
+/* App picker. */
+.zui-scope .aaos-cx-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 20px;
+}
+
+.zui-scope .aaos-cx-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 40px;
+	padding: 0 16px;
+	border: 1px solid var( --zui-border );
+	border-radius: 999px;
+	background: var( --zui-surface );
+	font: inherit;
+	font-size: 14px;
+	font-weight: var( --zui-fw-semibold );
+	color: var( --zui-text );
+	cursor: pointer;
+}
+
+.zui-scope .aaos-cx-tab:hover {
+	border-color: var( --zui-primary );
+}
+
+.zui-scope .aaos-cx-tab[aria-selected='true'] {
+	border: 2px solid var( --zui-primary );
+	padding: 0 15px;
+	background: var( --zui-primary-50, var( --zui-bg ) );
+	color: var( --zui-primary );
+}
+
+.zui-scope .aaos-cx-tab:focus-visible {
+	outline: 2px solid var( --zui-primary );
+	outline-offset: 2px;
+}
+
+.zui-scope .aaos-cx-tab__dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #9ca3af;
+}
+
+.zui-scope .aaos-cx-tab--claude .aaos-cx-tab__dot { background: #d97757; }
+.zui-scope .aaos-cx-tab--chatgpt .aaos-cx-tab__dot { background: #10a37f; }
+.zui-scope .aaos-cx-tab--grok .aaos-cx-tab__dot { background: #111; }
+.zui-scope .aaos-cx-tab--codex .aaos-cx-tab__dot { background: #6b7280; }
+
+.zui-scope .aaos-cx-panel {
+	padding: 20px;
+	border: 1px solid var( --zui-divider, var( --zui-border ) );
+	border-radius: var( --zui-radius-md );
+	background: var( --zui-bg );
+}
+
+.zui-scope .aaos-cx-panel[hidden] {
+	display: none;
+}
+
+.zui-scope .aaos-cx-panel__head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 10px;
+}
+
+.zui-scope .aaos-cx-panel__title {
+	margin: 0;
+	font-size: 15px;
+	font-weight: var( --zui-fw-bold, 700 );
+}
+
+.zui-scope .aaos-cx-panel__sub {
+	font-size: 12px;
+	color: var( --zui-text-faint );
+}
+
+.zui-scope .aaos-cx-steps {
+	margin: 14px 0 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: aaos-cx;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.zui-scope .aaos-cx-steps li {
+	counter-increment: aaos-cx;
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.zui-scope .aaos-cx-steps li::before {
+	content: counter( aaos-cx );
+	flex: none;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: var( --zui-text );
+	color: #fff;
+	font-size: 12px;
+	font-weight: 700;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.zui-scope .aaos-cx-cmd {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-top: 14px;
+}
+
+.zui-scope .aaos-cx-cmd code {
+	flex: 1 1 320px;
+	min-width: 0;
+	padding: 12px 14px;
+	border-radius: var( --zui-radius-sm );
+	background: #1d2327;
+	color: #e5e7eb;
+	font-size: 12px;
+	overflow-x: auto;
+	white-space: nowrap;
+}
+
+.zui-scope .aaos-cx-panel__foot {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-top: 18px;
+	padding-top: 14px;
+	border-top: 1px solid var( --zui-divider, var( --zui-border ) );
+}
+
+.zui-scope .aaos-cx-panel__note {
+	font-size: 13px;
+	color: var( --zui-text-soft );
+}
+
+.zui-scope .aaos-cx-panel__docs {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 14px;
+	font-weight: var( --zui-fw-semibold );
+	color: var( --zui-primary );
+	text-decoration: none;
+}
+
+.zui-scope .aaos-cx-panel__docs svg {
+	width: 14px;
+	height: 14px;
+}
+
+/* Connected apps. */
+.zui-scope .aaos-cx-apps {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	border: 1px solid var( --zui-divider, var( --zui-border ) );
+	border-radius: var( --zui-radius-md );
+}
+
+.zui-scope .aaos-cx-app {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 14px;
+	margin: 0;
+	padding: 14px 16px;
+}
+
+.zui-scope .aaos-cx-app + .aaos-cx-app {
+	border-top: 1px solid var( --zui-divider, var( --zui-border ) );
+}
+
+.zui-scope .aaos-cx-app__badge {
+	flex: none;
+	width: 36px;
+	height: 36px;
+	border-radius: 10px;
+	background: #6b7280;
+	color: #fff;
+	font-weight: 700;
+	font-size: 15px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.zui-scope .aaos-cx-app__badge--claude { background: #d97757; }
+.zui-scope .aaos-cx-app__badge--chatgpt { background: #10a37f; }
+.zui-scope .aaos-cx-app__badge--grok { background: #111; }
+
+.zui-scope .aaos-cx-app__text {
+	flex: 1 1 220px;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.zui-scope .aaos-cx-app__name {
+	font-size: 14px;
+	font-weight: var( --zui-fw-semibold );
+}
+
+.zui-scope .aaos-cx-app__meta {
+	font-size: 12px;
+	color: var( --zui-text-faint );
+}
+
+.zui-scope .aaos-cx-app__off {
+	color: var( --zui-danger, #b32d2e );
+}
+
+.zui-scope .aaos-cx-empty {
+	margin: 0;
+	font-size: 13px;
+	color: var( --zui-text-soft );
+}
+
+/* Advanced: a <details> card. */
+.zui-scope .aaos-cx-adv__summary {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 20px 24px;
+	cursor: pointer;
+	list-style: none;
+}
+
+.zui-scope .aaos-cx-adv__summary::-webkit-details-marker {
+	display: none;
+}
+
+.zui-scope .aaos-cx-adv__text {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.zui-scope .aaos-cx-adv__chev {
+	display: inline-flex;
+	color: var( --zui-text-soft );
+	transition: transform var( --zui-dur, 0.15s ) var( --zui-ease, ease );
+}
+
+.zui-scope .aaos-cx-adv[open] .aaos-cx-adv__chev {
+	transform: rotate( 180deg );
+}
+
+.zui-scope .aaos-cx-adv__summary:focus-visible {
+	outline: 2px solid var( --zui-primary );
+	outline-offset: -2px;
+}
+
+.zui-scope .aaos-cx-foot {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 4px 0 0;
+	font-size: 12px;
+	color: var( --zui-text-faint );
+}
+
+.zui-scope .aaos-cx-foot svg {
+	width: 14px;
+	height: 14px;
+	flex: none;
+}
+
+/* The token block on the Codex and Other tabs (agent-connect.php). */
+.zui-scope .aaos-cx-token {
+	margin-top: 16px;
+	border: 1px solid var( --zui-divider, var( --zui-border ) );
+	border-radius: var( --zui-radius-md );
+	background: var( --zui-surface );
+}
+
+.zui-scope .aaos-cx-token[hidden] {
+	display: none;
+}
+
+.zui-scope .aaos-cx-steps code {
+	padding: 1px 5px;
+	border-radius: 4px;
+	background: var( --zui-surface );
+	font-size: 12px;
+}
+
+/* --------------------------------------------------------------------------
+   Agent → Access & safety (agent-access.php): every row the same two columns,
+   label and description on the left, the control in one right-hand column,
+   so the date, the select and both switches line up. A row's live note (the
+   masking summary) sits under its description, not beside the switch.
+   -------------------------------------------------------------------------- */
+
+.zui-scope :is( .aaos-access, .aaos-aligned ) .zui-row {
+	display: grid;
+	grid-template-columns: minmax( 0, 1fr ) 300px;
+	column-gap: 40px;
+	row-gap: 6px;
+	align-items: center;
+}
+
+.zui-scope :is( .aaos-access, .aaos-aligned ) .zui-row__head {
+	grid-column: 1;
+	grid-row: 1;
+	min-width: 0;
+}
+
+.zui-scope :is( .aaos-access, .aaos-aligned ) .zui-row__control {
+	display: contents;
+}
+
+.zui-scope :is( .aaos-access, .aaos-aligned ) .zui-row__control > :not( .zui-row__hint ) {
+	grid-column: 2;
+	grid-row: 1 / span 2;
+	align-self: center;
+	width: 100%;
+	max-width: none;
+	margin: 0;
+}
+
+.zui-scope :is( .aaos-access, .aaos-aligned ) .zui-row__control > .zui-toggle {
+	justify-self: end;
+	width: auto;
+}
+
+.zui-scope :is( .aaos-access, .aaos-aligned ) .zui-row__hint {
+	grid-column: 1;
+	grid-row: 2;
+	margin: 0;
+	text-align: start;
+}
+
+@media ( max-width: 782px ) {
+	.zui-scope :is( .aaos-access, .aaos-aligned ) .zui-row {
+		grid-template-columns: minmax( 0, 1fr );
+	}
+
+	.zui-scope :is( .aaos-access, .aaos-aligned ) .zui-row__control > :not( .zui-row__hint ) {
+		grid-column: 1;
+		grid-row: auto;
+	}
+
+	.zui-scope :is( .aaos-access, .aaos-aligned ) .zui-row__control > .zui-toggle {
+		justify-self: start;
+	}
+
+	.zui-scope :is( .aaos-access, .aaos-aligned ) .zui-row__hint {
+		grid-row: auto;
+	}
+}
+
+/* ---- Agents list (as in AI Agent OS PRO): page header card and app chips ---- */
+/* ---- The page header card ---- */
+
+.zui-scope .aaos-pagehead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	flex-wrap: wrap;
+	padding: 24px;
+}
+
+.zui-scope .aaos-pagehead__title {
+	margin: 0;
+	font-size: 22px;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	color: var(--zui-text);
+}
+
+.zui-scope .aaos-pagehead__sub {
+	margin: 4px 0 0;
+	font-size: 13px;
+	color: var(--zui-text-muted);
+	max-width: 78ch;
+}
+
+.zui-scope .aaos-appchips {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	vertical-align: middle;
+}
+
+.zui-scope .aaos-appchip {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 2px 8px;
+	border: 1px solid var( --zui-border );
+	border-radius: 999px;
+	background: var( --zui-surface );
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 18px;
+	color: var( --zui-text );
+	white-space: nowrap;
+}
+
+.zui-scope .aaos-appchip__dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #9ca3af;
+}
+
+.zui-scope .aaos-appchip--claude .aaos-appchip__dot { background: #d97757; }
+.zui-scope .aaos-appchip--chatgpt .aaos-appchip__dot { background: #10a37f; }
+.zui-scope .aaos-appchip--grok .aaos-appchip__dot { background: #111; }
+.zui-scope .aaos-appchip--cursor .aaos-appchip__dot { background: #6366f1; }
+
+.zui-scope .aaos-appchips__none {
+	color: var( --zui-text-faint );
+}
+
+/* ---- Permissions: the simple form (as in AI Agent OS PRO) ---- */
+/* Step 3: the matrix, simple form. */
+.zui-scope .aaos-nagent .aaos-matrix--simple {
+	margin: 0;
+	box-shadow: none;
+}
+
+.zui-scope .aaos-matrix--simple .aaos-mtable__sectionname {
+	text-transform: none;
+	letter-spacing: 0;
+	font-size: 14px;
+}
+
+.zui-scope .aaos-lvl .aaos-bulk {
+	padding: 5px 12px;
+}
+
+.zui-scope .aaos-lvl .aaos-bulk.is-active,
+.zui-scope .aaos-lvl .aaos-bulk.is-active:hover {
+	background: var( --zui-primary );
+	color: #fff;
+	box-shadow: none;
+}
+
+.zui-scope .aaos-lvl .aaos-lvl__off.is-active,
+.zui-scope .aaos-lvl .aaos-lvl__off.is-active:hover {
+	background: #64748b;
+}
+
+.zui-scope .aaos-matrix--simple .aaos-risk {
+	text-transform: none;
+	letter-spacing: 0;
+	border-radius: 999px;
+	font-weight: 600;
+}
+
+.zui-scope .aaos-matrix .is-filtered {
+	display: none !important;
+}
+
+.zui-scope .aaos-onlyon {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin-inline-start: auto;
+	font-size: 13px;
+	color: var( --zui-text-soft );
+	cursor: pointer;
+}
+
+.zui-scope .aaos-onlyon__input {
+	position: absolute;
+	opacity: 0;
+	width: 1px;
+	height: 1px;
+}
+
+.zui-scope .aaos-onlyon__switch {
+	position: relative;
+	width: 36px;
+	height: 20px;
+	border-radius: 999px;
+	background: #cbd5e1;
+	transition: background 0.15s;
+}
+
+.zui-scope .aaos-onlyon__switch::after {
+	content: '';
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: #fff;
+	transition: left 0.15s;
+}
+
+.zui-scope .aaos-onlyon__input:checked + .aaos-onlyon__switch {
+	background: var( --zui-primary );
+}
+
+.zui-scope .aaos-onlyon__input:checked + .aaos-onlyon__switch::after {
+	left: 18px;
+}
+
+.zui-scope .aaos-onlyon__input:focus-visible + .aaos-onlyon__switch {
+	outline: 2px solid var( --zui-primary );
+	outline-offset: 2px;
+}
+
+.zui-scope .aaos-matrix--simple .aaos-search {
+	flex: 1 1 280px;
+	width: auto;
+	max-width: 460px;
+}
+
+.zui-scope .aaos-matrix--simple .aaos-risk--read { background: #e8f6ee; color: #15803d; }
+.zui-scope .aaos-matrix--simple .aaos-risk--write { background: #fff4e0; color: #b45309; }
+.zui-scope .aaos-matrix--simple .aaos-risk--destructive { background: #fdecea; color: #b42318; }
+
+/*
+ * An agent's Permissions toolbar, simple form: two fixed rows. Search and
+ * "Show only what's on" first; the profile, Revoke all and Save on their own
+ * row, Save on the right at a fixed width. It used to wrap by width, so the
+ * narrower "Saving…" label pulled every control up onto one line mid-save.
+ */
+.zui-scope .aaos-matrix--simple .aaos-tablecard__toolbar {
+	row-gap: 12px;
+}
+
+.zui-scope .aaos-matrix--simple .aaos-tablecard__toolbar .aaos-search {
+	flex: 1 1 320px;
+	max-width: none;
+}
+
+.zui-scope .aaos-matrix--simple .aaos-tablecard__actions {
+	flex: 1 1 100%;
+	flex-wrap: wrap;
+	padding-top: 12px;
+	border-top: 1px solid var(--zui-divider, var(--zui-border));
+}
+
+.zui-scope .aaos-matrix--simple [data-aaos-save-permissions] {
+	margin-inline-start: auto;
+	min-width: 160px;
+	justify-content: center;
+}
+
+@media (max-width: 600px) {
+	.zui-scope .aaos-matrix--simple [data-aaos-save-permissions] {
+		flex: 1 1 100%;
+		margin-inline-start: 0;
+	}
+}
+
+/* ---- Status pills and the back link (as in AI Agent OS PRO) ---- */
+.zui-scope .aaos-pill--connected {
+	background: #f0fdf4;
+	border-color: #bbf7d0;
+	color: #15803d;
+}
+
+.zui-scope .aaos-pill--idle .aaos-pill__dot {
+	background: #9ca3af;
+}
+
+.zui-scope .aaos-pill--revoked .aaos-pill__dot,
+.zui-scope .aaos-pill--expired .aaos-pill__dot {
+	background: #dc2626;
+}
+
+.zui-scope .aaos-agenthead__back {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0 0 10px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--zui-primary-600, var(--zui-primary));
+	text-decoration: none;
+	box-shadow: none;
+}
+
+.zui-scope .aaos-agenthead__back:hover {
+	text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------
+ * Activity Log (1.0.2 redesign): 4 boxes, one filter bar, a feed by day.
+ * ------------------------------------------------------------- */
+.zui-scope .aaos-alog {
+	--aaos-alog-g: #15803d;
+	--aaos-alog-g-bg: #e8f6ee;
+	--aaos-alog-p: #6d28d9;
+	--aaos-alog-p-bg: #f3edff;
+	--aaos-alog-a: #b45309;
+	--aaos-alog-a-bg: #fff4e0;
+	--aaos-alog-r: #b42318;
+	--aaos-alog-r-bg: #fdecea;
+	--aaos-alog-b: var(--zui-primary);
+	--aaos-alog-b-bg: #eef2ff;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.zui-scope .aaos-alog__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+.zui-scope .aaos-alog__title {
+	margin: 0;
+	font-size: 20px;
+	line-height: 1.3;
+	color: var(--zui-text-strong);
+}
+
+.zui-scope .aaos-alog__lead {
+	margin: 2px 0 0;
+	font-size: 13px;
+	color: var(--zui-text-soft);
+}
+
+/* Four boxes, also the quick filters. */
+.zui-scope .aaos-alog__tiles {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 12px;
+}
+
+.zui-scope .aaos-alog__tile {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 14px 16px;
+	background: #fff;
+	border: 1px solid var(--zui-border);
+	border-radius: 12px;
+	color: inherit;
+	text-decoration: none;
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.zui-scope .aaos-alog__tile:hover {
+	border-color: var(--aaos-alog-b);
+	color: inherit;
+}
+
+.zui-scope .aaos-alog__tile:focus-visible {
+	outline: 2px solid var(--aaos-alog-b);
+	outline-offset: 2px;
+}
+
+.zui-scope .aaos-alog__tile.is-active {
+	border-color: var(--aaos-alog-b);
+	box-shadow: 0 0 0 1px var(--aaos-alog-b);
+}
+
+.zui-scope .aaos-alog__tileicon {
+	flex: 0 0 36px;
+	height: 36px;
+	border-radius: 10px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.zui-scope .aaos-alog__tileicon svg {
+	width: 18px;
+	height: 18px;
+}
+
+.zui-scope .aaos-alog__tile--all .aaos-alog__tileicon { background: var(--aaos-alog-b-bg); color: var(--aaos-alog-b); }
+.zui-scope .aaos-alog__tile--changed .aaos-alog__tileicon { background: var(--aaos-alog-p-bg); color: var(--aaos-alog-p); }
+.zui-scope .aaos-alog__tile--problem .aaos-alog__tileicon { background: var(--aaos-alog-a-bg); color: var(--aaos-alog-a); }
+.zui-scope .aaos-alog__tile--blocked .aaos-alog__tileicon { background: var(--aaos-alog-r-bg); color: var(--aaos-alog-r); }
+
+.zui-scope .aaos-alog__tilenum {
+	display: block;
+	font-size: 20px;
+	font-weight: 700;
+	line-height: 1.15;
+	color: var(--zui-text-strong);
+}
+
+.zui-scope .aaos-alog__tilelabel {
+	display: block;
+	font-size: 12px;
+	color: var(--zui-text-soft);
+}
+
+/* The card: filter bar, feed, footer. */
+.zui-scope .aaos-alog__card {
+	background: #fff;
+	border: 1px solid var(--zui-border);
+	border-radius: 12px;
+	overflow: hidden;
+}
+
+.zui-scope .aaos-alog__bar {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	padding: 14px 16px;
+	border-bottom: 1px solid var(--zui-border);
+	margin: 0;
+}
+
+.zui-scope .aaos-alog__search {
+	flex: 1 1 260px;
+	position: relative;
+	min-width: 0;
+}
+
+.zui-scope .aaos-alog__search .zui-input {
+	width: 100%;
+	max-width: none;
+	padding-left: 34px;
+}
+
+.zui-scope .aaos-alog__searchicon {
+	position: absolute;
+	left: 11px;
+	top: 50%;
+	transform: translateY(-50%);
+	display: inline-flex;
+	color: var(--zui-text-muted);
+	pointer-events: none;
+}
+
+.zui-scope .aaos-alog__searchicon svg {
+	width: 16px;
+	height: 16px;
+}
+
+.zui-scope .aaos-alog__bar .zui-select-wrap {
+	flex: 0 0 auto;
+	width: auto;
+	min-width: 150px;
+}
+
+.zui-scope .aaos-alog__dates {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--zui-text-muted);
+}
+
+.zui-scope .aaos-alog__dates[hidden] {
+	display: none;
+}
+
+.zui-scope .aaos-alog__dates .zui-input {
+	width: auto;
+}
+
+.zui-scope .aaos-alog__bar .aaos-btn {
+	flex: 0 0 auto;
+}
+
+.zui-scope .aaos-alog__clear {
+	font-size: 13px;
+}
+
+/* Feed. */
+.zui-scope .aaos-alog__day {
+	margin: 0;
+	padding: 10px 16px;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--zui-text-muted);
+	background: #fafafa;
+	border-bottom: 1px solid var(--zui-border);
+}
+
+.zui-scope .aaos-alog__item {
+	border-bottom: 1px solid var(--zui-border);
+}
+
+.zui-scope .aaos-alog__row {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	width: 100%;
+	padding: 14px 16px;
+	margin: 0;
+	background: none;
+	border: 0;
+	border-radius: 0;
+	text-align: start;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}
+
+.zui-scope .aaos-alog__row:hover {
+	background: #fafbff;
+}
+
+.zui-scope .aaos-alog__row:focus-visible {
+	outline: 2px solid var(--aaos-alog-b);
+	outline-offset: -2px;
+}
+
+.zui-scope .aaos-alog__dot {
+	flex: 0 0 32px;
+	height: 32px;
+	border-radius: 50%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.zui-scope .aaos-alog__dot svg {
+	width: 16px;
+	height: 16px;
+}
+
+.zui-scope .aaos-alog__dot--worked { background: var(--aaos-alog-g-bg); color: var(--aaos-alog-g); }
+.zui-scope .aaos-alog__dot--changed { background: var(--aaos-alog-p-bg); color: var(--aaos-alog-p); }
+.zui-scope .aaos-alog__dot--problem { background: var(--aaos-alog-a-bg); color: var(--aaos-alog-a); }
+.zui-scope .aaos-alog__dot--blocked { background: var(--aaos-alog-r-bg); color: var(--aaos-alog-r); }
+.zui-scope .aaos-alog__dot--connect { background: var(--aaos-alog-b-bg); color: var(--aaos-alog-b); }
+
+.zui-scope .aaos-alog__main {
+	flex: 1 1 auto;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+
+.zui-scope .aaos-alog__rtitle {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--zui-text-strong);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.zui-scope .aaos-alog__item.is-open .aaos-alog__rtitle {
+	white-space: normal;
+}
+
+.zui-scope .aaos-alog__meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 8px;
+	font-size: 12px;
+	color: var(--zui-text-muted);
+}
+
+.zui-scope .aaos-alog__meta strong {
+	color: var(--zui-text-soft);
+	font-weight: 600;
+}
+
+.zui-scope .aaos-alog__app {
+	padding: 1px 7px;
+	border-radius: 999px;
+	background: #f2f3f5;
+	color: var(--zui-text-soft);
+}
+
+.zui-scope .aaos-alog__priv {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.zui-scope .aaos-alog__priv svg {
+	width: 12px;
+	height: 12px;
+}
+
+.zui-scope .aaos-alog__priv--shared { color: var(--aaos-alog-a); }
+.zui-scope .aaos-alog__priv--full { color: var(--aaos-alog-r); font-weight: 600; }
+
+.zui-scope .aaos-alog__res {
+	flex: 0 0 auto;
+	font-size: 13px;
+	color: var(--zui-text-soft);
+	white-space: nowrap;
+}
+
+.zui-scope .aaos-alog__pill {
+	flex: 0 0 auto;
+	padding: 3px 10px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.zui-scope .aaos-alog__pill--worked { background: var(--aaos-alog-g-bg); color: var(--aaos-alog-g); }
+.zui-scope .aaos-alog__pill--changed { background: var(--aaos-alog-p-bg); color: var(--aaos-alog-p); }
+.zui-scope .aaos-alog__pill--problem { background: var(--aaos-alog-a-bg); color: var(--aaos-alog-a); }
+.zui-scope .aaos-alog__pill--blocked { background: var(--aaos-alog-r-bg); color: var(--aaos-alog-r); }
+.zui-scope .aaos-alog__pill--connect { background: var(--aaos-alog-b-bg); color: var(--aaos-alog-b); }
+
+.zui-scope .aaos-alog__chev {
+	flex: 0 0 auto;
+	display: inline-flex;
+	color: var(--zui-text-muted);
+	transform: rotate(-90deg);
+	transition: transform 0.15s;
+}
+
+.zui-scope .aaos-alog__chev svg {
+	width: 16px;
+	height: 16px;
+}
+
+.zui-scope .aaos-alog__item.is-open .aaos-alog__chev {
+	transform: none;
+}
+
+/* Details. */
+.zui-scope .aaos-alog__det {
+	padding: 0 16px 18px 62px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.zui-scope .aaos-alog__det[hidden] {
+	display: none;
+}
+
+.zui-scope .aaos-alog__note {
+	margin: 0;
+	font-size: 12px;
+	color: var(--zui-text-muted);
+}
+
+.zui-scope .aaos-alog__fix {
+	margin: 0;
+	padding: 10px 14px;
+	border-radius: 10px;
+	background: #f7f7fb;
+	font-size: 13px;
+	color: var(--zui-text-soft);
+}
+
+.zui-scope .aaos-alog__fix p {
+	margin: 0;
+}
+
+.zui-scope .aaos-alog__fix p + p {
+	margin-top: 4px;
+}
+
+.zui-scope .aaos-alog__reasons,
+.zui-scope .aaos-alog__steps {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.zui-scope .aaos-alog__step {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 10px 14px;
+	margin: 0;
+	border: 1px solid var(--zui-border);
+	border-radius: 10px;
+}
+
+.zui-scope .aaos-alog__n {
+	flex: 0 0 22px;
+	height: 22px;
+	border-radius: 50%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 12px;
+	font-weight: 700;
+	background: var(--aaos-alog-g-bg);
+	color: var(--aaos-alog-g);
+}
+
+.zui-scope .aaos-alog__step--changed .aaos-alog__n { background: var(--aaos-alog-p-bg); color: var(--aaos-alog-p); }
+.zui-scope .aaos-alog__step--problem .aaos-alog__n { background: var(--aaos-alog-a-bg); color: var(--aaos-alog-a); }
+.zui-scope .aaos-alog__step--blocked .aaos-alog__n { background: var(--aaos-alog-r-bg); color: var(--aaos-alog-r); }
+
+.zui-scope .aaos-alog__sbody {
+	flex: 1 1 auto;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.zui-scope .aaos-alog__what {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--zui-text-strong);
+}
+
+.zui-scope .aaos-alog__got {
+	font-size: 12px;
+	color: var(--zui-text-soft);
+}
+
+.zui-scope .aaos-alog__got--fix {
+	color: var(--aaos-alog-r);
+}
+
+.zui-scope .aaos-alog__tech {
+	margin-top: 6px;
+	font-size: 12px;
+}
+
+.zui-scope .aaos-alog__tech summary {
+	cursor: pointer;
+	color: var(--aaos-alog-b);
+	font-weight: 500;
+	width: max-content;
+}
+
+.zui-scope .aaos-alog__techlabel {
+	margin: 10px 0 4px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--zui-text-muted);
+}
+
+.zui-scope .aaos-alog__privacy {
+	margin: 0;
+	padding: 8px 12px;
+	border-radius: 8px;
+	background: #f7f7fb;
+	font-size: 12px;
+	color: var(--zui-text-soft);
+}
+
+.zui-scope .aaos-alog__privacy--shared {
+	background: var(--aaos-alog-a-bg);
+	color: #7a3e06;
+}
+
+.zui-scope .aaos-alog__foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 12px 16px;
+	font-size: 13px;
+	color: var(--zui-text-soft);
+}
+
+.zui-scope .aaos-alog__foot .is-loading {
+	opacity: 0.6;
+	pointer-events: none;
+}
+
+.zui-scope .aaos-alog__empty {
+	padding: 40px 16px;
+	text-align: center;
+	color: var(--zui-text-soft);
+}
+
+.zui-scope .aaos-alog__empty p {
+	margin: 0 0 4px;
+}
+
+@media (max-width: 960px) {
+	.zui-scope .aaos-alog__tiles {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.zui-scope .aaos-alog__res {
+		display: none;
+	}
+}
+
+@media (max-width: 600px) {
+	.zui-scope .aaos-alog__det {
+		padding-left: 16px;
+	}
+
+	.zui-scope .aaos-alog__bar .zui-select-wrap {
+		flex: 1 1 140px;
+	}
+}
+
+/* ---- Locked previews: fake controls, and the Website Brain overview (as in AI Agent OS PRO) ---- */
+.zui-scope .aaos-locked-preview__fake {
+	display: flex;
+	align-items: center;
+	min-height: 36px;
+	color: var( --zui-text-muted );
+	pointer-events: none;
+}
+
+.zui-scope .aaos-locked-preview.aaos-alog .aaos-alog__search .aaos-locked-preview__fake {
+	padding-left: 34px;
+}
+
+.zui-scope .aaos-locked-preview.aaos-alog .aaos-alog__bar > .aaos-locked-preview__fake {
+	min-width: 150px;
+}
+
+.zui-scope .aaos-lbrain {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.zui-scope .aaos-lbrain__card {
+	padding: 20px 22px;
+}
+
+.zui-scope .aaos-lbrain__head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+	margin-bottom: 16px;
+}
+
+.zui-scope .aaos-lbrain__title {
+	margin: 0;
+	font-size: 16px;
+	color: var( --zui-text-strong );
+}
+
+.zui-scope .aaos-lbrain__lead {
+	margin: 4px 0 0;
+	font-size: 13px;
+	color: var( --zui-text-soft );
+}
+
+.zui-scope .aaos-lbrain__stats {
+	display: grid;
+	grid-template-columns: repeat( 6, minmax( 0, 1fr ) );
+	gap: 10px;
+}
+
+.zui-scope .aaos-lbrain__stat {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 12px 14px;
+	border: 1px solid var( --zui-border );
+	border-radius: 10px;
+	background: #f8fafc;
+}
+
+.zui-scope .aaos-lbrain__stat.is-active {
+	border-color: var( --zui-primary );
+	background: var( --zui-primary-50, #eef2fd );
+}
+
+.zui-scope .aaos-lbrain__stat b {
+	font-size: 20px;
+	color: var( --zui-text-strong );
+}
+
+.zui-scope .aaos-lbrain__stat span {
+	font-size: 12px;
+	color: var( --zui-text-soft );
+}
+
+.zui-scope .aaos-lbrain__cols {
+	display: grid;
+	grid-template-columns: repeat( 2, minmax( 0, 1fr ) );
+	gap: 16px;
+}
+
+.zui-scope .aaos-lbrain__rows {
+	margin-top: 14px;
+	border: 1px solid var( --zui-border );
+	border-radius: 10px;
+}
+
+.zui-scope .aaos-lbrain__row {
+	display: grid;
+	grid-template-columns: minmax( 0, 1fr ) minmax( 0, 1.2fr );
+	gap: 12px;
+	align-items: center;
+	padding: 10px 12px;
+	font-size: 13px;
+	color: var( --zui-text-strong );
+}
+
+.zui-scope .aaos-lbrain__row + .aaos-lbrain__row {
+	border-top: 1px solid var( --zui-border );
+}
+
+.zui-scope .aaos-lbrain__read {
+	margin-left: 6px;
+	padding: 1px 6px;
+	border-radius: 999px;
+	background: #e8f6ee;
+	color: #15803d;
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.zui-scope .aaos-lbrain__pages {
+	display: grid;
+	grid-template-columns: repeat( 2, minmax( 0, 1fr ) );
+	gap: 8px 16px;
+	margin-top: 14px;
+	padding: 12px;
+	border: 1px solid var( --zui-border );
+	border-radius: 10px;
+}
+
+.zui-scope .aaos-lbrain__page {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+	color: var( --zui-text-strong );
+}
+
+.zui-scope .aaos-lbrain__box {
+	width: 14px;
+	height: 14px;
+	border: 1.5px solid #94a3b8;
+	border-radius: 3px;
+}
+
+.zui-scope .aaos-lbrain__box.is-on {
+	border-color: var( --zui-primary );
+	background: var( --zui-primary );
+}
+
+.zui-scope .aaos-lbrain__kind {
+	margin-left: auto;
+	padding: 0 6px;
+	border-radius: 4px;
+	background: #f1f5f9;
+	font-size: 11px;
+	color: var( --zui-text-muted );
+}
+
+@media ( max-width: 960px ) {
+	.zui-scope .aaos-lbrain__stats {
+		grid-template-columns: repeat( 3, minmax( 0, 1fr ) );
+	}
+
+	.zui-scope .aaos-lbrain__cols {
+		grid-template-columns: 1fr;
+	}
+}
+
+.zui-scope .aaos-locked-preview.aaos-alog .aaos-alog__bar {
+	flex-wrap: nowrap;
+}
+
+.zui-scope .aaos-locked-preview.aaos-alog .aaos-alog__bar > .aaos-locked-preview__fake {
+	flex: 0 0 170px;
+	width: 170px;
+	max-width: none;
+}
+
+.zui-scope .aaos-locked-preview.aaos-alog .aaos-alog__search .aaos-locked-preview__fake {
+	width: 100%;
+	max-width: none;
+}
+
+/* ---- Table footer and name link (as in AI Agent OS PRO) ---- */
+.zui-scope .aaos-tablecard__foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	flex-wrap: wrap;
+	padding: 14px 20px;
+	border-block-start: 1px solid var(--zui-border);
+	background: var(--zui-bg);
+	font-size: 12px;
+	color: var(--zui-text-muted);
+}
+
+.zui-scope .aaos-tablecard__foot strong {
+	color: var(--zui-text-soft);
+	font-weight: 600;
+}
+
+.zui-scope .aaos-atable__name a {
+	color: var(--zui-primary-600);
+	font-weight: 600;
+	text-decoration: none;
+	box-shadow: none;
+}
+
+.zui-scope .aaos-atable__name a:hover {
+	text-decoration: underline;
+}
+.zui-scope .aaos-atable__muted {
+	color: var(--zui-text-muted);
+}
+.zui-scope .aaos-atable__mono {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 12px;
+	white-space: nowrap;
 }

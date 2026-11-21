@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  * Builds the protected-resource and authorization-server metadata.
  *
  * These are a protocol handshake, not an about page. Nothing here names the
- * site, counts agents, lists profiles or states a version — the plan's §3.1
+ * site, describes the agent, lists profiles or states a version — the plan's §3.1
  * accepts that a stranger learns this site serves an MCP address, and nothing more.
  *
  * `scopes_supported` is absent from both on purpose (plan S17 / D7): a refusal
@@ -45,11 +45,11 @@ final class OAuthMetadata {
 	/**
 	 * RFC 9728 Protected Resource Metadata (S1).
 	 *
-	 * For the shared address, or for an agent's own. Any well-formed code gets
+	 * For the base MCP path, or for the agent's MCP address. Any well-formed code gets
 	 * its document — it only repeats the address back — so asking reveals
-	 * nothing about which agents exist.
+	 * nothing about the agent.
 	 *
-	 * @param string $code An agent's address code, or '' for the shared address.
+	 * @param string $code The agent's address code, or '' for the base path.
 	 * @return array<string, mixed>
 	 */
 	public function protected_resource( string $code = '' ): array {
@@ -67,10 +67,11 @@ final class OAuthMetadata {
 	 * Authorization header as an application password and refuses the request
 	 * before it reaches the token endpoint.
 	 *
-	 * No `registration_endpoint`: clients identify themselves with a metadata
-	 * document (`client_id_metadata_document_supported`), and Dynamic Client
-	 * Registration was removed in 1.0.1. Its absence is how a client is
-	 * specified to learn DCR is unavailable, so this is a conforming state.
+	 * `registration_endpoint` is present only while "Let Grok sign in" is on
+	 * (RegistrationPolicy): Grok's connectors can only sign in by registering.
+	 * Everyone else identifies with a metadata document
+	 * (`client_id_metadata_document_supported`). Its absence is how a client
+	 * is specified to learn DCR is unavailable, so leaving it off conforms.
 	 *
 	 * @return array<string, mixed>
 	 */
@@ -87,6 +88,11 @@ final class OAuthMetadata {
 			'client_id_metadata_document_supported' => true,
 			'authorization_response_iss_parameter_supported' => true,
 		);
+
+		if ( ( new RegistrationPolicy( $this->settings ) )->is_enabled() ) {
+			$metadata['registration_endpoint']                 = OAuthEndpoints::url( 'register' );
+			$metadata['token_endpoint_auth_methods_supported'] = array( 'none', 'client_secret_post' );
+		}
 
 		return $metadata;
 	}

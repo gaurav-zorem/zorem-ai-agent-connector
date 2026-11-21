@@ -1,6 +1,6 @@
 <?php
 /**
- * The agent's own MCP address.
+ * The agent's MCP address.
  *
  * @package AiAgentOs
  */
@@ -11,22 +11,18 @@ namespace AiAgentOs\Mcp;
 
 use AiAgentOs\Agents\Agent;
 use AiAgentOs\Agents\AgentRepository;
-use AiAgentOs\Core\Installer;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * An MCP address that belongs to the agent: `…/mcp/agent/{code}`.
+ * The agent's MCP address: `…/mcp/agent/{code}`.
  *
- * Why a second kind of address: a client such as Claude keeps one connection
- * per URL, and this one is the agent's, so a connector added here is its own
- * server, signed in as the agent, with the agent's tools only.
- *
- * The code is random, not the agent's name, so an address names nothing and
+ * The code is random, not the agent's name, so the address names nothing and
  * nothing about the site can be read or guessed from it. It is stored in the
- * agent's meta, created the first time it is asked for, and can be replaced
- * if it leaks. The token still decides who is calling; the address only
- * decides who may call there (TransportPermission::check_agent()).
+ * agent's meta, created when the agent is set up, and can be replaced if it
+ * leaks: the old address then stops working at once. The token still decides
+ * who is calling; the address must be the current one
+ * (TransportPermission::check_address()).
  */
 final class AgentAddress {
 
@@ -51,7 +47,7 @@ final class AgentAddress {
 	public const SEGMENT = 'agent';
 
 	/**
-	 * Agents.
+	 * Agent storage.
 	 *
 	 * @var AgentRepository
 	 */
@@ -60,66 +56,59 @@ final class AgentAddress {
 	/**
 	 * Constructor.
 	 *
-	 * @param AgentRepository $agents Agents.
+	 * @param AgentRepository $agents Agent storage.
 	 */
 	public function __construct( AgentRepository $agents ) {
 		$this->agents = $agents;
 	}
 
 	/**
-	 * Give every new agent its address straight away.
+	 * Give the agent its address as soon as it is set up.
 	 */
 	public function register(): void {
 		add_action(
 			'ai_agent_os_agent_created',
-			function ( Agent $agent ): void {
-				$this->code( $agent );
+			function (): void {
+				$this->code();
 			}
 		);
 	}
 
 	/**
-	 * The agent's code, created and stored if it has none yet.
-	 *
-	 * @param Agent $agent The agent.
+	 * The agent's code, created and stored if it has none yet; '' before the agent exists.
 	 */
-	public function code( Agent $agent ): string {
+	public function code(): string {
+		$this->agents->flush_cache();
+
+		$agent = $this->agents->get();
+
+		if ( ! $agent instanceof Agent ) {
+			return '';
+		}
+
 		$code = (string) $agent->meta( self::META, '' );
 
-		if ( self::is_code( $code ) ) {
-			return $code;
-		}
-
-		/*
-		 * The object may predate its code. The agent AgentFactory returns is
-		 * given one on `ai_agent_os_agent_created`, which stores it without
-		 * touching that object, so the first url() on it used to mint a second
-		 * address and sign out every connection made at the first. The stored
-		 * agent decides; only an agent that truly has no code gets one.
-		 */
-		$stored = $this->agents->find( $agent->get_id() );
-		$code   = $stored instanceof Agent ? (string) $stored->meta( self::META, '' ) : '';
-
-		if ( self::is_code( $code ) ) {
-			return $code;
-		}
-
-		return $this->replace( $agent );
+		return self::is_code( $code ) ? $code : $this->replace();
 	}
 
 	/**
 	 * Give the agent a new code. The old address stops working at once.
 	 *
-	 * @param Agent $agent The agent.
-	 * @return string The new code.
+	 * @return string The new code, or '' before the agent exists.
 	 */
-	public function replace( Agent $agent ): string {
+	public function replace(): string {
+		$agent = $this->agents->get();
+
+		if ( ! $agent instanceof Agent ) {
+			return '';
+		}
+
 		$code = self::new_code();
 
-		$this->agents->update_meta( $agent->get_id(), array( self::META => $code ) );
+		$this->agents->update_meta( array( self::META => $code ) );
 
 		/**
-		 * Fires after an agent is given a new MCP address.
+		 * Fires after the agent is given a new MCP address.
 		 *
 		 * Every connection signed in at the old one is signed out.
 		 *
@@ -132,40 +121,28 @@ final class AgentAddress {
 	}
 
 	/**
-	 * The agent's full MCP address.
-	 *
-	 * @param Agent $agent The agent.
+	 * The agent's full MCP address, or '' before the agent exists.
 	 */
-	public function url( Agent $agent ): string {
-		return rest_url( Routes::NAMESPACE . '/' . self::route( $this->code( $agent ) ) );
+	public function url(): string {
+		$code = $this->code();
+
+		return '' === $code ? '' : rest_url( Routes::NAMESPACE . '/' . self::route( $code ) );
 	}
 
 	/**
-	 * The agent whose address this code is, or null.
+	 * Whether a code is the agent's current address.
 	 *
 	 * @param string $code Code from an address.
 	 */
-	public function agent_for( string $code ): ?Agent {
-		global $wpdb;
-
+	public function matches( string $code ): bool {
 		if ( ! self::is_code( $code ) ) {
-			return null;
+			return false;
 		}
 
-		$table = Installer::table( Installer::TABLE_AGENTS );
-		$like  = '%' . $wpdb->esc_like( '"' . self::META . '":"' . $code . '"' ) . '%';
+		$agent = $this->agents->get();
+		$own   = $agent instanceof Agent ? (string) $agent->meta( self::META, '' ) : '';
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.WP.PreparedSQL -- Internal table name; value bound.
-		$id = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE meta LIKE %s LIMIT 1', $table, $like ) );
-
-		if ( $id < 1 ) {
-			return null;
-		}
-
-		$agent = $this->agents->find( $id );
-
-		// The LIKE narrowed it; the stored value decides.
-		return $agent instanceof Agent && hash_equals( (string) $agent->meta( self::META, '' ), $code ) ? $agent : null;
+		return self::is_code( $own ) && hash_equals( $own, $code );
 	}
 
 	/**
@@ -187,7 +164,7 @@ final class AgentAddress {
 	}
 
 	/**
-	 * The code in a REST route, when the route is an agent's address; otherwise ''.
+	 * The code in a REST route, when the route is an MCP address; otherwise ''.
 	 *
 	 * @param string $route REST route, e.g. from WP_REST_Request::get_route().
 	 */

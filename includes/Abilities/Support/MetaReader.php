@@ -1,6 +1,6 @@
 <?php
 /**
- * Reading post and term meta for an agent.
+ * Reading post and term meta for the agent.
  *
  * @package AiAgentOs
  */
@@ -106,7 +106,7 @@ final class MetaReader {
 	 * A stored value, unserialised without instantiating any class.
 	 *
 	 * WordPress's maybe_unserialize() would build whatever objects the stored string
-	 * names, which runs their magic methods. A read for an agent has no use
+	 * names, which runs their magic methods. A read for the agent has no use
 	 * for live objects, so they come back as __PHP_Incomplete_Class and are
 	 * reported as JSON of their properties.
 	 *

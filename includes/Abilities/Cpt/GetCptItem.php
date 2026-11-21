@@ -36,7 +36,7 @@ final class GetCptItem {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Get custom post type item', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Open an item', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Returns one item of any supported post type by ID: title, status, full content, parent, template, featured image ID and terms. Password-protected items return no content.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-cpt',
 			'input_schema'        => Schema::input(
@@ -48,7 +48,7 @@ final class GetCptItem {
 			/*
 			 * Coarse here on purpose. `PostReader::find()` makes the
 			 * per-object `read_post` check and answers every refusal with
-			 * "not found", so an agent that may not read an item learns
+			 * "not found", so the agent that may not read an item learns
 			 * nothing about whether it exists. Refusing at the permission
 			 * stage instead would answer "no permission", which tells the
 			 * caller the item is there.

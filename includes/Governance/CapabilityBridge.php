@@ -15,11 +15,11 @@ use AiAgentOs\Governance\CapMaps\CapMapLoader;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Lets an agent's shadow user pass the capability checks an ability performs
+ * Lets the agent's shadow user pass the capability checks an ability performs
  * on itself — and only for as long as that ability is running.
  *
  * The problem this solves: WooCommerce's ability callbacks ask
- * current_user_can( 'edit_shop_orders' ). An agent's shadow user holds 'read'
+ * current_user_can( 'edit_shop_orders' ). The agent's shadow user holds 'read'
  * and nothing else, so a granted write ability would fail its own permission
  * check. Persisting those capabilities on the shadow user would fix it and
  * destroy the model — the agent would then hold standing privilege that
@@ -42,7 +42,7 @@ defined( 'ABSPATH' ) || exit;
  *     Permissions screen and refused by WordPress at call time.
  *
  * Either way the capabilities are a downstream compatibility shim. They are
- * never the reason an agent is allowed to do something — PermissionResolver
+ * never the reason the agent is allowed to do something — PermissionResolver
  * has already said yes before this class is used at all. What was lent and
  * what was withheld is reported so the call's activity row records it.
  */
@@ -123,6 +123,27 @@ final class CapabilityBridge {
 		'_others_',
 		'_private_',
 		'personal_data',
+	);
+
+	/**
+	 * Fragments of capability names never lent, even to an agent that acts for the administrator.
+	 *
+	 * An agent acting for the administrator may be lent store, settings,
+	 * publishing and other people's content capabilities that a tool from
+	 * another plugin asks for (see is_never_lent_for()). These stay out of
+	 * reach for every agent, with NEVER_LENT, role names and user levels:
+	 * personal-data export and erasure, network administration, and any
+	 * plugin's capability over users, roles, plugins or themes.
+	 *
+	 * @var array<int, string>
+	 */
+	private const ALWAYS_BLOCKED_FRAGMENTS = array(
+		'personal_data',
+		'network',
+		'_users',
+		'_roles',
+		'_plugins',
+		'_themes',
 	);
 
 	/**
@@ -261,8 +282,6 @@ final class CapabilityBridge {
 	 * @return array<string, bool>
 	 */
 	public function grant( array $allcaps, array $caps, array $args, $user = null ): array {
-		unset( $args );
-
 		$agent = AgentContext::get();
 
 		if ( null === $agent || array() === $this->frames ) {
@@ -272,7 +291,7 @@ final class CapabilityBridge {
 		/*
 		 * Only ever elevate the shadow user belonging to the agent making this
 		 * request. Without this check, a capability test run against some other
-		 * user during an agent request would be answered with the agent's
+		 * user during the agent request would be answered with the agent's
 		 * elevated capabilities.
 		 */
 		$user_id = $user instanceof \WP_User ? (int) $user->ID : 0;
@@ -291,6 +310,30 @@ final class CapabilityBridge {
 			return $allcaps;
 		}
 
+		/*
+		 * Judge the capability that was asked for, not only what WordPress
+		 * mapped it to. map_meta_cap() turns `erase_others_personal_data`,
+		 * `export_others_personal_data` and `manage_network*` checks into
+		 * `manage_options` on a single site, which an administrator agent may
+		 * borrow; without this, asking for a capability that is never lent
+		 * would succeed under another name.
+		 */
+		$requested = isset( $args[0] ) ? (string) $args[0] : '';
+
+		if ( '' !== $requested && self::is_never_lent_for( $requested, $agent ) ) {
+			foreach ( $caps as $cap ) {
+				$cap = (string) $cap;
+
+				if ( empty( $allcaps[ $cap ] ) ) {
+					$this->frames[ $top ]['withheld'][ $cap ] = true;
+				}
+			}
+
+			$this->frames[ $top ]['withheld'][ $requested ] = true;
+
+			return $allcaps;
+		}
+
 		foreach ( $caps as $cap ) {
 			$cap = (string) $cap;
 
@@ -298,7 +341,7 @@ final class CapabilityBridge {
 				continue;
 			}
 
-			if ( self::is_never_lent( $cap ) ) {
+			if ( self::is_never_lent_for( $cap, $agent ) ) {
 				$this->frames[ $top ]['withheld'][ $cap ] = true;
 				continue;
 			}
@@ -324,6 +367,16 @@ final class CapabilityBridge {
 			return true;
 		}
 
+		/*
+		 * A role name or a legacy user level is not a capability but a whole
+		 * role's worth of them: `current_user_can( 'administrator' )` and
+		 * `level_10` both pass when the name is in the user's capabilities,
+		 * and many plugins guard their admin code with exactly that check.
+		 */
+		if ( 1 === preg_match( '/^level_\d+$/', $cap ) || self::is_role_name( $cap ) ) {
+			return true;
+		}
+
 		foreach ( self::NEVER_LENT_FRAGMENTS as $fragment ) {
 			if ( false !== strpos( $cap, $fragment ) ) {
 				return true;
@@ -331,6 +384,67 @@ final class CapabilityBridge {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Whether a capability may never be lent on demand to this agent.
+	 *
+	 * Decided 2026-11-19 to match what other WordPress MCP plugins offer:
+	 * they run other plugins' tools as the connected administrator, so a tool
+	 * guarded by `manage_woocommerce` or `manage_options` simply works (Returns
+	 * for WooCommerce, Yoast SEO's score tools, Rank Math, Fluent Forms). For
+	 * an agent that acts for the administrator, this plugin now lends what
+	 * such a tool asks for, for that call only: store and settings
+	 * capabilities (`manage_*`), publishing, and other people's and private
+	 * content. It still never lends anything in NEVER_LENT (users, plugins,
+	 * themes, files, core updates, unfiltered markup, imports and exports,
+	 * this plugin's own capability, network administration), a role name or
+	 * user level, or a capability matching ALWAYS_BLOCKED_FRAGMENTS. Every
+	 * other agent keeps the strict rule of is_never_lent().
+	 *
+	 * The tool must still be granted on the Permissions screen, and the
+	 * destructive switch still applies; this only decides what a granted tool
+	 * may borrow while it runs.
+	 *
+	 * @param string                       $cap   Capability name.
+	 * @param \AiAgentOs\Agents\Agent|null $agent The agent making the call.
+	 */
+	public static function is_never_lent_for( string $cap, ?\AiAgentOs\Agents\Agent $agent ): bool {
+		if ( ! $agent instanceof \AiAgentOs\Agents\Agent || \AiAgentOs\Agents\Agent::ACTS_FOR_ADMIN !== $agent->get_acts_for() ) {
+			return self::is_never_lent( $cap );
+		}
+
+		if ( in_array( $cap, self::NEVER_LENT, true ) ) {
+			return true;
+		}
+
+		if ( 1 === preg_match( '/^level_\d+$/', $cap ) || self::is_role_name( $cap ) ) {
+			return true;
+		}
+
+		foreach ( self::ALWAYS_BLOCKED_FRAGMENTS as $fragment ) {
+			if ( false !== strpos( $cap, $fragment ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Whether a capability name is the name of a role on this site.
+	 *
+	 * The standard roles are listed too, so a site that renamed or removed
+	 * one still never lends its name.
+	 *
+	 * @param string $cap Capability name.
+	 */
+	private static function is_role_name( string $cap ): bool {
+		if ( in_array( $cap, array( 'administrator', 'editor', 'author', 'contributor', 'subscriber', 'shop_manager', 'customer', 'super_admin' ), true ) ) {
+			return true;
+		}
+
+		return function_exists( 'wp_roles' ) && null !== wp_roles()->get_role( $cap );
 	}
 
 	/**

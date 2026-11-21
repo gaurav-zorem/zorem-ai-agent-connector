@@ -37,7 +37,7 @@ final class GetTermMeta {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Get term meta', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'See extra category or tag details', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Returns the custom fields (meta) of a category, tag or custom taxonomy term. Values are text; structured values are JSON.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-cpt',
 			'input_schema'        => Schema::input(

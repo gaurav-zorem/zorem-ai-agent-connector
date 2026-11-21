@@ -76,6 +76,74 @@ if ( array() !== $ai_agent_os_route_list ) {
 
 $ai_agent_os_woo = (string) ( $ai_agent_os_diag['woocommerce'] ?? '' );
 
+/*
+ * WooCommerce's tools need capabilities that are never lent automatically,
+ * so they run only with the shipped map for this WooCommerce version.
+ */
+$ai_agent_os_cap_maps = \AiAgentOs\Plugin::instance()->container()->get( \AiAgentOs\Governance\CapMaps\CapMapLoader::class );
+$ai_agent_os_wc_map   = $ai_agent_os_cap_maps->get_loaded_map();
+$ai_agent_os_wc_stale = $ai_agent_os_cap_maps->is_map_stale();
+
+if ( '' === $ai_agent_os_woo ) {
+	$ai_agent_os_wc_tools = array(
+		'value' => __( 'WooCommerce is not active', 'zorem-ai-agent-connector' ),
+	);
+} elseif ( '' === $ai_agent_os_wc_map ) {
+	$ai_agent_os_wc_tools = array(
+		'value' => __( 'No capability map found', 'zorem-ai-agent-connector' ),
+		'note'  => array( __( 'WooCommerce’s tools will be refused when they run. Reinstall this plugin to restore its files.', 'zorem-ai-agent-connector' ) ),
+		'state' => 'danger',
+	);
+} else {
+	$ai_agent_os_wc_tools = array(
+		'value' => __( 'Supported', 'zorem-ai-agent-connector' ),
+		'code'  => $ai_agent_os_wc_map,
+		'note'  => $ai_agent_os_wc_stale
+			? array( __( 'This WooCommerce is newer than the newest capability map in this plugin, so its tools use that map. A tool whose permission check changed is refused until this plugin is updated.', 'zorem-ai-agent-connector' ) )
+			: array( __( 'Each WooCommerce tool is lent exactly the access its own check needs, for that call only. Grant them on the agent’s Permissions screen.', 'zorem-ai-agent-connector' ) ),
+		'state' => $ai_agent_os_wc_stale ? 'warning' : 'ok',
+	);
+}
+
+/*
+ * Whether a bearer token sent to this site reaches PHP. Absent from the
+ * payload means it was not checked, which is not a pass.
+ */
+$ai_agent_os_auth_raw   = (array) ( $ai_agent_os_diag['auth_header'] ?? array() );
+$ai_agent_os_auth       = array(
+	'status'     => (string) ( $ai_agent_os_auth_raw['status'] ?? '' ),
+	'detail'     => (string) ( $ai_agent_os_auth_raw['detail'] ?? '' ),
+	'checked_at' => (string) ( $ai_agent_os_auth_raw['checked_at'] ?? '' ),
+);
+$ai_agent_os_auth_state = array(
+	\AiAgentOs\Mcp\AuthorizationHeaderCheck::STATUS_PASSED => 'ok',
+	\AiAgentOs\Mcp\AuthorizationHeaderCheck::STATUS_STRIPPED => 'danger',
+);
+$ai_agent_os_auth_notes = array();
+
+if ( \AiAgentOs\Mcp\AuthorizationHeaderCheck::STATUS_STRIPPED === $ai_agent_os_auth['status'] ) {
+	foreach ( \AiAgentOs\Mcp\AuthorizationHeaderCheck::fixes() as $ai_agent_os_fix ) {
+		$ai_agent_os_auth_notes[] = $ai_agent_os_fix['text'] . ' ' . $ai_agent_os_fix['code'];
+	}
+
+	$ai_agent_os_auth_notes[] = __( 'If you cannot edit these files, send this to your hosting provider.', 'zorem-ai-agent-connector' );
+}
+
+$ai_agent_os_auth_value = '' === $ai_agent_os_auth['status'] ? __( 'Not checked', 'zorem-ai-agent-connector' ) : \AiAgentOs\Mcp\AuthorizationHeaderCheck::summary( $ai_agent_os_auth );
+
+/*
+ * The last refused request: this plugin keeps no log, so this is the only
+ * trace a failed connection leaves. The reason slug is shown beside its label.
+ */
+$ai_agent_os_refusal        = is_array( $ai_agent_os_diag['last_refusal'] ?? null ) ? $ai_agent_os_diag['last_refusal'] : array();
+$ai_agent_os_refusal_reason = (string) ( $ai_agent_os_refusal['reason'] ?? '' );
+$ai_agent_os_refusal_at     = (string) ( $ai_agent_os_refusal['at'] ?? '' );
+$ai_agent_os_refusal_recent = '' !== $ai_agent_os_refusal_at && ( time() - (int) strtotime( $ai_agent_os_refusal_at . ' UTC' ) ) < DAY_IN_SECONDS;
+$ai_agent_os_refusal_value  = '' === $ai_agent_os_refusal_reason
+	? __( 'None recorded.', 'zorem-ai-agent-connector' )
+	/* translators: 1: date and time, 2: why the request was refused. */
+	: sprintf( __( '%1$s — %2$s', 'zorem-ai-agent-connector' ), ai_agent_os_local_datetime( $ai_agent_os_refusal_at ), \AiAgentOs\Governance\Decision::labels()[ $ai_agent_os_refusal_reason ] ?? '' );
+
 $ai_agent_os_groups = array(
 	array(
 		'title' => __( 'Connections', 'zorem-ai-agent-connector' ),
@@ -84,7 +152,7 @@ $ai_agent_os_groups = array(
 			array(
 				'label' => __( 'MCP addresses', 'zorem-ai-agent-connector' ),
 				'code'  => (string) ( $ai_agent_os_diag['mcp_endpoint'] ?? '' ),
-				'note'  => array( __( 'The agent’s own address sits under this path. Copy it from its Connection section.', 'zorem-ai-agent-connector' ) ),
+				'note'  => array( __( 'The agent’s MCP address sits under this path. Copy it from its Connect page.', 'zorem-ai-agent-connector' ) ),
 			),
 			array(
 				'label' => __( 'MCP Adapter', 'zorem-ai-agent-connector' ),
@@ -102,6 +170,19 @@ $ai_agent_os_groups = array(
 				'code'  => $ai_agent_os_route_list,
 				'note'  => $ai_agent_os_route_note,
 				'state' => array() === $ai_agent_os_route_list ? 'ok' : 'warning',
+			),
+			array(
+				'label' => __( 'Authorization header', 'zorem-ai-agent-connector' ),
+				'value' => $ai_agent_os_auth_value,
+				'note'  => $ai_agent_os_auth_notes,
+				'state' => $ai_agent_os_auth_state[ $ai_agent_os_auth['status'] ] ?? 'warning',
+			),
+			array(
+				'label' => __( 'Last refused connection', 'zorem-ai-agent-connector' ),
+				'value' => $ai_agent_os_refusal_value,
+				'code'  => $ai_agent_os_refusal_reason,
+				'note'  => '' === $ai_agent_os_refusal_reason ? array() : array( __( 'Only the most recent refusal is kept. This plugin keeps no log of the agent’s calls.', 'zorem-ai-agent-connector' ) ),
+				'state' => $ai_agent_os_refusal_recent ? 'warning' : '',
 			),
 		),
 	),
@@ -132,6 +213,10 @@ $ai_agent_os_groups = array(
 			array(
 				'label' => __( 'WooCommerce', 'zorem-ai-agent-connector' ),
 				'value' => '' !== $ai_agent_os_woo ? $ai_agent_os_woo : __( 'Not active', 'zorem-ai-agent-connector' ),
+			),
+			array_merge(
+				array( 'label' => __( 'WooCommerce tools', 'zorem-ai-agent-connector' ) ),
+				$ai_agent_os_wc_tools
 			),
 		),
 	),

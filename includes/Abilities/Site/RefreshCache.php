@@ -51,7 +51,7 @@ final class RefreshCache {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Clear cache', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Clear the site cache', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Purges the page cache (WP Rocket, LiteSpeed Cache, W3 Total Cache, WP Super Cache or WP Fastest Cache) for one item, or for the whole site when no ID is given. Use it after changing custom fields, which cache plugins do not notice.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-site',
 			'input_schema'        => Schema::input(

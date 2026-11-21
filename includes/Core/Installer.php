@@ -35,13 +35,13 @@ final class Installer {
 	/** Option holding the last install failure. */
 	public const FAILURE_OPTION = 'ai_agent_os_install_failure';
 
-	/** The role of agents' shadow users: `read` only; grants come from the gate, not the role. */
+	/** The role of the agent's shadow user: `read` only; grants come from the gate, not the role. */
 	public const AGENT_ROLE = 'aaos_agent';
 
-	/** Agents: identity, status, expiry, token hash, shadow user. */
+	/** The agent: identity, status, expiry, token hash, shadow user. */
 	public const TABLE_AGENTS = 'aaos_agents';
 
-	/** Grants: one row per agent and ability. */
+	/** Grants: one row per ability. */
 	public const TABLE_PERMISSIONS = 'aaos_agent_permissions';
 
 	/**
@@ -229,7 +229,7 @@ final class Installer {
 	/**
 	 * Remove what the retired WooCommerce REST door left behind.
 	 *
-	 * Every WooCommerce API key owned by an agent's account is deleted, so a
+	 * Every WooCommerce API key owned by the agent's account is deleted, so a
 	 * key issued before the door was removed (or leaked since) stops working
 	 * at once rather than when someone remembers it; then the link table goes.
 	 * Keys belonging to people are untouched. Safe to run more than once.
@@ -244,26 +244,64 @@ final class Installer {
 	}
 
 	/**
-	 * Remove the activity log's tables.
+	 * Remove the activity log's tables, but only while they are empty.
 	 *
 	 * This plugin keeps no record of the agent's calls. Earlier releases created
 	 * these two tables on activation and never wrote a row to either, so a site
 	 * upgrading from one is carrying empty tables for something that is not
-	 * here. They are dropped rather than left behind: a table that exists is a
+	 * here. Those are dropped rather than left behind: a table that exists is a
 	 * promise that something fills it.
+	 *
+	 * A table with rows is not ours to drop. AI Agent OS PRO shares these tables
+	 * and writes its Activity Log into them, and while PRO runs it records an
+	 * older schema version. When PRO is switched off and this plugin takes over
+	 * again, it sees that older version and runs this method, which used to
+	 * delete the site's whole activity history. Now the history stays, ready for
+	 * PRO when it comes back; uninstalling with "Delete all data" still removes
+	 * it.
 	 *
 	 * Safe to run more than once.
 	 */
 	public static function retire_activity_log(): void {
 		global $wpdb;
 
+		$dropped_audit = false;
+
 		foreach ( array( self::TABLE_AUDIT, self::TABLE_USAGE ) as $basename ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange -- This plugin's own retired table.
+			if ( self::table_has_rows( self::table( $basename ) ) ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange -- This plugin's own retired table, and empty.
 			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', self::table( $basename ) ) );
+
+			$dropped_audit = $dropped_audit || self::TABLE_AUDIT === $basename;
 		}
 
-		// The counter of rows the log could not write, for a log that wrote none.
-		delete_option( 'ai_agent_os_audit_failures' );
+		// The counter of rows the log could not write; it goes with the log's table.
+		if ( $dropped_audit ) {
+			delete_option( 'ai_agent_os_audit_failures' );
+		}
+	}
+
+	/**
+	 * Whether a table exists and holds at least one row.
+	 *
+	 * A missing table answers false, so it is "dropped" as before (a no-op).
+	 *
+	 * @param string $table Full table name.
+	 */
+	private static function table_has_rows( string $table ): bool {
+		global $wpdb;
+
+		$suppressed = $wpdb->suppress_errors( true );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Existence probe on this plugin's own table during install.
+		$row = $wpdb->get_var( $wpdb->prepare( 'SELECT 1 FROM %i LIMIT 1', $table ) );
+
+		$wpdb->suppress_errors( $suppressed );
+
+		return null !== $row;
 	}
 
 	/**
@@ -306,9 +344,9 @@ final class Installer {
 	}
 
 	/**
-	 * Delete the WooCommerce API keys owned by agents' accounts.
+	 * Delete the WooCommerce API keys owned by the agent's account.
 	 *
-	 * Found by owner (an account with the agent role, or one an agent row
+	 * Found by owner (an account with the agent role, or one the agent row
 	 * names), not through the retired link table, so a key made by hand for an
 	 * agent's account goes too. Nothing happens without WooCommerce's table.
 	 */
@@ -323,7 +361,7 @@ final class Installer {
 		$exists = false !== $wpdb->query( $wpdb->prepare( 'SELECT 1 FROM %i LIMIT 0', $keys ) );
 
 		if ( $exists ) {
-			// Agents' accounts are kept out of user queries unless asked for.
+			// The agent's account are kept out of user queries unless asked for.
 			add_filter( 'ai_agent_os_include_shadow_users', '__return_true' );
 
 			try {
@@ -369,6 +407,9 @@ final class Installer {
 		if ( self::DB_VERSION !== get_option( self::DB_VERSION_OPTION ) ) {
 			self::install();
 		}
+
+		// Once: existing agent accounts move to an address that can never receive mail.
+		\AiAgentOs\Agents\ShadowUserManager::retire_routable_emails();
 	}
 
 	/**
@@ -406,7 +447,7 @@ final class Installer {
 	}
 
 	/**
-	 * Delete the agents' shadow users and their role. Only ever called from uninstall.php.
+	 * Delete the agent's shadow users and their role. Only ever called from uninstall.php.
 	 *
 	 * Shadow users exist only to give agent requests a WordPress identity; they
 	 * are never real people, and leaving them would leave orphaned accounts. The
@@ -420,7 +461,7 @@ final class Installer {
 
 		$table = self::table( self::TABLE_AGENTS );
 
-		// Any WooCommerce API key an agent's account owns goes with the account.
+		// Any WooCommerce API key the agent's account owns goes with the account.
 		self::delete_agent_wc_keys();
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.WP.PreparedSQL -- Table name is $wpdb->prefix plus a class constant; uninstall context.
@@ -432,12 +473,12 @@ final class Installer {
 		if ( array() !== $ids ) {
 			require_once ABSPATH . 'wp-admin/includes/user.php';
 
-			// What the agents created stays on the site, with the first administrator.
+			// What the agent created stays on the site, with the first administrator.
 			$heir = \AiAgentOs\Agents\ShadowUserManager::heir();
 		}
 
 		/*
-		 * Identified by the meta that marks an account as an agent's, not by
+		 * Identified by the meta that marks an account as the agent's, not by
 		 * its role: a role that an administrator or a role-editing plugin has
 		 * changed would make the account unrecognisable here and leave it on
 		 * the site after the plugin was gone.

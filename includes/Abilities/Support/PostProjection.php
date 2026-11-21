@@ -12,10 +12,10 @@ namespace AiAgentOs\Abilities\Support;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The single shape every core content ability returns, so an agent learns it once.
+ * The single shape every core content ability returns, so the agent learns it once.
  *
  * A password-protected item never carries its content or excerpt: the
- * password is the author's decision about who reads it, and an agent is not
+ * password is the author's decision about who reads it, and the agent is not
  * someone who typed it.
  */
 final class PostProjection {

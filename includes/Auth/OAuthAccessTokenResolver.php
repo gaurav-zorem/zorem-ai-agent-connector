@@ -11,6 +11,7 @@ namespace AiAgentOs\Auth;
 
 use AiAgentOs\Agents\Agent;
 use AiAgentOs\Agents\AgentRepository;
+use AiAgentOs\Governance\Decision;
 use AiAgentOs\Mcp\Routes;
 use AiAgentOs\OAuth\OAuthEndpoints;
 use AiAgentOs\OAuth\OAuthStore;
@@ -18,7 +19,7 @@ use AiAgentOs\OAuth\OAuthStore;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Resolves an agent from an access token issued by the connect flow.
+ * Resolves the agent from an access token issued by the connect flow.
  *
  * The same contract as BearerTokenResolver: identification only. A token that
  * is unknown, expired or spent resolves to nobody; a valid token resolves to
@@ -90,29 +91,45 @@ final class OAuthAccessTokenResolver implements AgentResolverInterface {
 
 		$row = $this->store->find( $token, OAuthStore::TYPE_ACCESS );
 
+		/*
+		 * Each refusal says why (AgentContext::set_credential_problem()), so the
+		 * transport can report the real cause. Unknown, spent and expired
+		 * tokens are routine or forgeable and name nobody; a token issued for
+		 * another address is neither, so it names its agent.
+		 */
 		if ( null === $row || null !== $row['consumed_at'] ) {
+			AgentContext::set_credential_problem( Decision::INVALID_TOKEN );
+
 			return null;
 		}
 
 		$expires = strtotime( (string) $row['expires_at'] . ' UTC' );
 
 		if ( false === $expires || time() >= $expires ) {
+			AgentContext::set_credential_problem( Decision::TOKEN_EXPIRED );
+
 			return null;
 		}
 
 		// A token works only at the address it was issued for.
 		if ( ! self::issued_for_this_address( (string) ( $row['resource'] ?? '' ) ) ) {
+			AgentContext::set_credential_problem( Decision::TOKEN_ADDRESS_MISMATCH, (int) $row['agent_id'] );
+
 			return null;
 		}
 
-		$agent = $this->agents->find( (int) $row['agent_id'] );
+		// Stored against the agent's record: a credential left from an earlier setup of the plugin does not carry over.
+		$agent = $this->agents->get();
+		$agent = $agent instanceof Agent && (int) $row['agent_id'] === $agent->get_id() ? $agent : null;
 
 		if ( ! $agent instanceof Agent ) {
+			AgentContext::set_credential_problem( Decision::INVALID_TOKEN );
+
 			return null;
 		}
 
 		if ( $agent->is_active() ) {
-			$this->agents->touch_token_used( $agent->get_id() );
+			$this->agents->touch_token_used();
 		} else {
 			/*
 			 * Expiry passes without anything being written, so nothing told the
@@ -128,17 +145,16 @@ final class OAuthAccessTokenResolver implements AgentResolverInterface {
 	/**
 	 * Whether a token's resource is the MCP address this request is for.
 	 *
-	 * A token issued for an agent's own address is refused at the shared
-	 * address and at any other agent's, and stops working when that agent's
-	 * address is replaced. One issued for the shared address (or before
-	 * resources were recorded) works only there and at the earlier plugin's old one.
+	 * A token works only at the MCP address it was approved for, so it stops
+	 * working when that address is replaced. One issued without a recorded
+	 * address is refused.
 	 *
 	 * @param string $issued_for The token's resource.
 	 */
 	private static function issued_for_this_address( string $issued_for ): bool {
 		$code = Routes::requested_agent_code();
 
-		// Only an agent's own address is served, and a sign-in works only at the address it was approved for.
+		// Only the MCP address is served, and a sign-in works only at the address it was approved for.
 		if ( '' === $code || '' === $issued_for ) {
 			return false;
 		}

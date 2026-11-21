@@ -3,7 +3,7 @@
  * Confirmation modals.
  *
  * The prototype specified a confirmation step on all four destructive actions
- * — revoke from the list, revoke from the detail screen, revoke all
+ * — revoke the agent, revoke all
  * permissions, and issue a new token. The React screens had none: every one of
  * them fired on the first click.
  *
@@ -83,7 +83,7 @@ if ( ! function_exists( 'ai_agent_os_confirm_modal' ) ) {
 
 					<?php
 					/*
-					 * A slot for the subject of the action — which agent, how
+					 * A slot for the subject of the action — the agent's name, how
 					 * many permissions. Filled by the JavaScript from the
 					 * trigger's data attributes, because one modal serves every
 					 * trigger on the screen rather than one modal each: the

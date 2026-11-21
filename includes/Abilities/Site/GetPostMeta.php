@@ -38,7 +38,7 @@ final class GetPostMeta {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Get post meta', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'See a post’s extra fields', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Returns the custom fields (meta) of a post, page or custom post type item. Values are text; structured values are JSON.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-site',
 			'input_schema'        => Schema::input(

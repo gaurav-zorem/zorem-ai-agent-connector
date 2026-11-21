@@ -25,8 +25,10 @@ defined( 'ABSPATH' ) || exit;
  * The well-known requests are not REST requests — WordPress would treat them
  * as an unknown front-end URL and render the theme's 404 page. They are
  * answered on `init`, before any of that happens, and only for the exact paths
- * this plugin owns. The root documents (no path suffix) are left alone: they
- * may belong to another plugin on the same site.
+ * this plugin owns. The root authorization-server documents (no path suffix)
+ * may belong to another plugin on the same site, so they are answered only as
+ * a fallback, when the request would otherwise be a 404
+ * (serve_root_fallback()).
  */
 final class DiscoveryServer {
 
@@ -74,7 +76,52 @@ final class DiscoveryServer {
 		 */
 		add_action( 'setup_theme', array( $this, 'serve_well_known' ), 0 );
 		add_action( 'init', array( $this, 'serve_well_known' ), 1 );
+		add_action( 'template_redirect', array( $this, 'serve_root_fallback' ), 0 );
 		add_filter( 'rest_post_dispatch', array( $this, 'add_challenge' ), 10, 3 );
+	}
+
+	/**
+	 * Answer the root authorization-server documents, when nothing else has.
+	 *
+	 * Some clients (Grok's connectors, and any that follow the 2025-03-26 MCP
+	 * authorization spec) look for `/.well-known/oauth-authorization-server`
+	 * at the site's root only, ignoring the issuer path, and give up when it
+	 * is a 404 — before any sign-in screen and without a trace in the log.
+	 * Claude and ChatGPT use the path-suffixed documents and are unaffected.
+	 *
+	 * The root may belong to another plugin on the same site (see the class
+	 * comment), so this runs on `template_redirect`: a plugin that answers the
+	 * root itself does so earlier and ends the request, and only a request
+	 * WordPress is about to answer with its 404 page reaches this. The
+	 * document is the same one the issuer path serves, issuer unchanged, so a
+	 * client checking `iss` sees the same value either way.
+	 */
+	public function serve_root_fallback(): void {
+		if ( ! is_404() || ! OAuthEndpoints::is_available() ) {
+			return;
+		}
+
+		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( (string) $_SERVER['REQUEST_URI'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.VIP.ValidatedSanitizedInput -- Compared against fixed strings, never output.
+		$path = strtolower( untrailingslashit( rawurldecode( (string) wp_parse_url( $uri, PHP_URL_PATH ) ) ) );
+		$home = strtolower( untrailingslashit( (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH ) ) );
+
+		foreach ( array( '/.well-known/oauth-authorization-server', '/.well-known/openid-configuration' ) as $root ) {
+			if ( $path === $root || $path === $home . $root ) {
+				$this->send_json( $this->metadata->authorization_server() );
+			}
+		}
+
+		/*
+		 * The root resource document, for clients that ask the site root which
+		 * server signs them in instead of following the 401 challenge. It names
+		 * no agent (the root cannot know which address was called); the agent
+		 * is chosen on the consent screen and bound to the token there.
+		 */
+		$resource = '/.well-known/oauth-protected-resource';
+
+		if ( $path === $resource || $path === $home . $resource ) {
+			$this->send_json( $this->metadata->protected_resource() );
+		}
 	}
 
 	/**
@@ -89,7 +136,7 @@ final class DiscoveryServer {
 
 		$path = strtolower( untrailingslashit( rawurldecode( (string) wp_parse_url( $uri, PHP_URL_PATH ) ) ) );
 
-		// An agent's own address: its document names that address as the resource.
+		// The agent's MCP address: its document names that address as the resource.
 		$agent_prefix = strtolower( OAuthEndpoints::resource_metadata_path() ) . '/' . AgentAddress::SEGMENT . '/';
 
 		if ( 0 === strpos( $path, $agent_prefix ) && AgentAddress::is_code( substr( $path, strlen( $agent_prefix ) ) ) ) {
@@ -128,7 +175,7 @@ final class DiscoveryServer {
 			return $response;
 		}
 
-		// An agent's own address points at its own document: the resource is that address.
+		// The agent's MCP address points at its own document: the resource is that address.
 		$challenge = 'Bearer resource_metadata="' . OAuthEndpoints::resource_metadata_url( AgentAddress::code_in( $request->get_route() ) ) . '"';
 
 		if ( '' !== (string) $request->get_header( 'authorization' ) ) {

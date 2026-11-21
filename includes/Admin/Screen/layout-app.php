@@ -26,6 +26,7 @@ defined( 'ABSPATH' ) || exit;
 
 require_once AI_AGENT_OS_PATH . 'assets/zui/icons.php';
 require_once __DIR__ . '/partials/brand.php';
+require_once __DIR__ . '/partials/locked.php';
 
 /**
  * The top tabs, in order.
@@ -35,21 +36,36 @@ require_once __DIR__ . '/partials/brand.php';
  * Entry shape:
  *   label  : tab bar text.
  *   source : absolute path to the panel's render file.
+ *   pro    : true for a locked preview of an AI Agent OS PRO feature (PRO pill on the tab).
  */
 $ai_agent_os_tabs = apply_filters(
 	'ai_agent_os_admin_tabs',
 	array(
+		'agent'    => array(
+			'label'  => __( 'Agent', 'zorem-ai-agent-connector' ),
+			'source' => __DIR__ . '/tabs/agent.php',
+		),
+		'activity' => array(
+			'label'  => __( 'Activity Log', 'zorem-ai-agent-connector' ),
+			'source' => __DIR__ . '/tabs/activity.php',
+			'pro'    => true,
+		),
+		'brain'    => array(
+			'label'  => __( 'Website Brain', 'zorem-ai-agent-connector' ),
+			'source' => __DIR__ . '/tabs/brain.php',
+			'pro'    => true,
+		),
 		'settings' => array(
 			'label'  => __( 'Settings', 'zorem-ai-agent-connector' ),
 			'source' => __DIR__ . '/tabs/settings.php',
 		),
-		'agents'   => array(
-			'label'  => __( 'Agent', 'zorem-ai-agent-connector' ),
-			'source' => __DIR__ . '/tabs/agents.php',
-		),
 		'status'   => array(
 			'label'  => __( 'Status', 'zorem-ai-agent-connector' ),
 			'source' => __DIR__ . '/tabs/status.php',
+		),
+		'go-pro'   => array(
+			'label'  => __( 'Go PRO ✨', 'zorem-ai-agent-connector' ),
+			'source' => __DIR__ . '/tabs/go-pro.php',
 		),
 	)
 );
@@ -63,12 +79,12 @@ $ai_agent_os_tabs = apply_filters(
 $ai_agent_os_active_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '';
 
 /*
- * The landing tab is named, not inferred from the order: Settings, which is
+ * The landing tab is named, not inferred from the order: Agent, which is
  * also first in the strip. Named so that reordering the tabs cannot change the
  * screen this plugin opens on by accident.
  */
-$ai_agent_os_default_tab = isset( $ai_agent_os_tabs['settings'] )
-	? 'settings'
+$ai_agent_os_default_tab = isset( $ai_agent_os_tabs['agent'] )
+	? 'agent'
 	: (string) key( $ai_agent_os_tabs );
 
 // Diagnostics moved from Settings to Status; an old link opens Status.
@@ -84,6 +100,11 @@ if ( ! isset( $ai_agent_os_tabs[ $ai_agent_os_active_tab ] ) ) {
 <div class="aaos-app zui-scope" id="aaos-app">
 
 	<?php require __DIR__ . '/header.php'; ?>
+
+	<?php
+	// The Black Friday banner, full width above every tab; shows only while the offer runs.
+	\AiAgentOs\Admin\SeasonalOffer::banner();
+	?>
 
 	<?php foreach ( $ai_agent_os_tabs as $ai_agent_os_slug => $ai_agent_os_tab ) : ?>
 		<div class="zui-tab-panel"

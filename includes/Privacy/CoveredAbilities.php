@@ -24,16 +24,27 @@ final class CoveredAbilities {
 	 *
 	 * Their payload shape has been read from source, so address parts (`city`,
 	 * `state`, …) are masked anywhere in them. Every other ability's result
-	 * is masked too, for an agent that masks — with address parts masked only
+	 * is masked too, for the agent that masks — with address parts masked only
 	 * under a customer or address key. This list also drives the Customer data
-	 * column on the agents screen.
+	 * column on the Agent screen.
 	 *
-	 * This plugin's get-users returns `display_name` and `user_email`, and
-	 * get-comments returns the commenter's `display_name` and `email`.
+	 * WooCommerce's order and customer abilities return billing and shipping
+	 * names, emails, phones and addresses (read from WooCommerce's
+	 * src/Internal/Abilities/Domain/; the same list as AI Agent OS PRO's, so
+	 * both mask alike). This plugin's get-users returns `display_name` and
+	 * `user_email`, and get-comments returns the commenter's `display_name`
+	 * and `email`.
 	 *
 	 * @var array<int, string>
 	 */
 	private const ABILITIES = array(
+		'woocommerce/orders-query',
+		'woocommerce/order-get',
+		'woocommerce/order-notes-query',
+		'woocommerce/order-add-note',
+		'woocommerce/order-update-status',
+		'woocommerce/customers-query',
+		'woocommerce/customer-get',
 		'ai-agent-os/get-users',
 		'ai-agent-os/get-comments',
 	);
@@ -156,7 +167,7 @@ final class CoveredAbilities {
 	}
 
 	/**
-	 * Whether an ability's result is left unmasked for agents that mask.
+	 * Whether an ability's result is left unmasked when the agent masks.
 	 *
 	 * Masking runs on every ability's result, because an ability nobody has
 	 * read is where customer data would slip through. None is exempt by default.

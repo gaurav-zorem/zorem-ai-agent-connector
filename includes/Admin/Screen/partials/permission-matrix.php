@@ -17,7 +17,7 @@
  *    names the WordPress capabilities an ability needs, they are lent on
  *    demand for each call — never the ones that would let a call change users,
  *    plugins or site code. The badge says which abilities run that way.
- * 3. **The locked-destructive state explains itself where it happens** — the
+ * 3. **The destructive switch explains itself where it applies** — the
  *    note sits under that row's own control, not in a banner at the top. The
  *    design put it there and it is the better placement: a disabled control with
  *    its reason three feet away is a disabled control nobody understands.
@@ -28,7 +28,6 @@
  *
  * @package AiAgentOs
  *
- * @var int                                           $ai_agent_os_agent_id  Agent id.
  * @var \AiAgentOs\Agents\Agent                    $ai_agent_os_agent     The agent.
  * @var \AiAgentOs\Governance\PermissionRepository  $ai_agent_os_perms     Grants.
  * @var \AiAgentOs\Governance\AbilityInventory      $ai_agent_os_inventory Abilities.
@@ -36,38 +35,34 @@
 
 defined( 'ABSPATH' ) || exit;
 
-/*
- * Both inputs may be supplied by the caller, so this table can render for an
- * agent that does not exist yet.
- *
- * The create screen needs the same matrix before there is anything to read
- * grants from — and a second, nearly-identical table would drift from this one
- * the first time either changed. `isset()` rather than a flag: a caller either
- * has these answers or does not.
- */
-$ai_agent_os_grants = isset( $ai_agent_os_grants )
-	? (array) $ai_agent_os_grants
-	: $ai_agent_os_perms->get_grants( $ai_agent_os_agent_id );
+$ai_agent_os_grants = $ai_agent_os_perms->get_grants( $ai_agent_os_agent->get_id() );
 
 $ai_agent_os_categories = $ai_agent_os_inventory->grouped_descriptors();
 
-$ai_agent_os_locked = isset( $ai_agent_os_locked )
-	? (bool) $ai_agent_os_locked
-	: ! $ai_agent_os_agent->allows_destructive();
+// The agent's destructive switch, set by an administrator on the Connection tab.
+$ai_agent_os_destructive_off = ! $ai_agent_os_agent->allows_destructive();
 
+/*
+ * The simple form, as in AI Agent OS PRO: Off / View only / Full per
+ * section, View / Change / Delete for risk, Off / View / Change per ability,
+ * no internal ability names, and "Show only what's on".
+ */
 $ai_agent_os_levels = array(
-	'none'  => __( 'None', 'zorem-ai-agent-connector' ),
-	'read'  => __( 'Read', 'zorem-ai-agent-connector' ),
-	'write' => __( 'Write', 'zorem-ai-agent-connector' ),
+	'none'  => __( 'Off', 'zorem-ai-agent-connector' ),
+	'read'  => __( 'View', 'zorem-ai-agent-connector' ),
+	'write' => __( 'Change', 'zorem-ai-agent-connector' ),
 );
 
 $ai_agent_os_risk_labels = array(
-	'read'        => __( 'READ', 'zorem-ai-agent-connector' ),
-	'write'       => __( 'WRITE', 'zorem-ai-agent-connector' ),
-	'destructive' => __( 'DESTRUCTIVE', 'zorem-ai-agent-connector' ),
+	'read'        => __( 'View', 'zorem-ai-agent-connector' ),
+	'write'       => __( 'Change', 'zorem-ai-agent-connector' ),
+	'destructive' => __( 'Delete', 'zorem-ai-agent-connector' ),
 );
+
+/* translators: 1: number of permissions on, 2: number of permissions in the section. */
+$ai_agent_os_tally = __( '%1$d of %2$d on', 'zorem-ai-agent-connector' );
 ?>
-<div class="aaos-tablecard aaos-matrix" data-aaos-matrix>
+<div class="aaos-tablecard aaos-matrix aaos-matrix--simple" data-aaos-matrix data-aaos-tally="<?php echo esc_attr( $ai_agent_os_tally ); ?>">
 
 	<div class="aaos-tablecard__toolbar">
 		<div class="aaos-search">
@@ -75,50 +70,36 @@ $ai_agent_os_risk_labels = array(
 			<label class="screen-reader-text" for="aaos-matrix-search"><?php esc_html_e( 'Search abilities', 'zorem-ai-agent-connector' ); ?></label>
 			<input type="search" id="aaos-matrix-search" class="aaos-search__input"
 				data-aaos-matrix-search
-				placeholder="<?php esc_attr_e( 'Search abilities…', 'zorem-ai-agent-connector' ); ?>">
+				placeholder="<?php esc_attr_e( 'Search permissions, e.g. “orders” or “refund”', 'zorem-ai-agent-connector' ); ?>">
 		</div>
 
-		<?php
-		/*
-		 * Every section at once, with the same three choices each section row
-		 * has. Only the on-screen matrix changes: nothing is saved until
-		 * "Save permissions", and a level a row cannot take (destructive with
-		 * destructive mode off) is skipped, as it is per section. "None"
-		 * rather than "Revoke all": on an existing agent that name is the
-		 * button that revokes at once.
-		 */
-		?>
-		<div class="aaos-matrix-all" role="group" aria-label="<?php esc_attr_e( 'Set every ability', 'zorem-ai-agent-connector' ); ?>">
-			<span class="aaos-matrix-all__label"><?php esc_html_e( 'All abilities', 'zorem-ai-agent-connector' ); ?></span>
-			<span class="aaos-mtable__bulk">
-				<button type="button" class="aaos-bulk" data-aaos-bulk="write"><?php esc_html_e( 'Grant all', 'zorem-ai-agent-connector' ); ?></button>
-				<button type="button" class="aaos-bulk" data-aaos-bulk="read"><?php esc_html_e( 'All read', 'zorem-ai-agent-connector' ); ?></button>
-				<button type="button" class="aaos-bulk" data-aaos-bulk="none"><?php esc_html_e( 'None', 'zorem-ai-agent-connector' ); ?></button>
-			</span>
-		</div>
+		<label class="aaos-onlyon">
+			<input type="checkbox" class="aaos-onlyon__input" data-aaos-only-on>
+			<span class="aaos-onlyon__switch" aria-hidden="true"></span>
+			<span><?php esc_html_e( 'Show only what’s on', 'zorem-ai-agent-connector' ); ?></span>
+		</label>
 
-		<?php
-		/*
-		 * Only for an agent that exists. Rendered for an agent that does not
-		 * yet have an id, these buttons would save to agent 0, which answers
-		 * 404.
-		 */
-		?>
-		<?php if ( (int) $ai_agent_os_agent_id > 0 ) : ?>
-			<div class="aaos-tablecard__actions">
-				<button type="button" class="aaos-btn aaos-btn--ghost" data-zui-modal-toggle="aaos-agent-revoke-all">
-					<?php esc_html_e( 'Revoke all', 'zorem-ai-agent-connector' ); ?>
-				</button>
-				<button type="button" class="aaos-btn aaos-btn--primary" data-aaos-save-permissions disabled>
-					<?php esc_html_e( 'Save permissions', 'zorem-ai-agent-connector' ); ?>
-				</button>
-			</div>
-		<?php endif; ?>
+		<div class="aaos-tablecard__actions">
+			<?php
+			// Profiles are AI Agent OS PRO: a locked control, linking to the upgrade.
+			?>
+			<a class="aaos-apply-profile aaos-locked-control" href="<?php echo esc_url( ai_agent_os_upgrade_url( 'profiles' ) ); ?>" target="_blank" rel="noopener noreferrer"
+				title="<?php esc_attr_e( 'Ready-made profiles (Store Admin Agent, Support Agent and more) are in AI Agent OS PRO.', 'zorem-ai-agent-connector' ); ?>">
+				<span class="zui-select aaos-locked-control__select"><?php esc_html_e( 'Add a profile’s permissions…', 'zorem-ai-agent-connector' ); ?></span>
+				<?php ai_agent_os_pro_badge(); ?>
+			</a>
+			<button type="button" class="aaos-btn aaos-btn--ghost" data-zui-modal-toggle="aaos-agent-revoke-all">
+				<?php esc_html_e( 'Revoke all', 'zorem-ai-agent-connector' ); ?>
+			</button>
+			<button type="button" class="aaos-btn aaos-btn--primary" data-aaos-save-permissions disabled>
+				<?php esc_html_e( 'Save permissions', 'zorem-ai-agent-connector' ); ?>
+			</button>
+		</div>
 	</div>
 
 	<div class="aaos-tablecard__scroll">
 		<table class="aaos-atable aaos-mtable">
-			<thead>
+			<thead class="screen-reader-text">
 				<tr>
 					<th><?php esc_html_e( 'Ability', 'zorem-ai-agent-connector' ); ?></th>
 					<th><?php esc_html_e( 'Risk', 'zorem-ai-agent-connector' ); ?></th>
@@ -148,21 +129,19 @@ $ai_agent_os_risk_labels = array(
 					}
 
 					/*
-					 * Sections holding nothing start closed.
+					 * Every section starts closed.
 					 *
 					 * On a site with a few large plugins this screen runs to
-					 * several thousand pixels, nearly all of it abilities set
-					 * to None — so the few grants that decide what the agent
-					 * can actually do are the hardest things on the page to
-					 * find. Opening only the sections with a grant puts the
-					 * answer to "what can this agent do" on one screen, and
-					 * leaves the rest one click away.
+					 * several thousand pixels. Closed, it is one short list of
+					 * section names, each with its "x of y granted" tally, so
+					 * what the agent can do is readable at a glance and any
+					 * section is one click away.
 					 *
 					 * Everything stays in the DOM either way: the search still
 					 * reaches a closed section, and no request is needed to
 					 * open one.
 					 */
-					$ai_agent_os_open = $ai_agent_os_granted > 0;
+					$ai_agent_os_open = false;
 					?>
 					<tr class="aaos-mtable__section" data-aaos-matrix-group data-aaos-group="<?php echo esc_attr( (string) $ai_agent_os_slug ); ?>">
 						<td colspan="3">
@@ -218,7 +197,7 @@ $ai_agent_os_risk_labels = array(
 								<?php
 								printf(
 									/* translators: 1: number of abilities granted, 2: number of abilities in the section. */
-									esc_html__( '%1$d of %2$d granted', 'zorem-ai-agent-connector' ),
+									esc_html( $ai_agent_os_tally ),
 									(int) $ai_agent_os_granted,
 									(int) $ai_agent_os_total
 								);
@@ -244,16 +223,10 @@ $ai_agent_os_risk_labels = array(
 							 * just filled in.
 							 */
 							?>
-							<span class="aaos-mtable__bulk">
-								<button type="button" class="aaos-bulk" data-aaos-bulk="write" data-aaos-bulk-group="<?php echo esc_attr( (string) $ai_agent_os_slug ); ?>">
-									<?php esc_html_e( 'Grant all', 'zorem-ai-agent-connector' ); ?>
-								</button>
-								<button type="button" class="aaos-bulk" data-aaos-bulk="read" data-aaos-bulk-group="<?php echo esc_attr( (string) $ai_agent_os_slug ); ?>">
-									<?php esc_html_e( 'All read', 'zorem-ai-agent-connector' ); ?>
-								</button>
-								<button type="button" class="aaos-bulk" data-aaos-bulk="none" data-aaos-bulk-group="<?php echo esc_attr( (string) $ai_agent_os_slug ); ?>">
-									<?php esc_html_e( 'Revoke', 'zorem-ai-agent-connector' ); ?>
-								</button>
+							<span class="aaos-mtable__bulk aaos-lvl" role="group" aria-label="<?php echo esc_attr( (string) $ai_agent_os_group['label'] ); ?>">
+								<button type="button" class="aaos-bulk aaos-lvl__off" data-aaos-bulk="none" data-aaos-bulk-group="<?php echo esc_attr( (string) $ai_agent_os_slug ); ?>"><?php esc_html_e( 'Off', 'zorem-ai-agent-connector' ); ?></button>
+								<button type="button" class="aaos-bulk" data-aaos-bulk="read" data-aaos-bulk-group="<?php echo esc_attr( (string) $ai_agent_os_slug ); ?>"><?php esc_html_e( 'View only', 'zorem-ai-agent-connector' ); ?></button>
+								<button type="button" class="aaos-bulk" data-aaos-bulk="write" data-aaos-bulk-group="<?php echo esc_attr( (string) $ai_agent_os_slug ); ?>"><?php esc_html_e( 'Full', 'zorem-ai-agent-connector' ); ?></button>
 							</span>
 							</div>
 						</td>
@@ -264,9 +237,14 @@ $ai_agent_os_risk_labels = array(
 						$ai_agent_os_name  = (string) $ai_agent_os_ability['name'];
 						$ai_agent_os_risk  = (string) ( $ai_agent_os_ability['risk'] ?? 'write' );
 						$ai_agent_os_level = (string) ( $ai_agent_os_grants[ $ai_agent_os_name ] ?? 'none' );
+
+						// Write on a view-only ability (no Write control) allows exactly what View does.
+						if ( 'read' === $ai_agent_os_risk && 'write' === $ai_agent_os_level ) {
+							$ai_agent_os_level = 'read';
+						}
 						$ai_agent_os_infer = ! empty( $ai_agent_os_ability['risk_inferred'] );
 						$ai_agent_os_label = (string) ( $ai_agent_os_ability['label'] ?? $ai_agent_os_name );
-						$ai_agent_os_rlock = ( 'destructive' === $ai_agent_os_risk && $ai_agent_os_locked );
+						$ai_agent_os_rlock = ( 'destructive' === $ai_agent_os_risk && $ai_agent_os_destructive_off );
 						?>
 						<?php
 						/*
@@ -278,6 +256,7 @@ $ai_agent_os_risk_labels = array(
 						?>
 						<tr data-aaos-ability="<?php echo esc_attr( $ai_agent_os_name ); ?>"
 							data-aaos-group="<?php echo esc_attr( (string) $ai_agent_os_slug ); ?>"
+							data-aaos-risk="<?php echo esc_attr( $ai_agent_os_risk ); ?>"
 							data-aaos-search="<?php echo esc_attr( strtolower( $ai_agent_os_name . ' ' . $ai_agent_os_label ) ); ?>"
 							<?php echo $ai_agent_os_open ? '' : 'hidden'; ?>>
 
@@ -293,7 +272,6 @@ $ai_agent_os_risk_labels = array(
 									<?php endif; ?>
 								</div>
 
-								<code class="aaos-mtable__slug"><?php echo esc_html( $ai_agent_os_name ); ?></code>
 
 								<?php if ( ! empty( $ai_agent_os_ability['description'] ) ) : ?>
 									<p class="aaos-mtable__desc"><?php echo esc_html( (string) $ai_agent_os_ability['description'] ); ?></p>
@@ -361,7 +339,7 @@ $ai_agent_os_risk_labels = array(
 									: $ai_agent_os_levels;
 								?>
 								<div class="aaos-grant">
-									<div class="aaos-seg<?php echo $ai_agent_os_rlock ? ' is-locked' : ''; ?>">
+									<div class="aaos-seg<?php echo $ai_agent_os_rlock ? ' is-switched-off' : ''; ?>">
 										<?php foreach ( $ai_agent_os_offer as $ai_agent_os_value => $ai_agent_os_text ) : ?>
 											<?php $ai_agent_os_dis = ( $ai_agent_os_rlock && 'none' !== $ai_agent_os_value ); ?>
 											<button type="button"
@@ -369,7 +347,7 @@ $ai_agent_os_risk_labels = array(
 												data-aaos-level="<?php echo esc_attr( $ai_agent_os_value ); ?>"
 												<?php disabled( $ai_agent_os_dis, true ); ?>>
 												<?php if ( $ai_agent_os_dis ) : ?>
-													<?php \Zorem\UI\icon( 'lock' ); ?>
+													<?php \Zorem\UI\icon( 'shield-check' ); ?>
 												<?php endif; ?>
 												<?php echo esc_html( $ai_agent_os_text ); ?>
 											</button>
@@ -378,7 +356,7 @@ $ai_agent_os_risk_labels = array(
 
 									<?php if ( $ai_agent_os_rlock ) : ?>
 										<span class="aaos-grant__note">
-											<?php esc_html_e( 'Destructive abilities are off for this agent. Turn them on in the Connection tab, under Access.', 'zorem-ai-agent-connector' ); ?>
+											<?php esc_html_e( 'Destructive abilities are switched off for the agent. Turn them on under Access & safety.', 'zorem-ai-agent-connector' ); ?>
 										</span>
 									<?php endif; ?>
 								</div>

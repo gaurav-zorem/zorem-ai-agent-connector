@@ -1,7 +1,7 @@
 /* global jQuery */
 
 /*
- * Agents: the list, the create flow, the permission matrix, the token reveal.
+ * The agent: the permission matrix, the connection settings, the token reveal.
  *
  * Depends on `aaos-admin` for the REST wrapper. Everything to do with
  * opening and closing modals belongs to `zui.js` and is not re-implemented
@@ -31,7 +31,7 @@
 	/* ------------------------------------------------------------------
 	   The token, on the Connection tab.
 
-	   There is no token dialog. An agent is created without a token (most
+	   There is no token dialog. The agent starts without a token (most
 	   connect by signing in), and one is issued on its Connection tab, where
 	   the plaintext is shown in the Token card. PHP never renders it and
 	   nothing persists it; it lives in that field until the page is left or
@@ -69,14 +69,12 @@
 	}
 
 	/*
-	 * An agent with no token yet: issue one without asking, since there is
-	 * nothing for it to replace. An agent that has one goes through the
+	 * No token yet: issue one without asking, since there is nothing for it
+	 * to replace. Replacing an existing token goes through the
 	 * "Issue a new token?" confirmation instead (data-aaos-confirm below).
 	 */
 	$( document ).on( 'click', '[data-aaos-issue-token]', function () {
-		const id = currentAgentId();
-
-		if ( ! id ) {
+		if ( ! hasAgent() ) {
 			return;
 		}
 
@@ -84,7 +82,7 @@
 
 		$( '[data-aaos-issue-token]' ).prop( 'disabled', true );
 
-		api.post( '/agents/' + id + '/rotate-token', {} )
+		api.post( '/agent/rotate-token', {} )
 			.then( function ( data ) {
 				$( '[data-aaos-issue-token]' ).prop( 'hidden', true );
 				fillToken( data.token );
@@ -178,8 +176,8 @@
 	/* ------------------------------------------------------------------
 	   Confirmation modals.
 
-	   One dialog serves every row; the trigger's data attributes say which
-	   agent it is about, and the dialog names it before confirming.
+	   One dialog serves each action; the trigger's data attribute carries the
+	   agent's name, and the dialog shows it before confirming.
 	   ------------------------------------------------------------------ */
 
 	let pending = {};
@@ -188,7 +186,6 @@
 		const $trigger = $( this );
 
 		pending = {
-			agent: $trigger.data( 'aaos-agent' ) || currentAgentId(),
 			name: $trigger.data( 'aaos-agent-name' ) || '',
 		};
 
@@ -203,20 +200,16 @@
 	} );
 
 	/**
-	 * The agent this detail screen is about, or 0 on the list.
+	 * Whether the agent screen is on the page.
 	 *
-	 * @return {number} Agent id.
+	 * @return {boolean} Whether the agent is shown.
 	 */
-	function currentAgentId() {
-		const el = document.querySelector( '[data-aaos-agent-id]' );
-
-		return el ? Number( el.getAttribute( 'data-aaos-agent-id' ) ) : 0;
+	function hasAgent() {
+		return null !== document.querySelector( '[data-aaos-agent]' );
 	}
 
 	$( document ).on( 'click', '[data-aaos-confirm]', function () {
-		const id = pending.agent || currentAgentId();
-
-		if ( ! id ) {
+		if ( ! hasAgent() ) {
 			return;
 		}
 
@@ -228,14 +221,11 @@
 		let request;
 
 		if ( action === 'revoke-agent' ) {
-			request = api.post( '/agents/' + id + '/revoke', {} );
+			request = api.post( '/agent/revoke', {} );
 		} else if ( action === 'revoke-all-permissions' ) {
-			request = api.post(
-				'/agents/' + id + '/revoke-all-permissions',
-				{}
-			);
+			request = api.post( '/agent/revoke-all-permissions', {} );
 		} else if ( action === 'rotate-token' ) {
-			request = api.post( '/agents/' + id + '/rotate-token', {} );
+			request = api.post( '/agent/rotate-token', {} );
 		} else {
 			$button.prop( 'disabled', false );
 			return;
@@ -254,8 +244,8 @@
 					// Filled into the Connection tab; anywhere else, open that tab, where the next token is issued.
 					if ( ! fillToken( data.token ) ) {
 						window.location.href =
-							( settings.agentsUrl ||
-								'?page=ai-agent-os&tab=agents' ) +
+							( settings.agentUrl ||
+								'?page=ai-agent-os&tab=agent' ) +
 							'&section=connection';
 					}
 
@@ -290,7 +280,7 @@
 
 		$button.prop( 'disabled', true );
 
-		api.put( '/agents/' + currentAgentId(), { status: 'active' } )
+		api.put( '/agent', { status: 'active' } )
 			.then( function () {
 				window.location.reload();
 			} )
@@ -395,10 +385,62 @@
 				this.classList.toggle( 'is-active', matches );
 				this.setAttribute( 'aria-pressed', matches ? 'true' : 'false' );
 			} );
+
+		/*
+		 * Off / View only / Full is one choice: in a section that can only be
+		 * looked at, "Full" and "View only" mean the same, so only "View only"
+		 * lights.
+		 */
+		$matrix()
+			.find( '.aaos-lvl' )
+			.each( function () {
+				const read = this.querySelector( '[data-aaos-bulk="read"]' );
+				const write = this.querySelector( '[data-aaos-bulk="write"]' );
+
+				if (
+					read &&
+					write &&
+					read.classList.contains( 'is-active' ) &&
+					write.classList.contains( 'is-active' )
+				) {
+					write.classList.remove( 'is-active' );
+					write.setAttribute( 'aria-pressed', 'false' );
+				}
+			} );
 	}
+
+	/**
+	 * Hide the sections with nothing on, while "Show only what's on" is ticked.
+	 */
+	function applyOnlyOn() {
+		const only = $( '[data-aaos-only-on]' ).is( ':checked' );
+
+		$matrix()
+			.find( '[data-aaos-matrix-group]' )
+			.each( function () {
+				const group = this.getAttribute( 'data-aaos-group' );
+				const $rows = $matrix().find(
+					'[data-aaos-ability][data-aaos-group="' + group + '"]'
+				);
+				const anyOn = $rows.get().some( function ( row ) {
+					const active = row.querySelector( '.aaos-seg__item.is-active' );
+
+					return (
+						active && 'none' !== active.getAttribute( 'data-aaos-level' )
+					);
+				} );
+				const hide = only && ! anyOn;
+
+				this.classList.toggle( 'is-filtered', hide );
+				$rows.toggleClass( 'is-filtered', hide );
+			} );
+	}
+
+	$( document ).on( 'change', '[data-aaos-only-on]', applyOnlyOn );
 
 	function refreshMatrix() {
 		paintBulkState();
+		applyOnlyOn();
 
 		if ( matrixBaseline === null ) {
 			return;
@@ -529,7 +571,7 @@
 			$tally
 				.toggleClass( 'is-granted', totals[ group ].granted > 0 )
 				.text(
-					( settings.i18n.grantedOf || '%1$d of %2$d granted' )
+					( $matrix().attr( 'data-aaos-tally' ) || settings.i18n.grantedOf || '%1$d of %2$d granted' )
 						.replace( '%1$d', String( totals[ group ].granted ) )
 						.replace( '%2$d', String( totals[ group ].total ) )
 				);
@@ -546,7 +588,108 @@
 	}
 
 	/* ------------------------------------------------------------------
-	   A new MCP address for this agent. The old one stops working at once.
+	   Connect page: the app picker (tabs), the address's "⋯" menu, and
+	   Disconnect for one signed-in app.
+	   ------------------------------------------------------------------ */
+
+	/**
+	 * Show one app's guide.
+	 *
+	 * @param {jQuery} $tab The tab to select.
+	 */
+	function selectAppTab( $tab ) {
+		const $box = $tab.closest( '[data-aaos-cx-apps]' );
+		const app = $tab.attr( 'data-aaos-cx-tab' );
+
+		$box.find( '[data-aaos-cx-tab]' ).attr( { 'aria-selected': 'false', tabindex: '-1' } );
+		$tab.attr( { 'aria-selected': 'true', tabindex: '0' } );
+		$box.find( '[data-aaos-cx-panel]' ).prop( 'hidden', true );
+		$box.find( '[data-aaos-cx-panel="' + app + '"]' ).prop( 'hidden', false );
+
+		// The token block belongs only to the apps that cannot sign in (Codex, Other).
+		$box.find( '[data-aaos-cx-token-for]' ).each( function () {
+			const forApps = ( this.getAttribute( 'data-aaos-cx-token-for' ) || '' ).split( ' ' );
+
+			this.hidden = forApps.indexOf( app ) === -1;
+		} );
+	}
+
+	$( document ).on( 'click', '[data-aaos-cx-tab]', function () {
+		selectAppTab( $( this ) );
+	} );
+
+	// Arrow keys move between tabs, as in any tab list.
+	$( document ).on( 'keydown', '[data-aaos-cx-tab]', function ( event ) {
+		const keys = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+
+		if ( ! keys[ event.key ] && 'Home' !== event.key && 'End' !== event.key ) {
+			return;
+		}
+
+		event.preventDefault();
+
+		const $tabs = $( this ).closest( '[role="tablist"]' ).find( '[data-aaos-cx-tab]' );
+		let next = $tabs.index( this ) + ( keys[ event.key ] || 0 );
+
+		if ( 'Home' === event.key ) {
+			next = 0;
+		} else if ( 'End' === event.key ) {
+			next = $tabs.length - 1;
+		}
+
+		const $next = $tabs.eq( ( next + $tabs.length ) % $tabs.length );
+
+		selectAppTab( $next );
+		$next.trigger( 'focus' );
+	} );
+
+	$( document ).on( 'click', '[data-aaos-cx-more]', function ( event ) {
+		event.stopPropagation();
+
+		const $menu = $( '#' + $( this ).attr( 'aria-controls' ) );
+		const open = $menu.prop( 'hidden' );
+
+		$menu.prop( 'hidden', ! open );
+		$( this ).attr( 'aria-expanded', open ? 'true' : 'false' );
+	} );
+
+	// A click elsewhere, or Escape, closes the menu.
+	$( document ).on( 'click keydown', function ( event ) {
+		if ( 'keydown' === event.type && 'Escape' !== event.key ) {
+			return;
+		}
+
+		if ( 'click' === event.type && $( event.target ).closest( '.aaos-cx-more__menu' ).length ) {
+			return;
+		}
+
+		$( '.aaos-cx-more__menu' ).prop( 'hidden', true );
+		$( '[data-aaos-cx-more]' ).attr( 'aria-expanded', 'false' );
+	} );
+
+	$( document ).on( 'click', '[data-aaos-cx-disconnect]', function () {
+		const $button = $( this );
+		const api = window.aiAgentOsAdmin;
+
+		// eslint-disable-next-line no-alert -- Ends that app's connection; needs an answer first.
+		if ( ! window.confirm( $button.attr( 'data-confirm' ) ) ) {
+			return;
+		}
+
+		$button.prop( 'disabled', true );
+
+		api.del( '/agent/sign-ins/' + $button.attr( 'data-aaos-cx-disconnect' ) )
+			.then( function () {
+				window.location.reload();
+			} )
+			.fail( function ( error ) {
+				$button.prop( 'disabled', false );
+				fail( error.message );
+			} );
+	} );
+
+	/* ------------------------------------------------------------------
+	   A new MCP address for the agent. The old one stops working at once.
 	   ------------------------------------------------------------------ */
 
 	$( document ).on( 'click', '[data-aaos-mcp-address-new]', function () {
@@ -560,7 +703,7 @@
 
 		$button.prop( 'disabled', true );
 
-		api.post( '/agents/' + $button.attr( 'data-aaos-mcp-address-new' ) + '/mcp-address', {} )
+		api.post( '/agent/mcp-address', {} )
 			.then( function () {
 				window.location.reload();
 			} )
@@ -573,8 +716,7 @@
 	$( document ).on( 'click', '[data-aaos-save-permissions]', function () {
 		const $button = $( this );
 
-		// No agent yet: "Create agent" saves the grants once it exists.
-		if ( ! currentAgentId() ) {
+		if ( ! hasAgent() ) {
 			return;
 		}
 
@@ -586,7 +728,7 @@
 
 		$button.prop( 'disabled', true ).text( settings.i18n.saving );
 
-		api.put( '/agents/' + currentAgentId() + '/permissions', {
+		api.put( '/agent/permissions', {
 			grants: readMatrix(),
 		} )
 			.then( function ( data ) {
@@ -614,11 +756,11 @@
 				if ( 0 === granted ) {
 					message =
 						settings.i18n.permissionsNone ||
-						'Saved. This agent may not use any abilities.';
+						'Saved. The agent may not use any abilities.';
 				} else if ( 1 === granted ) {
 					message =
 						settings.i18n.permissionSaved ||
-						'Saved. This agent may now use 1 ability.';
+						'Saved. The agent may now use 1 ability.';
 				} else {
 					message = (
 						settings.i18n.permissionsSaved || '%d'

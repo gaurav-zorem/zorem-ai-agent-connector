@@ -67,6 +67,9 @@ $ai_agent_os_brand_info = ai_agent_os_brand();
 				data-zui-tab="<?php echo esc_attr( $ai_agent_os_slug ); ?>"
 				<?php echo ( $ai_agent_os_slug === $ai_agent_os_active_tab ) ? 'aria-current="page"' : ''; ?>>
 				<?php echo esc_html( $ai_agent_os_tab['label'] ); ?>
+				<?php if ( ! empty( $ai_agent_os_tab['pro'] ) ) : ?>
+					<span class="zui-pro-feature__badge aaos-tab-pro"><?php esc_html_e( 'PRO', 'zorem-ai-agent-connector' ); ?></span>
+				<?php endif; ?>
 			</button>
 		<?php endforeach; ?>
 	</nav>

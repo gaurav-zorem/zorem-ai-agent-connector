@@ -38,7 +38,7 @@ final class UpdatePost {
 		$properties = array( 'id' => Schema::id( __( 'The post ID, from get-posts.', 'zorem-ai-agent-connector' ) ) ) + CreatePost::properties( false );
 
 		return array(
-			'label'               => __( 'Update post', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Edit a blog post', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Changes a blog post\'s title, content, excerpt, status, categories, tags or featured image. Only the fields sent are changed; content and term lists replace what is there.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-content',
 			'input_schema'        => Schema::input( $properties, array( 'id' ) ),

@@ -1,17 +1,17 @@
 <?php
 /**
- * One agent: permissions and connection.
+ * The agent: permissions and connection.
  *
  * The React version used a `TabPanel` inside a tab. Here they are `.zui-section`
  * panels behind a sidebar, which is the library's own idiom for "sections within
  * a screen" and avoids a second row of tabs under the first.
  *
  * @package AiAgentOs
- *
- * @var int $ai_agent_os_agent_id The agent being viewed.
  */
 
 defined( 'ABSPATH' ) || exit;
+
+require_once __DIR__ . '/locked.php';
 
 /**
  * Agent repository.
@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
  */
 $ai_agent_os_agents = ai_agent_os_service( \AiAgentOs\Agents\AgentRepository::class );
 
-$ai_agent_os_agent = $ai_agent_os_agents->find( $ai_agent_os_agent_id );
+$ai_agent_os_agent = $ai_agent_os_agents->get();
 
 if ( null === $ai_agent_os_agent ) {
 	return;
@@ -46,7 +46,7 @@ $ai_agent_os_perms = ai_agent_os_service( \AiAgentOs\Governance\PermissionReposi
 $ai_agent_os_inventory = ai_agent_os_service( \AiAgentOs\Governance\AbilityInventory::class );
 
 $ai_agent_os_exposure_data = $ai_agent_os_exposure->describe(
-	$ai_agent_os_agent_id,
+	$ai_agent_os_agent->get_id(),
 	$ai_agent_os_agent->masks_pii()
 );
 
@@ -55,9 +55,17 @@ $ai_agent_os_sections = array(
 		'label' => __( 'Permissions', 'zorem-ai-agent-connector' ),
 		'icon'  => 'shield-check',
 	),
-	'connection'  => array(
-		'label' => __( 'Connection', 'zorem-ai-agent-connector' ),
-		'icon'  => 'server',
+	'connect'     => array(
+		'label' => __( 'Connect', 'zorem-ai-agent-connector' ),
+		'icon'  => 'globe',
+	),
+	'access'      => array(
+		'label' => __( 'Access & safety', 'zorem-ai-agent-connector' ),
+		'icon'  => 'sliders',
+	),
+	'manage'      => array(
+		'label' => __( 'Manage agent', 'zorem-ai-agent-connector' ),
+		'icon'  => 'alert-circle',
 	),
 );
 ?>
@@ -88,9 +96,13 @@ $ai_agent_os_states = array(
 	'expired'   => __( 'Expired', 'zorem-ai-agent-connector' ),
 );
 
-$ai_agent_os_grant_count = (int) ( $ai_agent_os_perms->count_grants( $ai_agent_os_agent_id )['total'] ?? 0 );
+$ai_agent_os_grant_count = (int) ( $ai_agent_os_perms->count_grants( $ai_agent_os_agent->get_id() )['total'] ?? 0 );
 ?>
 <div class="zui-card aaos-agenthead">
+
+	<a class="aaos-agenthead__back" href="<?php echo esc_url( add_query_arg( array( 'page' => 'ai-agent-os', 'tab' => 'agent' ), admin_url( 'admin.php' ) ) ); ?>">
+		&larr; <?php esc_html_e( 'All agents', 'zorem-ai-agent-connector' ); ?>
+	</a>
 
 	<div class="aaos-agenthead__title">
 		<h2 class="aaos-agenthead__name"><?php echo esc_html( $ai_agent_os_agent->get_name() ); ?></h2>
@@ -151,19 +163,34 @@ $ai_agent_os_grant_count = (int) ( $ai_agent_os_perms->count_grants( $ai_agent_o
 			?>
 		</span>
 
+		<?php
+		// Every app signed in as the agent now. ("no token issued" read like a problem for an agent connected by signing in.)
+		require_once __DIR__ . '/app-label.php';
+
+		$ai_agent_os_head_apps = array();
+
+		foreach ( (array) ( ai_agent_os_service( \AiAgentOs\OAuth\OAuthStore::class )->signed_in_apps()[ $ai_agent_os_agent->get_id() ] ?? array() ) as $ai_agent_os_head_app ) {
+			$ai_agent_os_head_apps[] = ai_agent_os_app_label( (string) $ai_agent_os_head_app['client_id'] );
+		}
+		?>
+		<?php if ( array() !== $ai_agent_os_head_apps ) : ?>
+			<span class="aaos-agenthead__sep">·</span>
+			<?php
+			/* translators: %s: app names, e.g. "Claude, ChatGPT". */
+			printf( esc_html__( 'Connected: %s', 'zorem-ai-agent-connector' ), esc_html( implode( ', ', array_unique( $ai_agent_os_head_apps ) ) ) );
+			?>
+		<?php endif; ?>
 		<?php if ( $ai_agent_os_agent->get_token_prefix() ) : ?>
 			<span class="aaos-agenthead__sep">·</span>
 			<?php esc_html_e( 'token', 'zorem-ai-agent-connector' ); ?>
 			<code><?php echo esc_html( $ai_agent_os_agent->get_token_prefix() . '…' ); ?></code>
-		<?php else : ?>
-			<span class="aaos-agenthead__sep">·</span>
-			<?php esc_html_e( 'no token issued', 'zorem-ai-agent-connector' ); ?>
 		<?php endif; ?>
 	</p>
+
+	<?php // "Add agent" and "Export all agents" (AI Agent OS PRO) are on the agents list, as in PRO. ?>
 </div>
 
-<div class="zui-layout"
-	data-aaos-agent-id="<?php echo esc_attr( (string) $ai_agent_os_agent_id ); ?>">
+<div class="zui-layout" data-aaos-agent>
 
 	<?php ai_agent_os_render_sidebar( $ai_agent_os_sections, $ai_agent_os_agent->get_name() ); ?>
 
@@ -175,9 +202,19 @@ $ai_agent_os_grant_count = (int) ( $ai_agent_os_perms->count_grants( $ai_agent_o
 		require __DIR__ . '/permission-matrix.php';
 		ai_agent_os_section_close();
 
-		// --------------------------------------------------------- Connection.
-		ai_agent_os_section_open( 'connection' );
-		require __DIR__ . '/agent-connection.php';
+		// ------------------------------------------------------------ Connect.
+		ai_agent_os_section_open( 'connect' );
+		require __DIR__ . '/agent-connect.php';
+		ai_agent_os_section_close();
+
+		// ---------------------------------------------------- Access & safety.
+		ai_agent_os_section_open( 'access' );
+		require __DIR__ . '/agent-access.php';
+		ai_agent_os_section_close();
+
+		// ------------------------------------------------------- Manage agent.
+		ai_agent_os_section_open( 'manage' );
+		require __DIR__ . '/agent-manage.php';
 		ai_agent_os_section_close();
 
 		?>

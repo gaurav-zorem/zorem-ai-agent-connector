@@ -259,7 +259,7 @@ final class Requirements {
 	 * Whether the auth salt changed since a token was last issued.
 	 *
 	 * Tokens are stored as an HMAC keyed with that salt, so a rotation stops
-	 * every token at once, and the only symptom an agent sees is "invalid
+	 * every token at once, and the only symptom the agent sees is "invalid
 	 * token". This is the diagnosis that symptom needs.
 	 */
 	public function salt_has_rotated(): bool {

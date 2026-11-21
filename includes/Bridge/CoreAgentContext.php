@@ -24,13 +24,13 @@ defined( 'ABSPATH' ) || exit;
  * governs it like the agent it is, with the identity taken from the record and
  * never from the caller's reference. A reference this plugin does not know
  * (`exp:*`, say) runs with no agent record, which keeps the gate transparent
- * for it. An `agent:` reference that matches no agent also runs with no
+ * for it. An `agent:` reference that is not the agent's also runs with no
  * record: the gate sees no agent rather than borrowing anyone's rights.
  */
 final class CoreAgentContext implements AgentContextProviderInterface {
 
 	/**
-	 * The agents.
+	 * Agent storage.
 	 *
 	 * @var AgentRepository
 	 */
@@ -39,7 +39,7 @@ final class CoreAgentContext implements AgentContextProviderInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param AgentRepository $agents The agents.
+	 * @param AgentRepository $agents Agent storage.
 	 */
 	public function __construct( AgentRepository $agents ) {
 		$this->agents = $agents;
@@ -63,7 +63,7 @@ final class CoreAgentContext implements AgentContextProviderInterface {
 		$record = null;
 
 		if ( 0 === strpos( $agent->ref(), Agent::REF_PREFIX ) ) {
-			$record = $this->agents->find_by_uuid( substr( $agent->ref(), strlen( Agent::REF_PREFIX ) ) );
+			$record = $this->agents->get_by_ref( $agent->ref() );
 			$agent  = $record instanceof Agent ? $record->to_agent_ref() : $agent;
 		}
 

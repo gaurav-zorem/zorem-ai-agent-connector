@@ -16,10 +16,10 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Turns a `client_id` into what the client claims about itself.
  *
- * One source (plan D8): a URL-shaped id is a metadata document fetched live;
- * anything else is unknown (Dynamic Client Registration was removed in
- * 1.0.1). It is not authentication (plan §3.2) — anyone can host a JSON
- * file. What they establish is where a
+ * Two sources (plan D8): a URL-shaped id is a metadata document fetched live;
+ * a `zcl_` id is a client that registered itself, which only Grok may do
+ * (RegistrationPolicy). Neither is authentication (plan §3.2) — anyone can
+ * host a JSON file. What they establish is where a
  * code may be sent, and that is enforced here by exact match (S7).
  */
 final class ClientResolver {
@@ -91,7 +91,26 @@ final class ClientResolver {
 			);
 		}
 
-		return new \WP_Error( 'ai_agent_os_oauth_invalid_client', __( 'This site does not know that client. Apps sign in with a client metadata document (an https address); others connect with the agent\'s token.', 'zorem-ai-agent-connector' ) );
+		/*
+		 * Switching registration off switches off the clients that registered
+		 * themselves, not only new registrations: otherwise the setting reads
+		 * as a way to stop them and does nothing about the ones already there.
+		 */
+		$client = ( new RegistrationPolicy( $this->settings ) )->is_enabled() ? $this->store->find_client( $client_id ) : null;
+
+		if ( null !== $client ) {
+			return array(
+				'client_id'     => $client['client_id'],
+				'name'          => self::clean_name( $client['client_name'] ),
+				// Re-checked against the allow-list on every use, so narrowing it applies to clients already registered.
+				'redirect_uris' => array_values( array_filter( $this->valid_redirects( $client['redirect_uris'] ), array( RegistrationPolicy::class, 'allows_redirect' ) ) ),
+				'kind'          => 'dcr',
+				'auth_method'   => $client['auth_method'],
+				'secret_hash'   => $client['secret_hash'],
+			);
+		}
+
+		return new \WP_Error( 'ai_agent_os_oauth_invalid_client', __( 'This site does not know that client. Apps sign in with a client metadata document (an https address), Grok by registering; others connect with the agent\'s token.', 'zorem-ai-agent-connector' ) );
 	}
 
 	/**

@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Builds one MCP server, scoped to the agent making the current request.
  *
- * This is the mechanism behind "permissions an agent doesn't have are
+ * This is the mechanism behind "permissions the agent doesn't have are
  * invisible", and it works because of how the adapter is ordered:
  *
  *   McpAdapter::instance()  registers rest_api_init at priority 15
@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
  * Servers are therefore constructed during the request, after the HTTP headers
  * are readable. We resolve the agent first and register only the tools that
  * agent may use. Ungranted abilities are not filtered out of tools/list — they
- * were never on the server, so tools/list cannot report them, and an agent
+ * were never on the server, so tools/list cannot report them, and the agent
  * cannot be argued into calling a tool it has never heard of.
  *
  * That matters because the adapter's own ToolsHandler::list_tools() returns
@@ -53,7 +53,7 @@ final class ServerBuilder {
 	private TransportPermission $permission;
 
 	/**
-	 * Each agent's own MCP address.
+	 * The agent's MCP address.
 	 *
 	 * @var AgentAddress
 	 */
@@ -64,7 +64,7 @@ final class ServerBuilder {
 	 *
 	 * @param PermissionResolver  $resolver   The permission authority.
 	 * @param TransportPermission $permission Transport-level gate.
-	 * @param AgentAddress        $addresses  Each agent's own MCP address.
+	 * @param AgentAddress        $addresses  The agent's MCP address.
 	 */
 	public function __construct(
 		PermissionResolver $resolver,
@@ -93,7 +93,7 @@ final class ServerBuilder {
 		$resources = array();
 
 		/**
-		 * Filters the tools an agent's server lists. It may only remove: a tool
+		 * Filters the tools the agent's server lists. It may only remove: a tool
 		 * the agent holds no grant on never appears, whatever a filter returns.
 		 *
 		 * @param array<int, string> $tools Granted ability names.
@@ -102,12 +102,12 @@ final class ServerBuilder {
 		$tools = array_values( array_intersect( (array) apply_filters( 'ai_agent_os_agent_tools', $tools, $agent ), $tools ) );
 
 		/*
-		 * Every agent has its own address; there is no shared one. Registered for
-		 * whatever well-formed code the URL carries, known or not, so an
-		 * unknown address answers 401 like a wrong token rather than 404 —
-		 * the response must not say which addresses exist. The tools are the
-		 * calling agent's only when the address is that agent's own; the
-		 * transport check refuses everyone else before any tool is listed.
+		 * The MCP address carries a random code. The server is registered for
+		 * whatever well-formed code the URL carries, current or not, so a
+		 * replaced or guessed address answers 401 like a wrong token rather
+		 * than 404 — the response must not confirm which address is live. The
+		 * tools are listed only at the current address; the transport check
+		 * refuses every other one before any tool is listed.
 		 */
 		$code = Routes::requested_agent_code();
 
@@ -129,7 +129,7 @@ final class ServerBuilder {
 				$own ? $tools : array(),
 				$own ? $resources : array(),
 				array(),
-				array( $this->permission, 'check_agent' )
+				array( $this->permission, 'check_address' )
 			);
 		}
 	}
@@ -141,12 +141,12 @@ final class ServerBuilder {
 	 */
 	private function server_description( ?Agent $agent ): string {
 		if ( ! $agent instanceof Agent ) {
-			return __( 'Governed access to this WordPress site. Authenticate with an agent token to see the abilities that agent is permitted to use.', 'zorem-ai-agent-connector' );
+			return __( 'Governed access to this WordPress site. Authenticate with the agent\'s token to see the abilities it is permitted to use.', 'zorem-ai-agent-connector' );
 		}
 
 		return sprintf(
 			/* translators: %s: agent name. */
-			__( 'Governed access to this WordPress site as the agent "%s". Only abilities granted to this agent are available.', 'zorem-ai-agent-connector' ),
+			__( 'Governed access to this WordPress site as the agent "%s". Only abilities granted to it are available.', 'zorem-ai-agent-connector' ),
 			$agent->get_name()
 		);
 	}

@@ -36,9 +36,9 @@ final class GetPage {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Get page', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Open a page', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Returns one page by ID: title, status, full content (block markup), parent, template and featured image ID. Password-protected pages return no content.', 'zorem-ai-agent-connector' ),
-			'category'            => 'ai-agent-os-content',
+			'category'            => 'ai-agent-os-pages',
 			'input_schema'        => Schema::input(
 				array( 'id' => Schema::id( __( 'The page ID, from get-pages.', 'zorem-ai-agent-connector' ) ) ),
 				array( 'id' )
@@ -48,7 +48,7 @@ final class GetPage {
 			/*
 			 * Coarse here on purpose. `PostReader::find()` makes the
 			 * per-object `read_post` check and answers every refusal with
-			 * "not found", so an agent that may not read an item learns
+			 * "not found", so the agent that may not read an item learns
 			 * nothing about whether it exists. Refusing at the permission
 			 * stage instead would answer "no permission", which tells the
 			 * caller the item is there.

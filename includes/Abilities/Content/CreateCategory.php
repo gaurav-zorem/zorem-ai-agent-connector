@@ -36,7 +36,7 @@ final class CreateCategory {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Create category', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Add a blog category', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Creates a post category with name, slug, description and parent. Fails if a category with that name already exists under the same parent.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-content',
 			'input_schema'        => Schema::input( TermWriter::properties( true ), array( 'name' ) ),

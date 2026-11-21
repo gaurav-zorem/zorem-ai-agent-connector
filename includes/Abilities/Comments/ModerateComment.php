@@ -47,7 +47,7 @@ final class ModerateComment {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Moderate comment', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Approve, hold or remove a comment', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Sets a comment\'s status: approved, pending (held for moderation), spam or trash. Trashing needs destructive mode.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-comments',
 			'input_schema'        => Schema::input(

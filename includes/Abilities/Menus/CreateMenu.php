@@ -38,7 +38,7 @@ final class CreateMenu {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Create menu', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Create a menu', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Creates an empty navigation menu. Add items with add-menu-item. It is not shown on the site until a person assigns it to a menu location.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-menus',
 			'input_schema'        => Schema::input(

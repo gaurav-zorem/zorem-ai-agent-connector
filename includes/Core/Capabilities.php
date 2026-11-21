@@ -12,14 +12,14 @@ namespace AiAgentOs\Core;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * `manage_agent_os`: who may configure agents and knowledge.
+ * `manage_agent_os`: who may configure the agent and knowledge.
  *
  * A custom capability rather than `manage_options`, so a store can hand agent
  * administration to a Shop Manager without handing over the whole site
  * (decision D-7). Granted to administrators on activation.
  *
  * The name is not private to this plugin: anything else that administers
- * agents on the same site may use it too. Uninstalling therefore asks, through
+ * the agent on the same site may use it too. Uninstalling therefore asks, through
  * `ai_agent_os_keep_manage_capability`, before taking it away, so removing one
  * plugin never locks administrators out of a screen that is still there.
  */

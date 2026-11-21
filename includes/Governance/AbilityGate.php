@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
  * Wraps every ability registered on the site.
  *
  * This is the enforcement point that does not depend on which door a request
- * came through. The MCP server we build is scoped per agent, so an ungranted
+ * came through. The MCP server we build is scoped to the agent, so an ungranted
  * tool is invisible there — but the adapter's default server exposes
  * mcp-adapter/execute-ability, which runs any ability by name, and WooCommerce
  * stands up a server of its own. A per-server allow-list cannot cover doors it
@@ -30,13 +30,13 @@ defined( 'ABSPATH' ) || exit;
  * Two rules govern the wrapper:
  *
  *   1. It wraps, never replaces. The original permission callback is still
- *      called, and called last. An agent can therefore only ever end up with
+ *      called, and called last. The agent can therefore only ever end up with
  *      less access than the ability's author intended, never more.
  *
- *   2. Without an agent in context it is transparent. Ordinary human traffic —
+ *   2. Without the agent in context it is transparent. Ordinary human traffic —
  *      an admin in wp-admin, a logged-in customer, WP-CLI — reaches the
  *      original callbacks unchanged. Installing this plugin does not alter
- *      behaviour for anyone who is not an agent.
+ *      behaviour for anyone who is not the agent.
  */
 final class AbilityGate {
 
@@ -101,6 +101,16 @@ final class AbilityGate {
 	private GovernedAbilities $governed;
 
 	/**
+	 * The permission wrapper built for each ability, name => closure.
+	 *
+	 * Lets adopt_deferred() confirm that a built ability still carries this
+	 * gate's wrapper before it wraps the execute callback beside it.
+	 *
+	 * @var array<string, callable>
+	 */
+	private array $permission_wrappers = array();
+
+	/**
 	 * Constructor.
 	 *
 	 * @param PermissionResolver $resolver     The permission authority.
@@ -155,13 +165,83 @@ final class AbilityGate {
 		/*
 		 * Something read the abilities registry before this point, so the
 		 * abilities registered then were never wrapped. They are missing from
-		 * the governed set and refused to agents; Diagnostics says why.
+		 * the governed set and refused to the agent; Diagnostics says why.
 		 */
 		if ( did_action( 'wp_abilities_api_init' ) ) {
 			$this->governed->mark_late();
 		}
 
 		add_filter( 'wp_register_ability_args', array( $this, 'wrap' ), 999, 2 );
+
+		// Last on the registry's start-up, once every ability registered then is built.
+		add_action( 'wp_abilities_api_init', array( $this, 'adopt_deferred' ), PHP_INT_MAX );
+	}
+
+	/**
+	 * Wrap the execute callback of abilities whose class fills it in while being built.
+	 *
+	 * WooCommerce 11.3 registers `woocommerce/product-create` and
+	 * `woocommerce/product-update` with a permission callback but no execute
+	 * callback: their `ActionableAbility` class sets it in its constructor
+	 * (`prepare_properties()`), after `wp_register_ability_args` has run. So
+	 * wrap() never saw it, and the agent was refused both tools.
+	 *
+	 * Once built, the callback sits in WP_Ability's protected
+	 * `execute_callback`, which is the only thing WP_Ability runs. Wrapping it
+	 * there gives the tool the same execute wrapper as any other: the decision
+	 * checked again, capabilities lent for the call alone, masking and the
+	 * activity row. GovernedAbilities only defers a class that overrides none of
+	 * WP_Ability's calling methods, so nothing else can run the original.
+	 *
+	 * Anything that does not check out exactly stays refused, as before.
+	 *
+	 * @param mixed $registry The abilities registry the action passes.
+	 */
+	public function adopt_deferred( $registry = null ): void {
+		$deferred = $this->governed->deferred();
+
+		if ( array() === $deferred || ! $registry instanceof \WP_Abilities_Registry ) {
+			return;
+		}
+
+		foreach ( $deferred as $name => $class ) {
+			if ( ! isset( $this->permission_wrappers[ $name ] ) || ! $registry->is_registered( $name ) ) {
+				continue;
+			}
+
+			$ability = $registry->get_registered( $name );
+
+			if ( ! $ability instanceof \WP_Ability || get_class( $ability ) !== $class ) {
+				continue;
+			}
+
+			try {
+				$permission = new \ReflectionProperty( \WP_Ability::class, 'permission_callback' );
+				$execute    = new \ReflectionProperty( \WP_Ability::class, 'execute_callback' );
+
+				if ( PHP_VERSION_ID < 80100 ) {
+					$permission->setAccessible( true );
+					$execute->setAccessible( true );
+				}
+
+				// The built ability must still hold this gate's own permission wrapper.
+				if ( $permission->getValue( $ability ) !== $this->permission_wrappers[ $name ] ) {
+					continue;
+				}
+
+				$original = $execute->getValue( $ability );
+
+				if ( ! is_callable( $original ) ) {
+					continue;
+				}
+
+				$execute->setValue( $ability, $this->wrap_execute( $original, $name ) );
+			} catch ( \ReflectionException $e ) {
+				continue;
+			}
+
+			$this->governed->adopt( $name );
+		}
 	}
 
 	/**
@@ -173,7 +253,8 @@ final class AbilityGate {
 	 */
 	public function wrap( array $args, string $name ): array {
 		if ( isset( $args['permission_callback'] ) && is_callable( $args['permission_callback'] ) ) {
-			$args['permission_callback'] = $this->wrap_permission( $args['permission_callback'], $name );
+			$args['permission_callback']        = $this->wrap_permission( $args['permission_callback'], $name );
+			$this->permission_wrappers[ $name ] = $args['permission_callback'];
 		}
 
 		if ( isset( $args['execute_callback'] ) && is_callable( $args['execute_callback'] ) ) {

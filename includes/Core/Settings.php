@@ -24,22 +24,27 @@ final class Settings {
 	/**
 	 * Defaults. Every key a setting can have is listed here.
 	 *
-	 * Dynamic Client Registration has no setting because it is not offered at
-	 * all: it is an unauthenticated write endpoint, and a client that publishes
-	 * a Client ID Metadata Document never needs it.
-	 *
 	 * @var array<string, mixed>
 	 */
 	private const DEFAULTS = array(
 
 		/*
-		 * MCP: the per-agent endpoint is on; the MCP Adapter's own default
+		 * MCP: the agent's endpoint is on; the MCP Adapter's own default
 		 * server, which would expose every ability to any logged-in user with
 		 * the right capability, is off.
 		 */
 		'mcp_enabled'              => true,
 
 		'delete_data_on_uninstall' => false,
+
+		/*
+		 * Let Grok sign in: Dynamic Client Registration, open only to callback
+		 * addresses on Grok's hosts (OAuth\RegistrationPolicy). On, because
+		 * the allow-list keeps it to Grok and every sign-in still needs an
+		 * administrator's approval. Clients with a Client ID Metadata Document
+		 * (Claude, ChatGPT) never need it.
+		 */
+		'oauth_grok_registration'  => true,
 	);
 
 	/**

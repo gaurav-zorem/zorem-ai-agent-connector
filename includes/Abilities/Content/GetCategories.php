@@ -36,7 +36,7 @@ final class GetCategories {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Get categories', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'See blog categories', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Lists post categories by name, with ID, slug, description, parent and post count.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-content',
 			'input_schema'        => Schema::input( TermReader::list_properties( true ) ),

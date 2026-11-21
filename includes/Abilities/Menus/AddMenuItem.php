@@ -35,7 +35,7 @@ final class AddMenuItem {
 		$properties = array( 'menu_id' => Schema::id( __( 'The menu ID, from list-menus.', 'zorem-ai-agent-connector' ) ) ) + MenuItemWriter::properties();
 
 		return array(
-			'label'               => __( 'Add menu item', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Add a link to a menu', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Adds an item to a navigation menu, linking to a published post, page or item, a category or tag, or an http(s) address. If the menu is on the site, the item is visible at once.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-menus',
 			'input_schema'        => Schema::input( $properties, array( 'menu_id', 'type' ) ),

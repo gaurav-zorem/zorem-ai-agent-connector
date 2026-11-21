@@ -14,7 +14,7 @@ use AiAgentOs\Agents\Agent;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Turns an inbound request into an agent identity.
+ * Turns an inbound request into the agent identity.
  *
  * This is the seam that keeps the governance core independent of how a caller
  * proves who it is: bearer tokens, connect-flow access tokens and an
@@ -37,7 +37,7 @@ interface AgentResolverInterface {
 	public function supports( ?\WP_REST_Request $request = null ): bool;
 
 	/**
-	 * Resolve the request to an agent.
+	 * Resolve the request to the agent.
 	 *
 	 * Returns null when the credentials are absent, malformed, unknown,
 	 * expired or revoked. Callers must treat null as "no agent", never as

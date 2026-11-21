@@ -38,7 +38,7 @@ final class UpdatePostMeta {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Update post meta', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Edit a post’s extra fields', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Sets one custom field (meta) on a post, page or custom post type item, replacing its value. Protected keys (starting with an underscore), which WordPress and plugins keep for themselves, are refused.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-site',
 			'input_schema'        => MetaWriter::input_schema( __( 'The post, page or item ID.', 'zorem-ai-agent-connector' ) ),

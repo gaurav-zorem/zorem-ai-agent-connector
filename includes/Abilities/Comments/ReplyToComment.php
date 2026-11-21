@@ -42,7 +42,7 @@ final class ReplyToComment {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Reply to comment', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Reply to a comment', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Posts a reply to a comment, published straight away and signed with the agent\'s name.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-comments',
 			'input_schema'        => Schema::input(

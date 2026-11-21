@@ -45,7 +45,7 @@ final class DeleteCptItem {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Delete custom post type item', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Move an item to the trash', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Moves a page or custom post type item to the trash, where a person can restore it. It is never deleted permanently.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-cpt',
 			'input_schema'        => Schema::input(

@@ -29,7 +29,7 @@ use AiAgentOs\Governance\RiskClassifier;
  * into a second item is how a copy ends up sharing an order number, a
  * licence key or a cached render with its original. The copy is always a
  * draft by the agent, and keeps the original's password if it had one.
- * The content is saved through the same markup filter as any agent write,
+ * The content is saved through the same markup filter as the agent write,
  * so markup only an administrator may post (scripts, iframes) is dropped
  * from the copy.
  */
@@ -48,7 +48,7 @@ final class DuplicatePost {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Duplicate post, page or item', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Make a copy of a post or page', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Copies a post, page or custom post type item, with its content, terms, featured image and custom fields, into a new draft.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-content',
 			'input_schema'        => Schema::input(

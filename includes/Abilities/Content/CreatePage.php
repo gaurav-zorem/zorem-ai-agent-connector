@@ -36,9 +36,9 @@ final class CreatePage {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Create page', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Create a new page', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Creates a page with title, content, parent, template and featured image. It is saved as a draft unless status says otherwise. To change a page later, use update-cpt-item with its ID.', 'zorem-ai-agent-connector' ),
-			'category'            => 'ai-agent-os-content',
+			'category'            => 'ai-agent-os-pages',
 			'input_schema'        => Schema::input( PostWriter::properties( true ) + PostWriter::hierarchy_properties(), array( 'title' ) ),
 			'output_schema'       => PostProjection::full_schema(),
 			'permission_callback' => static fn(): bool => Access::can_create_in( 'page' ),

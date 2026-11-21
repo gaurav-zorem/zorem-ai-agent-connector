@@ -36,7 +36,7 @@ final class GetTags {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Get tags', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'See blog tags', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Lists post tags by name, with ID, slug, description and post count.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-content',
 			'input_schema'        => Schema::input( TermReader::list_properties( false ) ),

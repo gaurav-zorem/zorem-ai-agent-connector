@@ -1,18 +1,20 @@
 === Zorem AI Agent Connector ===
-Contributors: zorem
-Tags: ai, agents, mcp, claude, chatgpt
+Contributors: zorem,gaurav1092,eranzorem,yashpatel1007
+Tags: mcp, mcp server, ai agent, ai assistant, model context protocol
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.0.1
+WC requires at least: 5.0
+WC tested up to: 11.3.0
+Stable tag: 1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Connect Claude, ChatGPT and other AI apps to WordPress safely, through one agent with its own identity and safety switches.
+Connect Claude, ChatGPT and other AI apps to WordPress safely, through an AI agent with its own identity and safety switches.
 
 == Description ==
 
-**Zorem AI Agent Connector** lets an AI app such as Claude, ChatGPT or Codex work on your WordPress site through an agent with its own identity and its own safety switches. The AI app never logs in as you: it connects to the agent's own MCP address, sees only the tools the agent is allowed, and anything else it asks for is refused.
+**Zorem AI Agent Connector** lets an AI app such as Claude, ChatGPT or Codex work on your WordPress site through an agent with its own identity and its own safety switches. The AI app never logs in as you: it connects to the agent's private MCP address, sees only the tools the agent is allowed, and anything else it asks for is refused.
 
 The plugin sets up an **Admin Assistant** agent the moment you activate it. You decide which of its tools it may use, issue or replace its credentials, and switch it off whenever you want. Paste its address into your AI app, approve one sign-in screen, and you are connected — no token to copy, no file to edit. It is built on the WordPress Abilities API and the official MCP Adapter.
 
@@ -32,10 +34,11 @@ Every request goes through the agent. It runs as its own hidden WordPress accoun
 * **Connect by signing in** — Add the agent's address to claude.ai, Claude Desktop, ChatGPT or any client with an "add custom connector" box, then approve one screen. No token is copied by hand.
 * **Token for apps that cannot sign in** — Codex and similar apps connect with a token you issue on the agent's Connection tab. It is shown once and stored only as a hash.
 * **43 WordPress tools** — Posts, pages, categories and tags; comments; the media library; the user list (read only); navigation menus; custom post types and their terms; and site tools such as statistics, post meta, active plugins, search and replace, and clearing the cache.
+* **WooCommerce tools** — With WooCommerce active, the agent can look up orders and products, read and add order notes, change an order's status, and create, update or delete products, using WooCommerce's own tools. Each is granted to nothing until you grant it and is lent only the access its own check needs, for that call only. Customer details in orders are masked when the agent does not act for the administrator.
 * **Exact permissions per tool** — Choose None, Read or Write for every tool, with Grant all, All read and Revoke for a whole section at once.
 * **Automatic risk ratings** — Every tool is rated Read, Write or Destructive, so you can see at a glance what each one can do.
 * **Destructive switch** — Tools that move content to the trash work only after you turn on the agent's own destructive switch. It is off by default.
-* **Personal-data masking** — Names, emails, phone numbers and addresses are replaced with [masked] for an agent that does not act for the administrator.
+* **Personal-data masking** — Names, emails, phone numbers and addresses are replaced with [masked] when the agent does not act for the administrator.
 * **Safe defaults** — New content is saved as a draft unless the agent asks to publish, and deleting only moves to the trash.
 * **Status screen** — Versions, database tables, the MCP Adapter and anything that needs a look, with diagnostics you can copy into a support ticket.
 * **Private by default** — No tracking, no telemetry and no call to a Zorem server.
@@ -45,11 +48,25 @@ Every request goes through the agent. It runs as its own hidden WordPress accoun
 Connecting an AI app with an administrator's password gives it everything. Zorem AI Agent Connector gives it only what it needs:
 
 * **No shared passwords** — the AI app connects as the agent, through its own address, never as you.
-* **No access to users, plugins or site code** — those capabilities are never lent to an agent, and there is no tool that changes the agent's own permissions.
+* **No access to users, plugins or site code** — those capabilities are never lent to the agent, and there is no tool that changes the agent's own permissions.
 * **No surprise deletions** — destructive tools stay off until you switch them on, and deleting only moves to the trash.
 * **No accidental publishing** — new posts and pages are saved as drafts unless the agent asks to publish.
-* **No customer data where it does not belong** — personal data is masked for an agent that does not act for the administrator.
+* **No customer data where it does not belong** — personal data is masked when the agent does not act for the administrator.
 * **One click to stop it** — revoke the agent and its token and sign-ins stop working at once; its permissions are kept so you can reactivate it.
+
+= Who Uses Zorem AI Agent Connector =
+
+Any WordPress site where someone would rather ask for a change than click through to make it:
+
+* **Bloggers and publishers** — draft a post, fix a category, tidy up tags, without leaving the chat you were already thinking in.
+* **Multi-author and editorial sites** — triage comments, check what is scheduled and move a draft forward, from one place.
+* **Agencies managing client sites** — connect one agent per site, give each a different set of tools, and revoke any of them in a click.
+* **Membership sites and online courses** — keep lesson pages, categories and menus in order without handing anyone an administrator password.
+* **Site owners who are not developers** — "add the About page to the main menu", instead of finding the menu screen.
+* **Developers** — connect Cursor, VS Code or Claude Code with the agent's token and work against the site's real content.
+* **Sites running plugins that register abilities** — any plugin that exposes its own tools through the WordPress Abilities API appears on the Permissions tab, rated like the rest and granted to nothing until you grant it. Once granted, a tool that needs store or settings access (such as `manage_woocommerce` or `manage_options`) works for an agent that acts for the administrator, lent that access for the call only; users, roles, plugins, themes, site code and personal-data erasure stay out of reach.
+
+**Please note:** this plugin controls what an AI app may do on your site. It cannot control what that app does with what it reads. Grant the smallest set of tools that does the job, leave the destructive switch off unless you need it, and treat the agent's address and token like a password.
 
 = Works With =
 
@@ -60,21 +77,43 @@ Connecting an AI app with an administrator's password gives it everything. Zorem
 
 Signing in needs your site to be served over HTTPS. Without it, connect with the agent's token.
 
+= Go Further with AI Agent OS PRO =
+
+Zorem AI Agent Connector gives you one fully featured agent, free. When AI does real work on your site every day, [AI Agent OS PRO](https://www.zorem.com/product/ai-agent-os/?utm_source=ai-agent-connector&utm_medium=wp-org-readme&utm_campaign=go-pro) adds:
+
+* **Unlimited agents** — give Claude, ChatGPT, Codex or each team its own agent, with its own permissions, token and MCP address. Revoke one without touching the others.
+* **Ready-made profiles** — start an agent as Store Admin, Support, Fulfillment, Supplier or Shopping Agent, with the right permissions already set.
+* **Activity Log** — every call your agents make and every one that was refused, what was asked and what came back, kept for up to 365 days, with a 30-day summary and CSV export.
+* **Website Brain** — your policies, chosen pages, store settings and installed plugins, ready for your agents to read, and you decide which agent reads what.
+* **Site-building tools** — 15 tools for the site title and tagline, homepage, logo, site icon, header menus, templates, colours and fonts, changed by asking.
+* **Shopping agents** — approve the agents AI Shopping Assistant proposes for your customers, each with its own permissions and customer data masked.
+* **Priority email support.**
+
+Upgrading needs no setup: your Admin Assistant, its token, MCP address and permissions carry over.
+
+👉 [Get AI Agent OS PRO](https://www.zorem.com/product/ai-agent-os/?utm_source=ai-agent-connector&utm_medium=wp-org-readme&utm_campaign=go-pro) · 📖 [AI Agent OS PRO documentation](https://docs.zorem.com/docs/ai-agent-os/)
+
 = Documentation & Support =
 
+* 📖 [Full documentation and setup guides](https://docs.zorem.com/docs/zorem-ai-agent-connector/)
+* 📖 [AI Agent OS PRO documentation](https://docs.zorem.com/docs/ai-agent-os/)
 * 💬 [WordPress.org support forum](https://wordpress.org/support/plugin/zorem-ai-agent-connector/)
 
-== Bundled third-party code ==
+= More Plugins by Zorem =
 
-This plugin bundles the [WordPress MCP Adapter](https://github.com/WordPress/mcp-adapter), which serves the agent's MCP address on top of the WordPress Abilities API. It is copyright the WordPress contributors and licensed GPL-2.0-or-later, the same licence as this plugin; the full text ships with it in `vendor-bundled/mcp-adapter/LICENSE.md`. It is bundled rather than required as a separate plugin so this one works on activation.
+* [Advanced Shipment Tracking for WooCommerce](https://www.zorem.com/product/woocommerce-advanced-shipment-tracking/?utm_source=ai-agent-connector&utm_medium=wp-org-readme&utm_campaign=add-ons) — Shipment tracking for WooCommerce orders, trusted by 70,000+ stores.
+* [SMS for WooCommerce](https://www.zorem.com/product/sms-for-woocommerce/?utm_source=ai-agent-connector&utm_medium=wp-org-readme&utm_campaign=add-ons) — Automated SMS order and shipping notifications via Twilio, WhatsApp, and 18 other providers.
+* [Customer Email Verification PRO](https://www.zorem.com/product/customer-email-verification/?utm_source=ai-agent-connector&utm_medium=wp-org-readme&utm_campaign=add-ons) — Block fake accounts and spam orders with OTP-based email verification.
+* [Advanced Local Pickup PRO](https://www.zorem.com/product/zorem-local-pickup-pro/?utm_source=ai-agent-connector&utm_medium=wp-org-readme&utm_campaign=add-ons) — Advanced local pickup with multiple locations, appointment scheduling, and ready-for-pickup notifications.
+* [Zorem Returns](https://www.zorem.com/product/zorem-returns/?utm_source=ai-agent-connector&utm_medium=wp-org-readme&utm_campaign=add-ons) — Self-service returns, exchanges, and store credit management for WooCommerce.
 
-The admin screens use Zorem's own ZUI component library (`assets/zui/`), also GPL-2.0-or-later.
+Explore the full catalog at [zorem.com →](https://www.zorem.com/)
 
 == Privacy ==
 
 This plugin sends no data anywhere by default.
 
-**The agent you connect.** An agent reaches your site only through its own MCP address, after you approve its sign-in or with the token you issued. What it receives is exactly what its permissions allow, and it goes to the app the agent runs in, such as Claude Desktop, and to that app's AI provider. Names, emails, phone numbers and addresses are masked for an agent that does not act for the administrator, unless you turn masking off for it. Revoke the agent and nothing more is sent. The plugin keeps no log of the agent's calls.
+**The agent you connect.** The agent reaches your site only through its MCP address, after you approve its sign-in or with the token you issued. What it receives is exactly what its permissions allow, and it goes to the app the agent runs in, such as Claude Desktop, and to that app's AI provider. Names, emails, phone numbers and addresses are masked when the agent does not act for the administrator, unless you turn masking off. Revoke the agent and nothing more is sent. The plugin keeps no log of the agent's calls.
 
 == External services ==
 
@@ -82,9 +121,15 @@ This plugin sends no data anywhere by default.
 
 That document belongs to the AI app's own publisher, not to Zorem, so the terms that apply to it are theirs.
 
-No other external service is contacted. There is no tracking and no telemetry, and no call to a Zorem server. Zorem's own [Terms of Service](https://www.zorem.com/terms-of-service/) and [Privacy Policy](https://www.zorem.com/privacy-policy/) cover the zorem.com website and are listed here for completeness; this plugin does not contact it.
+No other external service is contacted. There is no tracking and no telemetry, and no call to a Zorem server.
 
 The agent you connect is not an external service of this plugin: it calls your site, with the sign-in you approved or the token you issued, and receives only what you allowed.
+
+== Bundled third-party code ==
+
+This plugin bundles the [WordPress MCP Adapter](https://github.com/WordPress/mcp-adapter), which serves the agent's MCP address on top of the WordPress Abilities API. It is copyright the WordPress contributors and licensed GPL-2.0-or-later, the same licence as this plugin; the full text ships with it in `vendor-bundled/mcp-adapter/LICENSE.md`. It is bundled rather than required as a separate plugin so this one works on activation.
+
+The admin screens use Zorem's own ZUI component library (`assets/zui/`), also GPL-2.0-or-later.
 
 == Installation ==
 
@@ -95,6 +140,13 @@ The agent you connect is not an external service of this plugin: it calls your s
 5. Under **Access** on the same tab, turn destructive tools or data masking on or off at any time; the change applies on the agent's next request.
 
 Alternatively, upload the `zorem-ai-agent-connector` folder to `/wp-content/plugins/` and activate it through the Plugins menu.
+
+== Screenshots ==
+
+1. The Admin Assistant agent, set up the moment you activate the plugin — the WordPress tools it holds, with delete tools switched off by default.
+2. The Connection tab: copy the agent's MCP address straight into your AI app, or issue a token for apps that cannot sign in.
+3. The Permissions tab — None, Read or Write for every tool, each one rated Read, Write or Destructive so you can see at a glance what it can do.
+4. The Status screen: versions, database tables, the MCP Adapter and anything that needs a look, with diagnostics you can copy into a support ticket.
 
 == Frequently Asked Questions ==
 
@@ -124,15 +176,15 @@ New posts and pages are saved as drafts unless the agent asks to publish them.
 
 = Can the agent change its own permissions? =
 
-No. There is no tool for it, and the capability to manage Zorem AI Agent Connector is never lent to an agent.
+No. There is no tool for it, and the capability to manage Zorem AI Agent Connector is never lent to the agent.
 
 = Can the agent change users, plugins or site code? =
 
-No. Those capabilities are never lent to an agent, and the user list is read only.
+No. Those capabilities are never lent to the agent, and the user list is read only.
 
 = Can I limit which tools the agent uses? =
 
-Yes. Open the agent’s Permissions tab and set None, Read or Write for every tool, one at a time or a whole section at once. The Admin Assistant starts with the WordPress tools this plugin adds, and delete tools stay off until you turn on its destructive switch.
+Yes. Open the agent's Permissions tab and set None, Read or Write for every tool, one at a time or a whole section at once. The Admin Assistant starts with the WordPress tools this plugin adds, and delete tools stay off until you turn on its destructive switch.
 
 = Can I connect more than one AI app? =
 
@@ -150,6 +202,10 @@ Remove the connector in the app, or revoke the agent on its Connection tab. Revo
 
 Yes. Zorem AI Agent Connector works on any WordPress site and needs no other plugin.
 
+= Can the agent work with my WooCommerce store? =
+
+Yes. When WooCommerce is active, its own AI tools appear on the agent's Permissions tab: look up orders and products, read and add order notes, change an order's status, and create, update and delete products. None is granted until you grant it. Changing an order's status to cancelled, and deleting a product, also need the agent's destructive switch. Each tool is lent exactly the WooCommerce capabilities its own permission check asks for, for that call only, and customer names, emails, phone numbers and addresses are masked when the agent does not act for the administrator.
+
 = Does it send my data anywhere? =
 
 No. There is no tracking, no telemetry and no call to a Zorem server. The AI app you connect receives only what the agent is allowed — see Privacy above.
@@ -158,35 +214,39 @@ No. There is no tracking, no telemetry and no call to a Zorem server. The AI app
 
 Yes. Any plugin that registers abilities with the WordPress Abilities API appears on the Permissions tab as soon as it is active, rated like the rest and granted to nothing until you grant it.
 
+= Is there a PRO version? =
+
+Yes. [AI Agent OS PRO](https://www.zorem.com/product/ai-agent-os/?utm_source=ai-agent-connector&utm_medium=wp-org-readme&utm_campaign=go-pro) adds unlimited agents, ready-made agent profiles, the Activity Log, the Website Brain, site-building tools and priority email support. Your agent, token and permissions carry over when you upgrade.
+
+= Why does this need WordPress 6.9 or newer? =
+
+The plugin is built on the WordPress Abilities API, which is what lets tools be registered and permissioned in a standard way. It is available from WordPress 6.9, so earlier versions cannot run the plugin.
+
 == Changelog ==
 
-= 1.0.1 =
-* Change - The agent factory itself refuses to make a second agent, so one agent is a property of the plugin rather than of the one caller that asks for it.
-* Fix - The admin stylesheet asked the browser for nine component files that are not shipped, so every admin page load produced nine 404s.
-* Change - The admin menu item is now "AI Agent Connector", which fits the menu column without wrapping onto three lines.
-* Change - The Status tab leads with four tiles that each say something — the plugin version, the agent, the MCP endpoint and health — instead of leaving the row half empty.
-* Fix - Posting a setting this plugin does not define wrote it into the options row anyway.
-* Fix - Grant all, All read and Revoke on the Permissions tab did nothing when clicked.
-* Change - The sign-in approval screen states which agent a client connects as instead of offering a choice that does not exist.
-* Change - Wording in the admin screens and the readme describes this plugin and its agent, and nothing else.
-* Change - The shared agent-management capability is kept on uninstall through the `ai_agent_os_keep_manage_capability` filter instead of looking for another plugin on disk.
-* Remove - Admin stylesheet rules and a script for screens this plugin does not ship.
-* Change - Every tool now checks the specific post, page, comment or term it was given, instead of only the caller's role, and custom post types and taxonomies are checked against their own capabilities rather than the built-in ones.
-* Change - Tools registered by your other plugins appear on the Permissions tab as soon as the plugin is active, granted to nothing until you grant them.
-* Change - Issuing a credential for the agent, giving it a new MCP address, and changing its destructive, masking or acts-for settings now need more than the agent-management capability alone.
-* Change - Every parameter of a sign-in request is sanitised and validated as it arrives, and the unused `scope` parameter is no longer accepted or carried.
-* Fix - A sign-in `state` containing a reserved character was handed back to the app double-encoded.
-* Fix - The agent's hidden WordPress account was listed on the Users screen again if anything changed its role. It is now identified by the marker this plugin writes, so a role change no longer reveals it, the "All" count stays right, and uninstall still recognises the account and removes it.
-* Remove - The activity and usage tables, which were created but never written to, and the unused CSV helper that went with them.
+= 1.2 =
+* New: Grok can connect. Add the agent's address in Grok (Settings → Connect Apps), approve, done. Only Grok's own addresses (grok.com, x.ai) may register, and every connection still needs your approval. Turn it off with "Let Grok sign in" in Settings.
+* New: a small approval popup. When an app connects, you approve in one short card that shows the app, the agent and what it can do, instead of a full admin screen. "Don't ask again" is offered for agents that can only look.
+* New: the Agent tab opens on an agents list (status, connected apps, tools, customer data); click the name to open the agent.
+* New: redesigned Connect page: copy the agent's address, step-by-step guides for Claude, ChatGPT, Grok, Codex and other apps, and a list of connected apps, each with Disconnect.
+* New: simpler permissions: each section is Off, View only or Full, every permission shows View, Change or Delete, and "Show only what's on" hides the rest.
+* Improvement: friendly names for every permission (for example "See orders" instead of "Query orders"), and "Category or tag" instead of "term".
+* Improvement: Posts and Pages are separate sections, and sections appear in a fixed, everyday order.
+* Improvement: shorter, clearer Access & safety and Settings pages; "Danger zone" is now "Manage agent".
+* Improvement: the Activity Log and Website Brain previews now show what AI Agent OS PRO looks like.
+* Fix: ChatGPT showed "No tools available" for some sites; every tool is now sent in a form ChatGPT accepts.
+* Fix: some view-only permissions showed as Off even though they were on.
+* Tested with WordPress 7.1.5 and WooCommerce 11.3.0.
 
-= 1.0.0 - 2026-10-27 =
-* Add - First release on WordPress.org: an Admin Assistant agent, created on activation, with its own hidden WordPress account and its own MCP address.
-* Add - 43 WordPress tools: posts, pages, categories and tags; comments; the media library; the user list (read only); navigation menus; custom post types and their terms; site statistics, post meta, active plugins, search and replace, and clearing the cache.
-* Add - Connect Claude and ChatGPT by signing in, with no token to copy; Codex and other MCP apps with a token that is shown once and stored only as a hash.
-* Add - Automatic Read, Write and Destructive risk rating for every tool.
-* Add - Destructive switch, off by default; deleting only moves to the trash.
-* Add - Personal-data masking for an agent that does not act for the administrator.
-* Add - Agent expiry, revoke and reactivate.
-* Add - Settings to close the MCP endpoint and to choose what happens on uninstall.
-* Add - Status tab with versions, health checks and diagnostics to copy into a support ticket.
-* Add - None, Read or Write permissions for every tool, per section or all at once.
+= 1.1 =
+* New: WooCommerce tools. With WooCommerce active, the agent can look up orders and products, read and add order notes, change an order's status, and create, update or delete products, each lent only the access its own check needs. Customer details in orders are masked when the agent does not act for the administrator.
+* New: tools from other plugins that need store or settings access (such as `manage_woocommerce`) now work for an agent that acts for the administrator, for the call only. Users, roles, plugins, themes, site code and personal-data erasure stay out of reach.
+* New: Go PRO tab, and previews of the Activity Log and Website Brain.
+* Fix: WooCommerce 11.3's "Create product" and "Update product" tools were refused and reported on the Status screen; they are now governed like every other tool.
+* Fix: the agent's hidden account now uses an address that can never receive mail, so plugins that react to new users do not treat it as a sign-up.
+* Fix: the status badges on the Status screen are centred.
+* Improvement: security hardening of sign-in, the approval screen and MCP request handling.
+* Tested with WordPress 7.1.5 and WooCommerce 11.3.0.
+
+= 1.0 =
+* Initial release

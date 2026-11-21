@@ -81,7 +81,7 @@ final class OAuthStore {
 	 */
 	public function register(): void {
 		/*
-		 * D5: revoking an agent kills its refresh tokens. The status check at
+		 * D5: revoking the agent kills its refresh tokens. The status check at
 		 * refresh time would refuse them anyway, but deleting them means that
 		 * reactivating the agent later does not quietly bring a remote client
 		 * back to life — it has to be approved again.
@@ -287,7 +287,7 @@ final class OAuthStore {
 	}
 
 	/**
-	 * Delete every credential acting as one agent.
+	 * Delete every credential issued to the agent.
 	 *
 	 * @param int $agent_id Agent id.
 	 */
@@ -296,6 +296,54 @@ final class OAuthStore {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Custom table.
 		$wpdb->delete( $this->table(), array( 'agent_id' => $agent_id ), array( '%d' ) );
+	}
+
+	/**
+	 * Every app signed in right now, per agent: one entry per approval (grant).
+	 *
+	 * For the agent's Connect page ("Connected apps", each with Disconnect)
+	 * and the header. One query.
+	 *
+	 * @return array<int, array<string, array{client_id: string, last_at: string}>> Agent id => grant id => app.
+	 */
+	public function signed_in_apps(): array {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table; read once per screen.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT agent_id, grant_id, client_id, MAX(created_at) AS last_at FROM %i WHERE token_type IN ( %s, %s ) AND consumed_at IS NULL AND expires_at > %s GROUP BY agent_id, grant_id, client_id ORDER BY last_at DESC',
+				$this->table(),
+				self::TYPE_ACCESS,
+				self::TYPE_REFRESH,
+				current_time( 'mysql', true )
+			),
+			ARRAY_A
+		);
+
+		$apps = array();
+
+		foreach ( (array) $rows as $row ) {
+			$apps[ (int) $row['agent_id'] ][ (string) $row['grant_id'] ] = array(
+				'client_id' => (string) $row['client_id'],
+				'last_at'   => (string) $row['last_at'],
+			);
+		}
+
+		return $apps;
+	}
+
+	/**
+	 * Whether a grant belongs to an agent (so a Disconnect cannot reach another agent's app).
+	 *
+	 * @param int    $agent_id Agent id.
+	 * @param string $grant_id Grant id.
+	 */
+	public function grant_belongs_to( int $agent_id, string $grant_id ): bool {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table; one check per Disconnect.
+		return (bool) $wpdb->get_var( $wpdb->prepare( 'SELECT 1 FROM %i WHERE agent_id = %d AND grant_id = %s LIMIT 1', $this->table(), $agent_id, $grant_id ) );
 	}
 
 	/**
@@ -308,6 +356,17 @@ final class OAuthStore {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.WP.PreparedSQL -- Identifier is internal; value is bound.
 		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE expires_at < %s', $table, current_time( 'mysql', true ) ) );
+
+		// Registered clients that never signed in, or whose credentials have all expired, after a week.
+		$clients = $this->clients();
+
+		if ( array() !== $clients ) {
+			update_option( self::CLIENTS_OPTION, $this->cap_clients( $clients ), false );
+		}
+
+		// Registration counters from past hours (OAuthController::within_register_limit()).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- No API deletes options by prefix.
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE option_name LIKE %s AND option_name NOT LIKE %s', $wpdb->options, $wpdb->esc_like( 'ai_agent_os_dcr_' ) . '%', '%' . $wpdb->esc_like( '_' . gmdate( 'YmdH' ) ) ) );
 	}
 
 	/**
@@ -385,6 +444,128 @@ final class OAuthStore {
 	 */
 	private static function pair_key( string $refresh_token ): string {
 		return hash_hmac( 'sha256', 'key|' . $refresh_token, wp_salt( 'auth' ), true );
+	}
+
+	/**
+	 * Option holding the clients that registered themselves (Grok), client id => record.
+	 *
+	 * An option rather than a table: registration is open only to callback
+	 * addresses on an allow-list (RegistrationPolicy), the list is capped at
+	 * CLIENTS_KEPT, and the free plugin shares this plugin's tables, so a
+	 * schema change for a short list was not worth it. Not autoloaded.
+	 */
+	public const CLIENTS_OPTION = 'ai_agent_os_oauth_clients';
+
+	/** Most registered clients kept; the oldest unused go first. */
+	public const CLIENTS_KEPT = 50;
+
+	/** Prefix of a registered client's id, so it never looks like a metadata document URL. */
+	public const CLIENT_PREFIX = 'zcl_';
+
+	/**
+	 * Store a client posted to the registration endpoint.
+	 *
+	 * @param array{client_name: string, redirect_uris: array<int, string>, auth_method: string} $client The client.
+	 * @return array{client_id: string, client_secret: string|null}|\WP_Error
+	 */
+	public function register_client( array $client ) {
+		try {
+			$client_id = self::CLIENT_PREFIX . self::random_string( 18 );
+			$secret    = 'none' === $client['auth_method'] ? null : 'zcs_' . self::random_string();
+		} catch ( \Exception $e ) {
+			return new \WP_Error( 'ai_agent_os_oauth_no_csprng', $e->getMessage() );
+		}
+
+		$clients               = $this->clients();
+		$clients[ $client_id ] = array(
+			'client_name'   => (string) $client['client_name'],
+			'redirect_uris' => array_values( array_map( 'strval', (array) $client['redirect_uris'] ) ),
+			'auth_method'   => (string) $client['auth_method'],
+			'secret_hash'   => null === $secret ? null : $this->tokens->hash( $secret ),
+			'created_at'    => time(),
+		);
+
+		update_option( self::CLIENTS_OPTION, $this->cap_clients( $clients ), false );
+
+		return array(
+			'client_id'     => $client_id,
+			'client_secret' => $secret,
+		);
+	}
+
+	/**
+	 * A registered client, or null.
+	 *
+	 * @param string $client_id Client id.
+	 * @return array{client_id: string, client_name: string, redirect_uris: array<int, string>, auth_method: string, secret_hash: string|null}|null
+	 */
+	public function find_client( string $client_id ): ?array {
+		if ( 0 !== strpos( $client_id, self::CLIENT_PREFIX ) ) {
+			return null;
+		}
+
+		$row = $this->clients()[ $client_id ] ?? null;
+
+		if ( ! is_array( $row ) ) {
+			return null;
+		}
+
+		return array(
+			'client_id'     => $client_id,
+			'client_name'   => (string) ( $row['client_name'] ?? '' ),
+			'redirect_uris' => array_values( array_map( 'strval', (array) ( $row['redirect_uris'] ?? array() ) ) ),
+			'auth_method'   => (string) ( $row['auth_method'] ?? 'none' ),
+			'secret_hash'   => isset( $row['secret_hash'] ) ? (string) $row['secret_hash'] : null,
+		);
+	}
+
+	/**
+	 * Constant-time check of a presented client secret.
+	 *
+	 * @param string $secret      Presented secret.
+	 * @param string $stored_hash Stored hash.
+	 */
+	public function verify_secret( string $secret, string $stored_hash ): bool {
+		return '' !== $secret && $this->tokens->verify( $secret, $stored_hash );
+	}
+
+	/**
+	 * Registered clients, client id => record.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	private function clients(): array {
+		$clients = get_option( self::CLIENTS_OPTION, array() );
+
+		return is_array( $clients ) ? $clients : array();
+	}
+
+	/**
+	 * Keep the list short: clients that never signed in go after a week, and
+	 * the oldest go first once there are more than CLIENTS_KEPT.
+	 *
+	 * @param array<string, array<string, mixed>> $clients Registered clients.
+	 * @return array<string, array<string, mixed>>
+	 */
+	private function cap_clients( array $clients ): array {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table; read on registration and the daily prune only.
+		$in_use = array_flip( (array) $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT client_id FROM %i WHERE client_id LIKE %s', $this->table(), $wpdb->esc_like( self::CLIENT_PREFIX ) . '%' ) ) );
+		$cutoff = time() - WEEK_IN_SECONDS;
+
+		foreach ( $clients as $id => $row ) {
+			if ( ! isset( $in_use[ $id ] ) && (int) ( $row['created_at'] ?? 0 ) < $cutoff ) {
+				unset( $clients[ $id ] );
+			}
+		}
+
+		uasort(
+			$clients,
+			static fn( array $a, array $b ): int => (int) ( $b['created_at'] ?? 0 ) <=> (int) ( $a['created_at'] ?? 0 )
+		);
+
+		return array_slice( $clients, 0, self::CLIENTS_KEPT, true );
 	}
 
 	/**

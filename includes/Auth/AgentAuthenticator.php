@@ -1,6 +1,6 @@
 <?php
 /**
- * Binds an inbound request to an agent identity.
+ * Binds an inbound request to the agent identity.
  *
  * @package AiAgentOs
  */
@@ -12,6 +12,7 @@ namespace AiAgentOs\Auth;
 use AiAgentOs\Agents\Agent;
 use AiAgentOs\Agents\AgentRepository;
 use AiAgentOs\Agents\ShadowUserManager;
+use AiAgentOs\Governance\Decision;
 use AiAgentOs\Mcp\Routes;
 
 defined( 'ABSPATH' ) || exit;
@@ -25,7 +26,7 @@ defined( 'ABSPATH' ) || exit;
  *     thing that decides who the current user is.
  *   - Application passwords are validated by WordPress core, which has already
  *     set the user by the time REST starts. There we only observe that the
- *     established user is an agent's shadow user.
+ *     established user is the agent's shadow user.
  *
  * Both run before mcp_adapter_init (rest_api_init priority 15), so the server
  * is always built with the agent already known.
@@ -72,7 +73,7 @@ final class AgentAuthenticator {
 	public function register(): void {
 		// Priority 30: after core's application-password handling at 20.
 		add_filter( 'determine_current_user', array( $this, 'determine_current_user' ), 30 );
-		// Last: whoever resolved it, an agent's shadow user is only ever an identity on the agent doors.
+		// Last: whoever resolved it, the agent's shadow user is only ever an identity on the agent doors.
 		add_filter( 'determine_current_user', array( $this, 'confine_shadow_users' ), 1000 );
 		add_action( 'rest_api_init', array( $this, 'bind_application_password_agent' ), 1 );
 
@@ -110,7 +111,7 @@ final class AgentAuthenticator {
 	 * Refuse a REST route to a shadow user unless it is its MCP address.
 	 *
 	 * Only the MCP route is governed. Everything else — WooCommerce's REST API
-	 * and its own MCP route included — is not, so an agent may not use it.
+	 * and its own MCP route included — is not, so the agent may not use it.
 	 *
 	 * @param mixed            $result  Response so far.
 	 * @param \WP_REST_Server  $server  Server.
@@ -132,11 +133,11 @@ final class AgentAuthenticator {
 			return $result;
 		}
 
-		return new \WP_Error( 'ai_agent_os_agent_route', __( 'An agent may use only its own MCP address.', 'zorem-ai-agent-connector' ), array( 'status' => 403 ) );
+		return new \WP_Error( 'ai_agent_os_agent_route', __( 'The agent may use only its MCP address.', 'zorem-ai-agent-connector' ), array( 'status' => 403 ) );
 	}
 
 	/**
-	 * Resolve a bearer token to an agent and adopt its shadow user.
+	 * Resolve a bearer token to the agent and adopt its shadow user.
 	 *
 	 * @param int|false $user_id User id resolved so far.
 	 * @return int|false
@@ -160,6 +161,15 @@ final class AgentAuthenticator {
 		}
 
 		if ( null === $resolver ) {
+			/*
+			 * Nothing we accept. With no Authorization header at all, the
+			 * likely cause is the web server dropping it before PHP runs
+			 * (CGI and FastCGI hosts do), so that is recorded apart from a
+			 * header we do not recognise. An application password that core
+			 * accepted is bound later, on rest_api_init, and clears neither.
+			 */
+			AgentContext::set_credential_problem( $this->bearer->has_authorization_header() ? Decision::INVALID_TOKEN : Decision::NO_CREDENTIALS );
+
 			return $user_id;
 		}
 
@@ -169,10 +179,15 @@ final class AgentAuthenticator {
 			/*
 			 * A token was presented and rejected. Leave the user unchanged
 			 * rather than falling back to whatever session may exist: the
-			 * caller asked to be treated as an agent, so it gets an agent's
-			 * answer, which here is "no".
+			 * caller asked to be treated as the agent, so it gets the agent's
+			 * answer, which here is "no". The resolver's reason survives the
+			 * reset; a resolver that gave none refused an unknown token.
 			 */
+			$problem  = AgentContext::credential_problem();
+			$named_id = AgentContext::credential_problem_agent_id();
+
 			AgentContext::reset();
+			AgentContext::set_credential_problem( '' !== $problem ? $problem : Decision::INVALID_TOKEN, $named_id );
 
 			return $user_id;
 		}
@@ -198,7 +213,7 @@ final class AgentAuthenticator {
 		}
 
 		/*
-		 * An agent with no account of its own must not inherit whoever is
+		 * The agent with no account of its own must not inherit whoever is
 		 * already signed in: its calls would run, and be logged, as that
 		 * person. It runs as nobody, and Agent::inactive_reason() refuses it.
 		 */
@@ -210,11 +225,11 @@ final class AgentAuthenticator {
 	}
 
 	/**
-	 * Refuse an agent's shadow user anywhere but its MCP address.
+	 * Refuse the agent's shadow user anywhere but its MCP address.
 	 *
-	 * That is the one door an agent is governed on. (Until 1.0.1 WooCommerce's
-	 * REST API was a second one, for keys issued to agents; it was removed,
-	 * and an agent reaches the store only through MCP abilities.) A shadow
+	 * That is the one door the agent is governed on. (Until 1.0.1 WooCommerce's
+	 * REST API was a second one, for keys issued to the agent; it was removed,
+	 * and the agent reaches the store only through MCP abilities.) A shadow
 	 * user can still be resolved elsewhere: an application password on one
 	 * works on every REST route, and a WooCommerce key someone made for it by
 	 * hand would match `/wp-json/wc/`. Nothing there logs or decides the
@@ -237,7 +252,7 @@ final class AgentAuthenticator {
 	}
 
 	/**
-	 * Recognise an agent behind an application-password session.
+	 * Recognise the agent behind an application-password session.
 	 */
 	public function bind_application_password_agent(): void {
 		if ( AgentContext::has() || ! Routes::is_governed_request() ) {
@@ -250,7 +265,7 @@ final class AgentAuthenticator {
 			return;
 		}
 
-		$agent = $this->agents->find_by_shadow_user( $user_id );
+		$agent = $this->agents->get_by_shadow_user( $user_id );
 
 		if ( ! $agent instanceof Agent ) {
 			return;

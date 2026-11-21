@@ -115,7 +115,7 @@ final class PostReader {
 	/**
 	 * One item, if it is of an allowed type and the current user may read it.
 	 *
-	 * Every refusal is "not found": an agent that may not read an item learns
+	 * Every refusal is "not found": the agent that may not read an item learns
 	 * nothing about whether it exists.
 	 *
 	 * @param int                $id         Item ID.

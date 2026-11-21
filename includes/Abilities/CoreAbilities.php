@@ -198,8 +198,12 @@ final class CoreAbilities {
 				'description' => __( 'The agent asking about itself.', 'zorem-ai-agent-connector' ),
 			),
 			'ai-agent-os-content'  => array(
-				'label'       => __( 'Posts, pages & terms', 'zorem-ai-agent-connector' ),
-				'description' => __( 'Read and change posts, pages, categories and tags.', 'zorem-ai-agent-connector' ),
+				'label'       => __( 'Posts', 'zorem-ai-agent-connector' ),
+				'description' => __( 'Read and change blog posts and their categories and tags.', 'zorem-ai-agent-connector' ),
+			),
+			'ai-agent-os-pages'    => array(
+				'label'       => __( 'Pages', 'zorem-ai-agent-connector' ),
+				'description' => __( 'Read and create pages.', 'zorem-ai-agent-connector' ),
 			),
 			'ai-agent-os-comments' => array(
 				'label'       => __( 'Comments', 'zorem-ai-agent-connector' ),
@@ -214,15 +218,15 @@ final class CoreAbilities {
 				'description' => __( 'Read the site\'s user list.', 'zorem-ai-agent-connector' ),
 			),
 			'ai-agent-os-menus'    => array(
-				'label'       => __( 'Navigation menus', 'zorem-ai-agent-connector' ),
+				'label'       => __( 'Menus', 'zorem-ai-agent-connector' ),
 				'description' => __( 'Read and change navigation menus.', 'zorem-ai-agent-connector' ),
 			),
 			'ai-agent-os-cpt'      => array(
-				'label'       => __( 'Custom post types', 'zorem-ai-agent-connector' ),
+				'label'       => __( 'Other content', 'zorem-ai-agent-connector' ),
 				'description' => __( 'Read and change custom post type items and their terms.', 'zorem-ai-agent-connector' ),
 			),
 			'ai-agent-os-site'     => array(
-				'label'       => __( 'Site tools', 'zorem-ai-agent-connector' ),
+				'label'       => __( 'Maintenance', 'zorem-ai-agent-connector' ),
 				'description' => __( 'Site statistics, post meta, active plugins and cache.', 'zorem-ai-agent-connector' ),
 			),
 		);

@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 
 use AiAgentOs\Abilities\CoreAbilities;
 use AiAgentOs\Admin\AdminMenu;
-use AiAgentOs\Agents\AgentFactory;
+use AiAgentOs\Agents\AgentLifecycle;
 use AiAgentOs\Agents\AgentRepository;
 use AiAgentOs\Agents\ShadowUserManager;
 use AiAgentOs\Agents\TokenService;
@@ -134,7 +134,15 @@ final class Plugin {
 		$this->container->get( ShadowUserManager::class )->register();
 		$this->container->get( AgentAuthenticator::class )->register();
 		$this->container->get( Mcp\NotFoundResponse::class )->register();
-		// The agent's own MCP address, given to it when it is set up.
+		// Whether this server passes the Authorization header on: Diagnostics, Site Health, the Connection section.
+		$this->container->get( Mcp\AuthorizationHeaderCheck::class )->register();
+		// A session the site has forgotten answers 404, so the client starts a new one (MCP specification).
+		$this->container->get( Mcp\SessionNotFound::class )->register();
+		// JSON-RPC batches are refused, by the adapter's own rule for what is a batch.
+		$this->container->get( Mcp\BatchRefusal::class )->register();
+		// Tool schemas in tools/list sent as valid JSON Schema ({} rather than []), which ChatGPT requires.
+		$this->container->get( Mcp\ToolSchemaNormalizer::class )->register();
+		// The agent's MCP address, given to it when it is set up.
 		$this->container->get( Mcp\AgentAddress::class )->register();
 		$this->container->get( McpBootstrap::class )->register();
 
@@ -167,6 +175,9 @@ final class Plugin {
 			 */
 			$menu = $this->container->get( AdminMenu::class );
 			$menu->register();
+
+			// The Black Friday offer: hooks itself only between its start and end dates.
+			$this->container->get( Admin\SeasonalOffer::class )->register();
 		}
 
 		/**
@@ -203,10 +214,9 @@ final class Plugin {
 		$c->set( TokenService::class, static fn (): TokenService => new TokenService() );
 		$c->set( ShadowUserManager::class, static fn (): ShadowUserManager => new ShadowUserManager() );
 		$c->set(
-			AgentFactory::class,
-			static fn ( Container $c ): AgentFactory => new AgentFactory(
+			AgentLifecycle::class,
+			static fn ( Container $c ): AgentLifecycle => new AgentLifecycle(
 				$c->get( AgentRepository::class ),
-				$c->get( ShadowUserManager::class ),
 				$c->get( TokenService::class )
 			)
 		);
@@ -226,9 +236,11 @@ final class Plugin {
 				$c->get( OAuth\OAuthStore::class ),
 				$c->get( OAuth\ClientResolver::class ),
 				$c->get( AgentRepository::class ),
-				$c->get( Settings::class )
+				$c->get( Settings::class ),
+				$c->get( OAuth\SignInRefusals::class )
 			)
 		);
+		$c->set( OAuth\SignInRefusals::class, static fn ( Container $c ): OAuth\SignInRefusals => new OAuth\SignInRefusals( $c->get( Mcp\LastRefusal::class ) ) );
 		$c->set(
 			OAuth\ConsentScreen::class,
 			static fn ( Container $c ): OAuth\ConsentScreen => new OAuth\ConsentScreen(
@@ -238,7 +250,8 @@ final class Plugin {
 				$c->get( PermissionRepository::class ),
 				$c->get( PermissionResolver::class ),
 				$c->get( AbilityInventory::class ),
-				$c->get( Settings::class )
+				$c->get( Settings::class ),
+				$c->get( GrantAuthority::class )
 			)
 		);
 		$c->set(
@@ -260,7 +273,7 @@ final class Plugin {
 		$c->set( AbilityInventory::class, static fn ( Container $c ): AbilityInventory => new AbilityInventory( $c->get( RiskClassifier::class ), $c->get( CapMapLoader::class ) ) );
 		$c->set( CapabilityBridge::class, static fn ( Container $c ): CapabilityBridge => new CapabilityBridge( $c->get( CapMapLoader::class ) ) );
 		$c->set( PermissionRepository::class, static fn (): PermissionRepository => new PermissionRepository() );
-		$c->set( \AiAgentOs\Agents\SiteAgent::class, static fn ( Container $c ): \AiAgentOs\Agents\SiteAgent => new \AiAgentOs\Agents\SiteAgent( $c->get( AgentFactory::class ), $c->get( AbilityInventory::class ), $c->get( PermissionRepository::class ) ) );
+		$c->set( \AiAgentOs\Agents\SiteAgent::class, static fn ( Container $c ): \AiAgentOs\Agents\SiteAgent => new \AiAgentOs\Agents\SiteAgent( $c->get( AgentRepository::class ), $c->get( ShadowUserManager::class ), $c->get( AbilityInventory::class ), $c->get( PermissionRepository::class ) ) );
 		$c->set(
 			PermissionResolver::class,
 			static fn ( Container $c ): PermissionResolver => new PermissionResolver( $c->get( PermissionRepository::class ), $c->get( RiskClassifier::class ), $c->get( AbilityInventory::class ), $c->get( Settings::class ), $c->get( GovernedAbilities::class ) )
@@ -279,8 +292,13 @@ final class Plugin {
 		$c->set( CustomerDataExposure::class, static fn ( Container $c ): CustomerDataExposure => new CustomerDataExposure( $c->get( CoveredAbilities::class ), $c->get( PermissionRepository::class ) ) );
 
 		// MCP.
-		$c->set( TransportPermission::class, static fn ( Container $c ): TransportPermission => new TransportPermission( $c->get( ActivityRecorder::class ) ) );
+		$c->set( Mcp\LastRefusal::class, static fn (): Mcp\LastRefusal => new Mcp\LastRefusal() );
+		$c->set( TransportPermission::class, static fn ( Container $c ): TransportPermission => new TransportPermission( $c->get( ActivityRecorder::class ), $c->get( Mcp\LastRefusal::class ) ) );
 		$c->set( Mcp\AgentAddress::class, static fn ( Container $c ): Mcp\AgentAddress => new Mcp\AgentAddress( $c->get( AgentRepository::class ) ) );
+		$c->set( Mcp\AuthorizationHeaderCheck::class, static fn ( Container $c ): Mcp\AuthorizationHeaderCheck => new Mcp\AuthorizationHeaderCheck( $c->get( BearerTokenResolver::class ) ) );
+		$c->set( Mcp\SessionNotFound::class, static fn (): Mcp\SessionNotFound => new Mcp\SessionNotFound() );
+		$c->set( Mcp\ToolSchemaNormalizer::class, static fn (): Mcp\ToolSchemaNormalizer => new Mcp\ToolSchemaNormalizer() );
+		$c->set( Mcp\BatchRefusal::class, static fn ( Container $c ): Mcp\BatchRefusal => new Mcp\BatchRefusal( $c->get( ActivityRecorder::class ) ) );
 		$c->set( ServerBuilder::class, static fn ( Container $c ): ServerBuilder => new ServerBuilder( $c->get( PermissionResolver::class ), $c->get( TransportPermission::class ), $c->get( Mcp\AgentAddress::class ) ) );
 		$c->set( McpBootstrap::class, static fn ( Container $c ): McpBootstrap => new McpBootstrap( $c->get( Requirements::class ), $c->get( Settings::class ), $c->get( ServerBuilder::class ) ) );
 
@@ -298,5 +316,6 @@ final class Plugin {
 			AdminMenu::class,
 			static fn ( Container $c ): AdminMenu => new AdminMenu( $c->get( Requirements::class ) )
 		);
+		$c->set( Admin\SeasonalOffer::class, static fn (): Admin\SeasonalOffer => new Admin\SeasonalOffer() );
 	}
 }

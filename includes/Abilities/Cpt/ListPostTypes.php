@@ -35,7 +35,7 @@ final class ListPostTypes {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'List post types', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'See which content types the site has', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Lists the post types the content abilities can read and change (posts, pages and custom post types), with their taxonomies, and the ones they cannot, with the reason. Call this before using a custom post type.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-cpt',
 			'input_schema'        => Schema::input( array() ),
@@ -81,7 +81,7 @@ final class ListPostTypes {
 	 *
 	 * Excluded types are listed only when they have an admin screen: the
 	 * dozen internal types WordPress registers are not something a person
-	 * would ask an agent about, and listing them would bury the ones that are.
+	 * would ask the agent about, and listing them would bury the ones that are.
 	 *
 	 * @return array<string, mixed>
 	 */

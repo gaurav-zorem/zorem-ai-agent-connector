@@ -38,7 +38,7 @@ final class UpdateMenuItem {
 		) + MenuItemWriter::properties();
 
 		return array(
-			'label'               => __( 'Update menu item', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Edit a menu link', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Changes a menu item\'s title, link, parent or position. Only the fields sent are changed.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-menus',
 			'input_schema'        => Schema::input( $properties, array( 'menu_id', 'item_id' ) ),

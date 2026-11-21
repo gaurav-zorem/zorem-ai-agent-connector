@@ -115,8 +115,7 @@ final class BridgeRegistration {
 		$labels = array_merge(
 			Governance\Decision::labels(),
 			array(
-				CorePermissionAuthority::NOT_AN_AGENT => __( 'This identity is not an agent of this site.', 'zorem-ai-agent-connector' ),
-				'invalid_token'                       => __( 'The agent token was not recognised.', 'zorem-ai-agent-connector' ),
+				CorePermissionAuthority::NOT_AN_AGENT => __( 'This identity is not the agent of this site.', 'zorem-ai-agent-connector' ),
 				'ability_error'                       => __( 'The ability ran and returned an error.', 'zorem-ai-agent-connector' ),
 			)
 		);

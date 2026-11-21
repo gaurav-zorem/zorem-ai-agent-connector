@@ -38,7 +38,7 @@ final class GetActivePlugins {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Get active plugins', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'See installed plugins', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Lists the plugins active on the site, with name, slug and version. Use it to find out which features (SEO, shop, forms, languages) the site has.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-site',
 			'input_schema'        => Schema::input( array() ),

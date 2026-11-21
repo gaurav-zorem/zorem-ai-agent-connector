@@ -39,7 +39,7 @@ final class UpdateTerm {
 		$properties = array( 'id' => Schema::id( __( 'The term ID.', 'zorem-ai-agent-connector' ) ) ) + TermWriter::properties( true );
 
 		return array(
-			'label'               => __( 'Update term', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Rename or edit a category or tag', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Changes a category, tag or custom taxonomy term\'s name, slug, description or parent. Only the fields sent are changed. Changing a slug changes the term\'s web address.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-cpt',
 			'input_schema'        => Schema::input( $properties, array( 'id' ) ),

@@ -13,6 +13,7 @@ use AiAgentOs\Agents\Agent;
 use AiAgentOs\Agents\AgentRepository;
 use AiAgentOs\Core\Settings;
 use AiAgentOs\Governance\AbilityInventory;
+use AiAgentOs\Governance\GrantAuthority;
 use AiAgentOs\Governance\PermissionRepository;
 use AiAgentOs\Governance\PermissionResolver;
 
@@ -45,7 +46,12 @@ final class ConsentScreen {
 	/**
 	 * The one form error: Approve came back with nothing active to connect as.
 	 */
-	public const ERROR_CHOOSE_AGENT = 'choose_agent';
+	public const ERROR_INACTIVE = 'agent_inactive';
+
+	/**
+	 * Agent meta: apps an administrator chose not to be asked about again, client id => user id => time.
+	 */
+	public const TRUST_META = 'trusted_apps';
 
 	/**
 	 * Client identification.
@@ -111,6 +117,13 @@ final class ConsentScreen {
 	private string $hook_suffix = '';
 
 	/**
+	 * Who may hand out which grants.
+	 *
+	 * @var GrantAuthority|null
+	 */
+	private ?GrantAuthority $authority;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ClientResolver       $clients     Client identification.
@@ -120,6 +133,7 @@ final class ConsentScreen {
 	 * @param PermissionResolver   $resolver    The permission authority.
 	 * @param AbilityInventory     $inventory   Live ability registry.
 	 * @param Settings             $settings    Plugin settings.
+	 * @param GrantAuthority|null  $authority   Who may hand out which grants.
 	 */
 	public function __construct(
 		ClientResolver $clients,
@@ -128,7 +142,8 @@ final class ConsentScreen {
 		PermissionRepository $permissions,
 		PermissionResolver $resolver,
 		AbilityInventory $inventory,
-		Settings $settings
+		Settings $settings,
+		?GrantAuthority $authority = null
 	) {
 		$this->clients     = $clients;
 		$this->store       = $store;
@@ -137,6 +152,7 @@ final class ConsentScreen {
 		$this->resolver    = $resolver;
 		$this->inventory   = $inventory;
 		$this->settings    = $settings;
+		$this->authority   = $authority;
 	}
 
 	/**
@@ -146,6 +162,7 @@ final class ConsentScreen {
 		add_action( 'admin_menu', array( $this, 'add_page' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle' ) );
+		add_filter( 'login_message', array( $this, 'login_message' ) );
 	}
 
 	/**
@@ -219,9 +236,21 @@ final class ConsentScreen {
 		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited, WordPress.Variables.GlobalVariables -- Core reads the screen title from this global; there is no API for a menu-less page.
 		$title = __( 'Connect a client', 'zorem-ai-agent-connector' );
 
-		if ( ! current_user_can( \AiAgentOs\Core\Capabilities::MANAGE ) || ! OAuthEndpoints::is_available() || ! $this->settings->bool( 'mcp_enabled' ) ) {
-			return;
+		if ( current_user_can( \AiAgentOs\Core\Capabilities::MANAGE ) && OAuthEndpoints::is_available() && $this->settings->bool( 'mcp_enabled' ) ) {
+			$this->validate();
 		}
+
+		/*
+		 * The approval is its own small page, sized for the popup window an
+		 * app opens: printed here, before the admin header, and ended there.
+		 */
+		$this->render();
+	}
+
+	/**
+	 * Validate the request, and connect a trusted app at once.
+	 */
+	private function validate(): void {
 
 		/*
 		 * A request that fails validation is explained on this screen, never
@@ -234,6 +263,102 @@ final class ConsentScreen {
 		$ai_agent_os_query = map_deep( wp_unslash( $_GET ), 'sanitize_text_field' );
 
 		$this->current = AuthorizationRequest::from_params( self::request_params( (array) $ai_agent_os_query ), $this->clients );
+
+		if ( $this->current instanceof AuthorizationRequest ) {
+			$this->maybe_connect_trusted( $this->current );
+		}
+	}
+
+	/**
+	 * Say why the login form is there when an app's connect window landed on it.
+	 *
+	 * @param string $message Login screen message.
+	 */
+	public function login_message( $message ): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.CSRF.NonceVerification -- Read only: picks a fixed message.
+		$redirect = isset( $_REQUEST['redirect_to'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['redirect_to'] ) ) : '';
+
+		if ( false === strpos( $redirect, 'page=' . OAuthEndpoints::CONSENT_PAGE ) ) {
+			return (string) $message;
+		}
+
+		return (string) $message . '<p class="message">' . esc_html__( 'Log in as an administrator to connect your AI app. You’ll approve the connection on the next step.', 'zorem-ai-agent-connector' ) . '</p>';
+	}
+
+	/**
+	 * Connect at once an app the administrator said not to ask about again.
+	 *
+	 * Only while the agent can still only look (no changes, no deletes,
+	 * customer details hidden): the moment its permissions grow, the question
+	 * is asked again. The code still goes only to the app's own address.
+	 *
+	 * @param AuthorizationRequest $request Validated request.
+	 */
+	private function maybe_connect_trusted( AuthorizationRequest $request ): void {
+		$agent = $this->agents->get();
+
+		if ( ! $agent instanceof Agent || ! $agent->is_active() || ! $this->address_is_current( $request ) ) {
+			return;
+		}
+
+		if ( ! $this->is_trusted( $agent, (string) $request->client()['client_id'] ) || ! $this->only_looks( $agent ) || ! $this->may_hand_out( $agent ) ) {
+			return;
+		}
+
+		$code = $this->approve( $request, $agent );
+
+		if ( ! is_wp_error( $code ) ) {
+			$this->redirect( $request->redirect_with( array( 'code' => (string) $code ) ) );
+		}
+	}
+
+	/**
+	 * Whether the current administrator trusts an app on the agent.
+	 *
+	 * @param Agent  $agent     The agent.
+	 * @param string $client_id The app's client id.
+	 */
+	private function is_trusted( Agent $agent, string $client_id ): bool {
+		$trusted = (array) $agent->meta( self::TRUST_META, array() );
+
+		return '' !== $client_id && isset( $trusted[ $client_id ][ get_current_user_id() ] );
+	}
+
+	/**
+	 * Remember that the current administrator trusts an app on the agent.
+	 *
+	 * @param Agent  $agent     The agent.
+	 * @param string $client_id The app's client id.
+	 */
+	private function trust( Agent $agent, string $client_id ): void {
+		$trusted = (array) $agent->meta( self::TRUST_META, array() );
+
+		$trusted[ $client_id ]                           = (array) ( $trusted[ $client_id ] ?? array() );
+		$trusted[ $client_id ][ get_current_user_id() ] = time();
+
+		$this->agents->update_meta( array( self::TRUST_META => array_slice( $trusted, -20, null, true ) ) );
+	}
+
+	/**
+	 * Whether the agent can only look: no tool that changes, no deletes, customer details hidden.
+	 *
+	 * @param Agent $agent The agent.
+	 */
+	private function only_looks( Agent $agent ): bool {
+		if ( $this->resolver->destructive_allowed( $agent ) || ! $agent->masks_pii() ) {
+			return false;
+		}
+
+		$descriptors = $this->inventory->descriptors();
+
+		foreach ( $this->resolver->granted_ability_names( $agent ) as $name ) {
+			// Write on a view-only ability allows only viewing, so it does not count.
+			if ( PermissionRepository::LEVEL_WRITE === $this->permissions->get_grant( $agent->get_id(), $name ) && 'read' !== (string) ( $descriptors[ $name ]['risk'] ?? 'write' ) ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -243,10 +368,9 @@ final class ConsentScreen {
 		$ai_agent_os_refusal = null;
 		$ai_agent_os_request = null;
 		$ai_agent_os_agent   = null;
-		$ai_agent_os_bound   = null;
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.CSRF.NonceVerification -- Display only: picks which fixed message to show.
-		$ai_agent_os_form_error = isset( $_GET[ self::ERROR_ARG ] ) && self::ERROR_CHOOSE_AGENT === sanitize_key( wp_unslash( $_GET[ self::ERROR_ARG ] ) );
+		$ai_agent_os_form_error = isset( $_GET[ self::ERROR_ARG ] ) && self::ERROR_INACTIVE === sanitize_key( wp_unslash( $_GET[ self::ERROR_ARG ] ) );
 
 		if ( ! current_user_can( \AiAgentOs\Core\Capabilities::MANAGE ) ) {
 			$ai_agent_os_refusal = __( 'Only a site administrator can connect a client to this site. Ask an administrator to sign in and start the connection again — nothing has been changed.', 'zorem-ai-agent-connector' );
@@ -256,29 +380,22 @@ final class ConsentScreen {
 			$ai_agent_os_refusal = (string) OAuthEndpoints::unavailable_reason();
 		} elseif ( is_wp_error( $this->current ) ) {
 			$ai_agent_os_refusal = $this->current->get_error_message();
-		} elseif ( $this->current instanceof AuthorizationRequest && '' !== $this->current->agent_code() && ! $this->bound_agent( $this->current ) instanceof Agent ) {
-			// Signing in to an agent's own address that no active agent has (any more).
-			$ai_agent_os_refusal = __( 'The client is signing in to an MCP address that belongs to no active agent on this site — it may have been replaced, or the agent revoked. Copy the agent’s current address from its Connection panel and add it to the client again.', 'zorem-ai-agent-connector' );
+		} elseif ( $this->current instanceof AuthorizationRequest && ! $this->address_is_current( $this->current ) ) {
+			// Signing in at an MCP address that has been replaced.
+			$ai_agent_os_refusal = __( 'The client is signing in at an MCP address that is no longer this site’s — it may have been replaced. Copy the current address from the agent’s Connection panel and add it to the client again.', 'zorem-ai-agent-connector' );
 		} elseif ( $this->current instanceof AuthorizationRequest ) {
 			$ai_agent_os_request = $this->current;
-			$ai_agent_os_bound   = $this->bound_agent( $this->current );
 
-			/*
-			 * The address decides what the client connects as; nothing is
-			 * chosen here. The summary is shown only when it matches the
-			 * address, so the screen can never describe one thing and approve
-			 * another.
-			 */
+			// Null while the agent is revoked or expired: there is nothing to approve.
 			$ai_agent_os_agent = $this->agent_summary();
-
-			if ( $ai_agent_os_bound instanceof Agent && ( null === $ai_agent_os_agent || (int) $ai_agent_os_agent['id'] !== $ai_agent_os_bound->get_id() ) ) {
-				$ai_agent_os_agent = null;
-			}
 		} else {
 			$ai_agent_os_refusal = __( 'This page is opened by a client asking to connect. There is no request to approve.', 'zorem-ai-agent-connector' );
 		}
 
-		require AI_AGENT_OS_PATH . 'includes/Admin/Screen/partials/connect-consent.php';
+		$ai_agent_os_cards     = null === $ai_agent_os_agent ? array() : array( $ai_agent_os_agent );
+		$ai_agent_os_form_text = __( 'Nothing on this site is active to connect as any more. Start the connection again from the app.', 'zorem-ai-agent-connector' );
+
+		require AI_AGENT_OS_PATH . 'includes/Admin/Screen/partials/connect-popup.php';
 	}
 
 	/**
@@ -313,27 +430,28 @@ final class ConsentScreen {
 			$this->redirect( $request->redirect_with( array( 'error' => 'access_denied' ) ) );
 		}
 
-		$agent = $this->agents->find( isset( $_POST['agent'] ) ? absint( $_POST['agent'] ) : 0 );
+		$agent = $this->agents->get();
 
 		/*
-		 * Re-checked here rather than trusted from the list that was rendered:
-		 * the agent may have been revoked or expired since the page loaded, and
-		 * a posted id is just a number anybody with the nonce could change.
+		 * Re-checked here rather than trusted from the page that was rendered:
+		 * the agent may have been revoked or expired since it loaded, or the
+		 * address replaced.
 		 */
 		if ( ! $agent instanceof Agent || ! $agent->is_active() ) {
-			$this->back_to_screen( $request, self::ERROR_CHOOSE_AGENT );
+			$this->back_to_screen( $request, self::ERROR_INACTIVE );
+		}
+
+		if ( ! $this->address_is_current( $request ) ) {
+			wp_die( esc_html__( 'This MCP address has been replaced. Add the agent’s current address to the client and connect again.', 'zorem-ai-agent-connector' ), 400 );
 		}
 
 		/*
-		 * At an agent's own address only that agent can be connected, whatever
-		 * was posted: the address is what the client was given for it.
+		 * Approving hands the client a credential for every grant the agent
+		 * holds. A delegated agent manager may only hand out access they could
+		 * have granted themselves, the same rule as issuing a token.
 		 */
-		if ( '' !== $request->agent_code() ) {
-			$bound = $this->bound_agent( $request );
-
-			if ( ! $bound instanceof Agent || $bound->get_id() !== $agent->get_id() ) {
-				wp_die( esc_html__( 'This MCP address belongs to a different agent. Only that agent can be connected here.', 'zorem-ai-agent-connector' ), 400 );
-			}
+		if ( ! $this->may_hand_out( $agent ) ) {
+			wp_die( esc_html__( 'This agent is allowed to use tools that need WordPress capabilities you do not have, so you cannot connect a client to it. An administrator can.', 'zorem-ai-agent-connector' ), 403 );
 		}
 
 		$code = $this->approve( $request, $agent );
@@ -342,11 +460,35 @@ final class ConsentScreen {
 			$this->redirect( $request->redirect_with( array( 'error' => 'server_error' ) ) );
 		}
 
+		// "Don't ask again": kept only for an agent that can only look, checked again here.
+		if ( ! empty( $_POST['trust'] ) && $this->only_looks( $agent ) ) {
+			$this->trust( $agent, (string) $request->client()['client_id'] );
+		}
+
 		$this->redirect( $request->redirect_with( array( 'code' => (string) $code ) ) );
 	}
 
 	/**
-	 * Issue an authorization code for the chosen agent.
+	 * Whether the current user could have granted everything the agent holds.
+	 *
+	 * An administrator always can, so this only ever narrows a delegated
+	 * agent manager. Without the authority service (unit tests), only an
+	 * administrator may approve.
+	 *
+	 * @param Agent $agent The agent.
+	 */
+	private function may_hand_out( Agent $agent ): bool {
+		if ( null === $this->authority ) {
+			return current_user_can( 'manage_options' );
+		}
+
+		list( , $refused ) = $this->authority->split( $this->permissions->get_grants( $agent->get_id() ), get_current_user_id() );
+
+		return array() === $refused;
+	}
+
+	/**
+	 * Issue an authorization code for the agent.
 	 *
 	 * Nothing about the agent changes except a note of the latest sign-in,
 	 * which the Connection screen shows. Its grants are not touched.
@@ -359,7 +501,6 @@ final class ConsentScreen {
 		$client = $request->client();
 
 		$this->agents->update_meta(
-			$agent->get_id(),
 			array(
 				'oauth' => array(
 					'client_id'     => (string) $client['client_id'],
@@ -386,20 +527,12 @@ final class ConsentScreen {
 	}
 
 	/**
-	 * The active agent whose own address the client is signing in to, or null.
+	 * Whether the client is signing in at the agent's current MCP address.
 	 *
 	 * @param AuthorizationRequest $request Validated request.
 	 */
-	private function bound_agent( AuthorizationRequest $request ): ?Agent {
-		$code = $request->agent_code();
-
-		if ( '' === $code ) {
-			return null;
-		}
-
-		$agent = ( new \AiAgentOs\Mcp\AgentAddress( $this->agents ) )->agent_for( $code );
-
-		return $agent instanceof Agent && $agent->is_active() ? $agent : null;
+	private function address_is_current( AuthorizationRequest $request ): bool {
+		return ( new \AiAgentOs\Mcp\AgentAddress( $this->agents ) )->matches( $request->agent_code() );
 	}
 
 	/**
@@ -419,22 +552,26 @@ final class ConsentScreen {
 	private function agent_summary(): ?array {
 		$descriptors = $this->inventory->descriptors();
 
-		foreach ( array_filter( array( $this->agents->current() ) ) as $agent ) {
-			if ( ! $agent->is_active() ) {
-				continue;
-			}
+		$agent = $this->agents->get();
 
+		if ( $agent instanceof Agent && $agent->is_active() ) {
 			$tools  = array();
 			$writes = 0;
 
 			foreach ( $this->resolver->granted_ability_names( $agent ) as $name ) {
 				$level = $this->permissions->get_grant( $agent->get_id(), $name );
+				$risk  = (string) ( $descriptors[ $name ]['risk'] ?? 'read' );
+
+				// Write on a view-only ability allows exactly what read does.
+				if ( 'read' === $risk && PermissionRepository::LEVEL_WRITE === $level ) {
+					$level = PermissionRepository::LEVEL_READ;
+				}
 
 				$tools[] = array(
 					'name'  => $name,
 					'label' => (string) ( $descriptors[ $name ]['label'] ?? $name ),
 					'level' => $level,
-					'risk'  => (string) ( $descriptors[ $name ]['risk'] ?? 'read' ),
+					'risk'  => $risk,
 				);
 
 				if ( PermissionRepository::LEVEL_WRITE === $level ) {
@@ -467,6 +604,10 @@ final class ConsentScreen {
 
 			return array(
 				'id'          => $agent->get_id(),
+				'writes'      => $writes,
+				'destructive' => $this->resolver->destructive_allowed( $agent ),
+				'masks'       => $agent->masks_pii(),
+				'hides'       => $hides,
 				'name'        => $agent->get_name(),
 				'description' => (string) $agent->meta( 'description', '' ),
 				'acts_for'    => Agent::acts_for_label( $agent->get_acts_for() ),

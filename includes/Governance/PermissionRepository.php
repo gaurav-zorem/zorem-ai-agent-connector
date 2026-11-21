@@ -14,7 +14,7 @@ use AiAgentOs\Core\Installer;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Stores the per-agent, per-ability allow-list.
+ * Stores the agent's per-ability allow-list.
  */
 final class PermissionRepository {
 
@@ -46,7 +46,7 @@ final class PermissionRepository {
 	}
 
 	/**
-	 * All grants for an agent, as ability name => grant level.
+	 * All grants for the agent, as ability name => grant level.
 	 *
 	 * Rows recorded as 'none' are returned as well. They are an explicit,
 	 * audited "no" from an admin rather than an absence, and the matrix screen
@@ -153,7 +153,7 @@ final class PermissionRepository {
 	}
 
 	/**
-	 * Set every existing grant for an agent to 'none'.
+	 * Set every existing grant for the agent to 'none'.
 	 *
 	 * Used by the "revoke all permissions" action. The rows are kept rather
 	 * than deleted so the admin's decision stays visible in the matrix.
@@ -182,7 +182,7 @@ final class PermissionRepository {
 	}
 
 	/**
-	 * Remove every permission row for an agent. Used when deleting the agent.
+	 * Remove every permission row for the agent. Used when deleting the agent.
 	 *
 	 * @param int $agent_id Agent id.
 	 */
@@ -196,7 +196,7 @@ final class PermissionRepository {
 	}
 
 	/**
-	 * How many abilities an agent can actually use, by level.
+	 * How many abilities the agent can actually use, by level.
 	 *
 	 * @param int $agent_id Agent id.
 	 * @return array{read: int, write: int, total: int}

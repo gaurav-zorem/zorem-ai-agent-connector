@@ -15,10 +15,10 @@ use AiAgentOs\Core\Settings;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Decides what an agent may do.
+ * Decides what the agent may do.
  *
  * This is the single authority. Both enforcement points call it: the MCP
- * server builder, to decide which tools an agent can even see, and AbilityGate,
+ * server builder, to decide which tools the agent can even see, and AbilityGate,
  * to decide whether a call may proceed. Neither is trusted on its own, and
  * neither reimplements the rules.
  *
@@ -87,7 +87,7 @@ final class PermissionResolver {
 	}
 
 	/**
-	 * Decide whether an agent may use an ability.
+	 * Decide whether the agent may use an ability.
 	 *
 	 * @param Agent       $agent   The agent.
 	 * @param \WP_Ability $ability The ability.
@@ -145,7 +145,7 @@ final class PermissionResolver {
 	}
 
 	/**
-	 * Whether an agent may use an ability, by name.
+	 * Whether the agent may use an ability, by name.
 	 *
 	 * @param Agent  $agent        The agent.
 	 * @param string $ability_name Ability name.
@@ -212,7 +212,7 @@ final class PermissionResolver {
 	/**
 	 * Whether destructive abilities may run for this agent.
 	 *
-	 * The agent's own switch decides. It is off for every new agent (no
+	 * The agent's own switch decides. It is off when the agent is set up (no
 	 * profile turns it on), so a destructive ability is ungrantable by
 	 * default and takes a deliberate act on that agent's page. The site-wide
 	 * master switch that also had to be on was removed in 1.0.1.

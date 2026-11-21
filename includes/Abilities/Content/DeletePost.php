@@ -36,7 +36,7 @@ final class DeletePost {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Delete post', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Move a blog post to the trash', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Moves a blog post to the trash, where a person can restore it. It is never deleted permanently.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-content',
 			'input_schema'        => Schema::input(

@@ -25,6 +25,7 @@ defined( 'ABSPATH' ) || exit;
 require_once __DIR__ . '/../partials/services.php';
 require_once __DIR__ . '/../renderer.php';
 require_once __DIR__ . '/../section-map.php';
+require_once __DIR__ . '/../partials/locked.php';
 
 /**
  * Dispatch one of our own admin routes internally.
@@ -73,25 +74,33 @@ $ai_agent_os_settings = (array) ( $ai_agent_os_fetch( '/settings' )['settings'] 
 			<?php
 			ai_agent_os_section_header(
 				__( 'General', 'zorem-ai-agent-connector' ),
-				__( 'How the endpoint behaves, and what is kept.', 'zorem-ai-agent-connector' ),
+				__( 'Whether AI apps can connect, and what is kept.', 'zorem-ai-agent-connector' ),
 				true
 			);
 			?>
 
-			<div class="zui-card">
+			<div class="zui-card aaos-aligned">
 				<?php
 				ai_agent_os_render_fields(
 					array(
 						'mcp_enabled'              => array(
 							'type'  => 'toggle',
-							'title' => __( 'Enable the MCP endpoint', 'zorem-ai-agent-connector' ),
-							'desc'  => __( 'Turning this off closes the endpoint entirely. Your agent and its permissions are kept.', 'zorem-ai-agent-connector' ),
+							'title'   => __( 'Allow AI apps to connect', 'zorem-ai-agent-connector' ),
+							'desc'    => __( 'Off blocks every agent address. Agents and permissions are kept.', 'zorem-ai-agent-connector' ),
+							'tooltip' => __( 'This is the MCP endpoint every agent address uses. Turn it off to stop all AI apps at once.', 'zorem-ai-agent-connector' ),
 							'value' => ! empty( $ai_agent_os_settings['mcp_enabled'] ),
+						),
+						'oauth_grok_registration'  => array(
+							'type'  => 'toggle',
+							'title'   => __( 'Let Grok sign in', 'zorem-ai-agent-connector' ),
+							'desc'    => __( 'Allow Grok (grok.com) connectors to sign in.', 'zorem-ai-agent-connector' ),
+							'tooltip' => __( 'Grok has to register with this site first. Only Grok’s own addresses (grok.com, x.ai) may register, and you still approve every connection. Turning it off disconnects Grok.', 'zorem-ai-agent-connector' ),
+							'value' => ! empty( $ai_agent_os_settings['oauth_grok_registration'] ),
 						),
 						'delete_data_on_uninstall' => array(
 							'type'  => 'toggle',
-							'title' => __( 'Delete all data when uninstalling', 'zorem-ai-agent-connector' ),
-							'desc'  => __( 'Off by default. When off, deleting the plugin leaves your agent and its permissions in place.', 'zorem-ai-agent-connector' ),
+							'title'   => __( 'Delete all data when uninstalling', 'zorem-ai-agent-connector' ),
+							'desc'    => __( 'Off keeps your agent and its permissions if the plugin is removed.', 'zorem-ai-agent-connector' ),
 							'value' => ! empty( $ai_agent_os_settings['delete_data_on_uninstall'] ),
 						),
 					)
@@ -99,6 +108,23 @@ $ai_agent_os_settings = (array) ( $ai_agent_os_fetch( '/settings' )['settings'] 
 				?>
 			</div>
 		</form>
+
+		<?php // The Activity Log's settings, as locked PRO rows. ?>
+		<div class="zui-card aaos-locked-settings">
+			<div class="zui-card__head">
+				<h3 class="zui-card__title"><?php esc_html_e( 'Activity Log', 'zorem-ai-agent-connector' ); ?></h3>
+				<?php ai_agent_os_pro_badge(); ?>
+			</div>
+			<div class="zui-lock-section__preview">
+				<?php
+				ai_agent_os_locked_row( __( 'Keep activity for (days)', 'zorem-ai-agent-connector' ), __( 'How long each call your agents make is kept, from 7 to 365 days.', 'zorem-ai-agent-connector' ), 'number' );
+				ai_agent_os_locked_row( __( 'Keep the full request and reply', 'zorem-ai-agent-connector' ), __( 'Open any entry later to see what the AI asked for and what was sent back.', 'zorem-ai-agent-connector' ) );
+				?>
+			</div>
+			<p class="aaos-locked-settings__cta">
+				<a class="zui-btn zui-btn-secondary" href="<?php echo esc_url( ai_agent_os_upgrade_url( 'settings' ) ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Upgrade to PRO', 'zorem-ai-agent-connector' ); ?></a>
+			</p>
+		</div>
 
 		<?php ai_agent_os_section_close(); ?>
 

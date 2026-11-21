@@ -44,7 +44,7 @@ final class SiteStatistics {
 		);
 
 		return array(
-			'label'               => __( 'Site statistics', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'See site totals (posts, pages, users)', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Counts the site\'s content: posts, pages and custom post type items by status, comments by status, media files, categories, tags and users.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-site',
 			'input_schema'        => Schema::input( array() ),

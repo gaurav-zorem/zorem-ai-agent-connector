@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
  *   a token — MCP or REST. It lasts for the request.
  * - **A run-as stack** (`run_as()`): an identity pushed for one callback and
  *   popped in a `finally`, whatever happens. It holds a bridge `AgentRef`, so it
- *   can carry an agent (`agent:<uuid>`, with its record) or another plugin's
+ *   can carry the agent (`agent:<uuid>`, with its record) or another plugin's
  *   identity, such as another plugin's `exp:storefront`, which has no agent
  *   record here.
  *
@@ -64,6 +64,20 @@ final class AgentContext {
 	private static string $channel = '';
 
 	/**
+	 * Why the credential on this request was refused (a Decision reason), '' when none was.
+	 *
+	 * @var string
+	 */
+	private static string $credential_problem = '';
+
+	/**
+	 * The agent a refused credential was issued to, 0 when it names nobody.
+	 *
+	 * @var int
+	 */
+	private static int $credential_problem_agent = 0;
+
+	/**
 	 * Set the authenticated agent.
 	 *
 	 * @param Agent $agent The agent.
@@ -80,7 +94,7 @@ final class AgentContext {
 	 * Run a callback as an identity; restored afterwards, whatever happens.
 	 *
 	 * @param AgentRef   $ref      The identity.
-	 * @param Agent|null $agent    Its agent record, when it is an agent of this plugin.
+	 * @param Agent|null $agent    Its agent record, when it is the agent of this plugin.
 	 * @param callable   $callback Work.
 	 * @return mixed The callback's return value.
 	 */
@@ -120,7 +134,7 @@ final class AgentContext {
 	}
 
 	/**
-	 * Whether an agent is acting.
+	 * Whether the agent is acting.
 	 */
 	public static function has(): bool {
 		return self::get() instanceof Agent;
@@ -166,9 +180,42 @@ final class AgentContext {
 	 * Forget everything. For tests and for the end of a long-running process.
 	 */
 	public static function reset(): void {
-		self::$agent      = null;
-		self::$stack      = array();
-		self::$request_id = null;
-		self::$channel    = '';
+		self::$agent                    = null;
+		self::$stack                    = array();
+		self::$request_id               = null;
+		self::$channel                  = '';
+		self::$credential_problem       = '';
+		self::$credential_problem_agent = 0;
+	}
+
+	/**
+	 * Record why this request's credential was refused.
+	 *
+	 * A refused credential leaves no agent behind, and "no agent" used to be
+	 * all the transport could say: a stripped Authorization header, an
+	 * unknown token, an expired one and one issued for another address all
+	 * looked the same. The resolver that refused it knows which, so it says
+	 * so here.
+	 *
+	 * @param string $reason   A Decision reason.
+	 * @param int    $agent_id The agent the credential was issued to, 0 when it names nobody.
+	 */
+	public static function set_credential_problem( string $reason, int $agent_id = 0 ): void {
+		self::$credential_problem       = $reason;
+		self::$credential_problem_agent = max( 0, $agent_id );
+	}
+
+	/**
+	 * Why this request's credential was refused, '' when nothing was recorded.
+	 */
+	public static function credential_problem(): string {
+		return self::$credential_problem;
+	}
+
+	/**
+	 * The agent a refused credential was issued to, 0 when it names nobody.
+	 */
+	public static function credential_problem_agent_id(): int {
+		return self::$credential_problem_agent;
 	}
 }

@@ -42,7 +42,7 @@ final class GetPosts {
 		);
 
 		return array(
-			'label'               => __( 'Get posts', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'See blog posts', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Lists blog posts (published, draft, pending or scheduled), newest first, with title, status, link and excerpt. Call get-post for the full content.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-content',
 			'input_schema'        => Schema::input( $properties ),

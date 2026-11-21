@@ -1,6 +1,6 @@
 <?php
 /**
- * Whether an agent can actually see customer personal data.
+ * Whether the agent can actually see customer personal data.
  *
  * @package AiAgentOs
  */
@@ -18,11 +18,10 @@ defined( 'ABSPATH' ) || exit;
  *
  * ## Why this class exists
  *
- * The agents list used to render this column as `agent.pii_masked ? 'Masked' :
- * 'Visible'` — the raw state of one toggle. A storefront plugin, which holds
- * no ability that can return a customer record at all, therefore read
- * **"Visible"**. An administrator scanning that column for the row to worry
- * about would have found the one agent that cannot see a customer if it tried.
+ * The Agent screen used to render this as `agent.pii_masked ? 'Masked' :
+ * 'Visible'` — the raw state of one toggle. With no ability that can return a
+ * customer record granted, it still read **"Visible"**, although the agent
+ * could not see a customer if it tried.
  *
  * The audit called that its worst misreading, and it is worth being precise
  * about why: the old column was not *wrong* about the toggle. It was answering

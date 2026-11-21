@@ -2,9 +2,8 @@
 /**
  * The Agent tab: this site's agent, its permissions and its connection.
  *
- * The site has one agent, the Admin Assistant, provisioned on the first admin
- * page after activation (SiteAgent). There is no list and no chooser: the tab
- * opens on the agent itself.
+ * The agent is the Admin Assistant, set up on the first admin page after
+ * activation (SiteAgent). The tab opens on the agent itself.
  *
  * @package AiAgentOs
  */
@@ -23,7 +22,7 @@ require_once __DIR__ . '/../section-map.php';
  */
 $ai_agent_os_repository = ai_agent_os_service( \AiAgentOs\Agents\AgentRepository::class );
 
-$ai_agent_os_agent = $ai_agent_os_repository->current();
+$ai_agent_os_agent = $ai_agent_os_repository->get();
 
 if ( ! $ai_agent_os_agent instanceof \AiAgentOs\Agents\Agent ) :
 	?>
@@ -41,6 +40,17 @@ if ( ! $ai_agent_os_agent instanceof \AiAgentOs\Agents\Agent ) :
 	return;
 endif;
 
-$ai_agent_os_agent_id = $ai_agent_os_agent->get_id();
+/*
+ * The tab opens on the agents list, as in AI Agent OS PRO; the agent's own
+ * page is `view=agent`, and any `section=` link (Connect, Access & safety…)
+ * lands there too, so links sent from elsewhere keep working.
+ */
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.CSRF.NonceVerification -- Read-only view state.
+$ai_agent_os_open_agent = ( isset( $_GET['view'] ) && 'agent' === sanitize_key( wp_unslash( $_GET['view'] ) ) ) || isset( $_GET['section'] );
+
+if ( ! $ai_agent_os_open_agent ) {
+	require __DIR__ . '/../partials/agent-list.php';
+	return;
+}
 
 require __DIR__ . '/../partials/agent-detail.php';

@@ -64,7 +64,7 @@ final class NotFoundResponse {
 			return $response;
 		}
 
-		// An agent's MCP address.
+		// The agent's MCP address.
 		if ( 404 !== $response->get_status() || ! Routes::is_mcp_route( $request->get_route() ) ) {
 			return $response;
 		}

@@ -36,12 +36,12 @@ final class AssignCptTerms {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Assign terms to custom post type item', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Set an item’s categories and tags', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Sets an item\'s terms in one of its taxonomies (from get-cpt-taxonomies), replacing them unless append is true.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-cpt',
 			'input_schema'        => AssignPostTerms::input_schema( __( 'The item ID, from get-cpt-items.', 'zorem-ai-agent-connector' ) ),
 			'output_schema'       => AssignPostTerms::output_schema(),
-			'permission_callback' => static fn( $input = null ): bool => Access::can_edit_post( $input ),
+			'permission_callback' => static fn( $input = null ): bool => Access::can_assign_terms( $input ),
 			'execute_callback'    => array( self::class, 'execute' ),
 			'meta'                => Schema::meta( RiskClassifier::RISK_WRITE, self::CAPS ),
 		);

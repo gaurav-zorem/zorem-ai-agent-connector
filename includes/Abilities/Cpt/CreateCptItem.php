@@ -40,7 +40,7 @@ final class CreateCptItem {
 		) + PostWriter::properties( true ) + PostWriter::hierarchy_properties();
 
 		return array(
-			'label'               => __( 'Create custom post type item', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Create an item', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Creates an item of a post type from list-post-types (including "page"), with title, content, excerpt, parent and featured image. It is saved as a draft unless status says otherwise. Set its terms afterwards with assign-cpt-terms.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-cpt',
 			'input_schema'        => Schema::input( $properties, array( 'post_type', 'title' ) ),

@@ -36,7 +36,7 @@ final class GetCptTaxonomies {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Get custom post type taxonomies', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'See an item’s category groups', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Lists the taxonomies (categories, tags and custom ones) a post type uses, with label, whether they are hierarchical and how many terms each has.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-cpt',
 			'input_schema'        => Schema::input(

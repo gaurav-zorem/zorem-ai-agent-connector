@@ -40,7 +40,7 @@ final class UpdateCptItem {
 		) + PostWriter::properties( false ) + PostWriter::hierarchy_properties();
 
 		return array(
-			'label'               => __( 'Update custom post type item', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Edit an item', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Changes a page or custom post type item\'s title, content, excerpt, status, parent, order, template or featured image. Only the fields sent are changed; content replaces what is there.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-cpt',
 			'input_schema'        => Schema::input( $properties, array( 'id' ) ),

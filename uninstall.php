@@ -24,7 +24,7 @@ require_once __DIR__ . '/zorem-ai-agent-connector.php';
 /**
  * Filters whether this plugin's data survives its uninstall.
  *
- * Another active plugin may share these agents, tokens, settings and tables.
+ * Another active plugin may share this agent, its tokens, settings and tables.
  * Where one does, it returns true here and nothing below runs, so removing this
  * plugin does not take the other plugin's data with it.
  *
@@ -46,7 +46,7 @@ function ai_agent_os_uninstall_site(): void {
 	 * Filters whether `manage_agent_os` survives this uninstall.
 	 *
 	 * The capability is not private to this plugin: anything else that uses it
-	 * to decide who may administer agents would lock administrators out if it
+	 * to decide who may administer the agent would lock administrators out if it
 	 * disappeared from under them. Such a plugin returns true here instead of
 	 * this plugin naming it.
 	 *

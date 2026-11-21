@@ -83,7 +83,7 @@ abstract class AbstractAdminController {
 	/**
 	 * Permission callback for site-wide settings and risk ratings.
 	 *
-	 * These change what every agent may do, so they need an administrator
+	 * These change what the agent may do, so they need an administrator
 	 * (`manage_options`) as well as `manage_agent_os`, which can be handed to
 	 * a Shop Manager.
 	 *

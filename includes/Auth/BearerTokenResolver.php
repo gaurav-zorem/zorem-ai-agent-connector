@@ -16,7 +16,7 @@ use AiAgentOs\Agents\TokenService;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Resolves an agent from an Authorization: Bearer header.
+ * Resolves the agent from an Authorization: Bearer header.
  *
  * The primary Phase 1 credential. MCP clients such as Claude Desktop send a
  * custom Authorization header, so this covers the main path.
@@ -69,7 +69,7 @@ final class BearerTokenResolver implements AgentResolverInterface {
 	 *
 	 * That distinction is the point. Returning null for a revoked agent would
 	 * make its rejected requests indistinguishable from an attacker guessing
-	 * tokens — both would log as invalid_token — and "you see what agents
+	 * tokens — both would log as invalid_token — and "you see what the agent
 	 * tried" stops being true precisely when it matters. Whether the agent may
 	 * act is decided downstream by TransportPermission and PermissionResolver,
 	 * which both default to deny and log the specific reason.
@@ -83,7 +83,7 @@ final class BearerTokenResolver implements AgentResolverInterface {
 			return null;
 		}
 
-		$agent = $this->agents->find_by_token_hash( $this->tokens->hash( $token ) );
+		$agent = $this->agents->get_by_token_hash( $this->tokens->hash( $token ) );
 
 		if ( ! $agent instanceof Agent ) {
 			return null;
@@ -103,7 +103,7 @@ final class BearerTokenResolver implements AgentResolverInterface {
 
 		// "Last used" records accepted credentials, not refused attempts.
 		if ( $agent->is_active() ) {
-			$this->agents->touch_token_used( $agent->get_id() );
+			$this->agents->touch_token_used();
 		}
 
 		return $agent;
@@ -129,7 +129,25 @@ final class BearerTokenResolver implements AgentResolverInterface {
 	}
 
 	/**
-	 * Read the stored hash for an agent.
+	 * Whether the request carries an Authorization header of any kind.
+	 *
+	 * Tells "no credential reached PHP" apart from "a credential we do not
+	 * accept": on many CGI and FastCGI hosts the web server drops the header
+	 * before WordPress runs, and every connection then fails with nothing
+	 * presented.
+	 *
+	 * @param \WP_REST_Request|null $request Current request.
+	 */
+	public function has_authorization_header( ?\WP_REST_Request $request = null ): bool {
+		if ( $request instanceof \WP_REST_Request && '' !== (string) $request->get_header( 'authorization' ) ) {
+			return true;
+		}
+
+		return null !== $this->raw_authorization_header();
+	}
+
+	/**
+	 * Read the stored hash for the agent.
 	 *
 	 * Agent deliberately does not expose its token hash — nothing outside
 	 * authentication should be able to reach it — so it is read directly here.

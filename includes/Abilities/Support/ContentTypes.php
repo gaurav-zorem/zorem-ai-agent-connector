@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * The content the core abilities are allowed to read and change.
  *
- * The abilities lend an agent the core `post` and `page` capabilities and
+ * The abilities lend the agent the core `post` and `page` capabilities and
  * nothing else, so they can only be right about post types whose
  * capabilities are those: the default for register_post_type(). A type with
  * its own capabilities (WooCommerce products, most LMS courses) would be
@@ -40,7 +40,7 @@ final class ContentTypes {
 	/**
 	 * Post types never touched, with the reason.
 	 *
-	 * Not filterable: which content an agent's lent capabilities reach is an
+	 * Not filterable: which content the agent's lent capabilities reach is an
 	 * authorisation input (PATTERNS 9).
 	 *
 	 * @var array<string, string>

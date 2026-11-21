@@ -268,7 +268,7 @@ final class RiskClassifier {
 		 * 3. The name's floor. Checked before the annotations because MCP's
 		 * destructiveHint cannot distinguish "modifies" from "irreversible",
 		 * and a readonly annotation on a name that says it changes something
-		 * is a mistake at best. Over-protection here costs an agent a
+		 * is a mistake at best. Over-protection here costs the agent a
 		 * switch; under-protection is a deleted order.
 		 */
 		if ( null !== $floor ) {

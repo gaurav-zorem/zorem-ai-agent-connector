@@ -20,10 +20,10 @@ use AiAgentOs\Governance\RiskClassifier;
 /**
  * Lists comments on posts, pages and supported custom post types.
  *
- * Never returns the commenter's IP address or browser: an agent moderating
+ * Never returns the commenter's IP address or browser: the agent moderating
  * comments needs what was said and by whom, not where they were. The name
  * and email are under keys the PII masker knows (`display_name`, `email`),
- * so an agent that masks customer data sees them masked.
+ * so the agent that masks customer data sees them masked.
  */
 final class GetComments {
 
@@ -50,7 +50,7 @@ final class GetComments {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Get comments', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'See comments', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Lists comments, newest first, with the post they are on, author name and email, content and status.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-comments',
 			'input_schema'        => Schema::input(

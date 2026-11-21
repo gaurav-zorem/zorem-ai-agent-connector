@@ -36,7 +36,7 @@ final class UpdateTermMeta {
 	 */
 	public static function definition(): array {
 		return array(
-			'label'               => __( 'Update term meta', 'zorem-ai-agent-connector' ),
+			'label'               => __( 'Edit extra category or tag details', 'zorem-ai-agent-connector' ),
 			'description'         => __( 'Sets one custom field (meta) on a category, tag or custom taxonomy term, replacing its value. Protected keys (starting with an underscore) are refused.', 'zorem-ai-agent-connector' ),
 			'category'            => 'ai-agent-os-cpt',
 			'input_schema'        => MetaWriter::input_schema( __( 'The term ID.', 'zorem-ai-agent-connector' ) ),

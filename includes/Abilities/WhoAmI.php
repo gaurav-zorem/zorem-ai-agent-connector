@@ -14,10 +14,10 @@ use AiAgentOs\Auth\AgentContext;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * An agent's view of itself: name, UUID, type, who it acts for, expiry, masking.
+ * The agent's view of itself: name, UUID, type, who it acts for, expiry, masking.
  *
  * A connection check ("am I connected, and as whom?") that touches no store
- * data, and lets an agent state its own boundaries instead of guessing them.
+ * data, and lets the agent state its own boundaries instead of guessing them.
  * The earlier all-in-one plugin had it as `zorem-agent-os/whoami`; the port left
  * that name behind, and the import maps grants on the old name to this one.
  *
@@ -46,7 +46,7 @@ final class WhoAmI {
 		wp_register_ability(
 			self::NAME,
 			array(
-				'label'               => __( 'Who am I', 'zorem-ai-agent-connector' ),
+				'label'               => __( 'See this agent’s own permissions', 'zorem-ai-agent-connector' ),
 				'description'         => __( 'Returns the connected agent\'s name, ID, who it acts for, expiry, and whether customer data is masked for it.', 'zorem-ai-agent-connector' ),
 				'category'            => 'ai-agent-os',
 				'input_schema'        => array(),
