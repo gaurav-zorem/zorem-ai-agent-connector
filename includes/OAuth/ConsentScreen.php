@@ -223,9 +223,25 @@ final class ConsentScreen {
 	}
 
 	/**
-	 * Validate before any output.
+	 * Validate before any output, print the approval page, and end the request.
 	 */
 	public function load(): void {
+		$this->prepare();
+
+		/*
+		 * The approval is its own small page, sized for the popup window an
+		 * app opens: printed here, before the admin header, and ended here so
+		 * none of the admin chrome loads.
+		 */
+		$this->render();
+
+		exit;
+	}
+
+	/**
+	 * Set the screen title and validate the request, before any output.
+	 */
+	private function prepare(): void {
 		/*
 		 * A page outside the menu has no title for WordPress to look up, and
 		 * admin-header.php passes the null it finds to strip_tags(), which PHP
@@ -239,12 +255,6 @@ final class ConsentScreen {
 		if ( current_user_can( \AiAgentOs\Core\Capabilities::MANAGE ) && OAuthEndpoints::is_available() && $this->settings->bool( 'mcp_enabled' ) ) {
 			$this->validate();
 		}
-
-		/*
-		 * The approval is its own small page, sized for the popup window an
-		 * app opens: printed here, before the admin header, and ended there.
-		 */
-		$this->render();
 	}
 
 	/**

@@ -3,7 +3,7 @@
  * Plugin Name:       Zorem AI Agent Connector
  * Plugin URI:        https://wordpress.org/plugins/zorem-ai-agent-connector/
  * Description:       Connect Claude, ChatGPT and other AI apps to WordPress safely: an AI agent with its own identity and exact permissions, on top of the WordPress Abilities API and the official MCP Adapter.
- * Version:           1.2
+ * Version:           1.4
  * Requires at least: 6.9
  * Requires PHP:      8.0
  * WC requires at least: 5.0
@@ -43,7 +43,7 @@ if ( defined( 'AI_AGENT_OS_FILE' ) ) {
 /** Display name. Not translated here: this file loads before text domains are. */
 define( 'AI_AGENT_OS_NAME', 'Zorem AI Agent Connector' );
 
-define( 'AI_AGENT_OS_VERSION', '1.2' );
+define( 'AI_AGENT_OS_VERSION', '1.4' );
 define( 'AI_AGENT_OS_FILE', __FILE__ );
 define( 'AI_AGENT_OS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'AI_AGENT_OS_URL', plugin_dir_url( __FILE__ ) );
@@ -58,8 +58,12 @@ define( 'AI_AGENT_OS_BUNDLED_ADAPTER_VERSION', '0.1.0' );
 /** Lowest bridge version this plugin's code is written against. */
 define( 'AI_AGENT_OS_MIN_BRIDGE', '1.0.0' );
 
-// Announce the bundled bridge; the highest bundled version loads on plugins_loaded 1.
+/** Lowest Website Brain Kit version this plugin's code is written against. */
+define( 'AI_AGENT_OS_MIN_BRAIN', '1.1.0' );
+
+// Announce the bundled shared libraries; for each, the highest bundled version loads on plugins_loaded 1.
 require_once AI_AGENT_OS_PATH . 'lib/zorem-agent-bridge/bridge.php';
+require_once AI_AGENT_OS_PATH . 'lib/zorem-agent-brain/brain.php';
 
 require_once AI_AGENT_OS_PATH . 'includes/Core/Autoloader.php';
 require_once AI_AGENT_OS_PATH . 'includes/functions.php';

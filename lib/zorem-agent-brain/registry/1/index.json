@@ -1,0 +1,24 @@
+{
+    "schema_version": 1,
+    "generated_at": "2026-08-13T00:00:00Z",
+    "plugins": {
+        "woocommerce": {
+            "ranges": [
+                {
+                    "min": "10.9",
+                    "max": "11.99",
+                    "entries": [
+                        {
+                            "file": "woocommerce/abilities.md",
+                            "checksum": "cf865e56e00921d5f35028400d1c3bb3"
+                        },
+                        {
+                            "file": "woocommerce/overview.md",
+                            "checksum": "36acb237443f5eb903b5b7e0fc65fdbd"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

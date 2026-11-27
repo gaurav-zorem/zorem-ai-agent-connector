@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace AiAgentOs\Core;
 
+use ZoremAgentBrain\V1\Brain;
 use ZoremAgentBridge\V1\Bridge;
 
 defined( 'ABSPATH' ) || exit;
@@ -48,6 +49,8 @@ final class Requirements {
 	public const WP_TOO_OLD        = 'wp_too_old';
 	public const BRIDGE_MISSING    = 'bridge_missing';
 	public const BRIDGE_TOO_OLD    = 'bridge_incompatible';
+	public const BRAIN_MISSING     = 'brain_missing';
+	public const BRAIN_TOO_OLD     = 'brain_incompatible';
 	public const LEGACY_ACTIVE     = 'legacy_plugin_active';
 	public const ABILITIES_MISSING = 'abilities_api_missing';
 
@@ -119,6 +122,12 @@ final class Requirements {
 			$failed[] = self::BRIDGE_TOO_OLD;
 		}
 
+		if ( ! class_exists( Brain::class ) ) {
+			$failed[] = self::BRAIN_MISSING;
+		} elseif ( ! Brain::satisfies( AI_AGENT_OS_MIN_BRAIN ) ) {
+			$failed[] = self::BRAIN_TOO_OLD;
+		}
+
 		if ( Coexistence::legacy_is_active() ) {
 			$failed[] = self::LEGACY_ACTIVE;
 		}
@@ -174,6 +183,24 @@ final class Requirements {
 				AI_AGENT_OS_NAME,
 				Bridge::version(),
 				AI_AGENT_OS_MIN_BRIDGE
+			);
+		}
+
+		if ( self::BRAIN_MISSING === $slug ) {
+			return sprintf(
+				/* translators: %s: plugin name. */
+				__( '%s could not load its bundled Website Brain Kit. Reinstall the plugin to restore the missing files.', 'zorem-ai-agent-connector' ),
+				AI_AGENT_OS_NAME
+			);
+		}
+
+		if ( self::BRAIN_TOO_OLD === $slug ) {
+			return sprintf(
+				/* translators: 1: plugin name, 2: loaded kit version, 3: required kit version. */
+				__( '%1$s needs Website Brain Kit %3$s, but another plugin on this site loaded version %2$s. Update that plugin, or deactivate it.', 'zorem-ai-agent-connector' ),
+				AI_AGENT_OS_NAME,
+				Brain::version(),
+				AI_AGENT_OS_MIN_BRAIN
 			);
 		}
 
@@ -286,6 +313,7 @@ final class Requirements {
 			'wp_version'         => get_bloginfo( 'version' ),
 			'plugin_version'     => AI_AGENT_OS_VERSION,
 			'bridge_version'     => Bridge::version(),
+			'brain_version'      => Brain::version(),
 			'woocommerce'        => class_exists( 'WooCommerce' ) ? ( defined( 'WC_VERSION' ) ? WC_VERSION : 'unknown' ) : false,
 			'adapter'            => array(
 				'available'       => $adapter['available'],

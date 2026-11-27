@@ -39,11 +39,11 @@ class ResourcesHandler {
 	/**
 	 * Handle the resources/list request.
 	 *
-	 * @param int $request_id The request ID for JSON-RPC.
+	 * @param int|string $request_id The request ID for JSON-RPC.
 	 *
 	 * @return array
 	 */
-	public function list_resources( int $request_id = 0 ): array {
+	public function list_resources( $request_id = 0 ): array {
 		// Get the registered resources from the MCP instance and extract only the args.
 		$resources = array();
 		foreach ( $this->mcp->get_resources() as $resource ) {
@@ -63,11 +63,11 @@ class ResourcesHandler {
 	 * Handle the resources/read request.
 	 *
 	 * @param array $params Request parameters.
-	 * @param int $request_id The request ID for JSON-RPC.
+	 * @param int|string $request_id The request ID for JSON-RPC.
 	 *
 	 * @return array
 	 */
-	public function read_resource( array $params, int $request_id = 0 ): array {
+	public function read_resource( array $params, $request_id = 0 ): array {
 		// Extract parameters using helper method.
 		$request_params = $this->extract_params( $params );
 

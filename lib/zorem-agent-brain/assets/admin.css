@@ -1,0 +1,1148 @@
+/* Website Brain admin. Scoped under .zui-scope; ZUI tokens with fallbacks (CS-CSS-1, CS-CSS-2). */
+
+.zui-scope.zorem-brain {
+	margin-inline-start: -20px;
+	background: var(--zui-bg, #f6f7f9);
+	min-height: calc(100vh - 32px);
+}
+
+.zui-scope .zorem-brain__brand {
+	--zui-brand-emblem-bg: #dbeafe;
+	--zui-brand-emblem-color: #2563eb;
+}
+
+.zui-scope .zorem-brain__body {
+	/* Full width: the overview lays two cards side by side on a wide screen. */
+	max-width: none;
+	padding: 24px;
+	display: grid;
+	gap: 16px;
+}
+
+.zui-scope .zorem-brain__body .zui-section {
+	display: grid;
+	gap: 16px;
+}
+
+/* A tab, filter or page opening in place (admin.js): the old view dims until the new one arrives. */
+.zui-scope.zorem-brain.is-loading .zorem-brain__body {
+	opacity: 0.55;
+	pointer-events: none;
+	transition: opacity 0.15s ease 0.1s;
+}
+
+.zui-scope .zorem-brain__lede,
+.zui-scope .zorem-brain__meta {
+	margin: 0 0 12px;
+	color: var(--zui-text-muted, #566074);
+	max-width: 75ch;
+}
+
+.zui-scope .zorem-brain__subhead {
+	margin: 16px 0 8px;
+	font-size: 13px;
+}
+
+.zui-scope .zorem-brain__facts {
+	margin: 0;
+	display: grid;
+}
+
+.zui-scope .zorem-brain__fact {
+	display: grid;
+	grid-template-columns: minmax(180px, 1fr) 2fr;
+	gap: 16px;
+	padding-block: 10px;
+	border-block-start: 1px solid var(--zui-border, #e2e6ec);
+}
+
+.zui-scope .zorem-brain__fact dt {
+	color: var(--zui-text-muted, #566074);
+}
+
+.zui-scope .zorem-brain__fact dd {
+	margin: 0;
+}
+
+.zui-scope .zorem-brain__list {
+	margin: 0 0 12px;
+	padding-inline-start: 18px;
+}
+
+.zui-scope .zorem-brain__list li {
+	margin-block-end: 6px;
+}
+
+.zui-scope .zorem-brain__grid,
+.zui-scope .zorem-brain__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin-block-start: 12px;
+}
+
+.zui-scope .zorem-brain__grid .zui-input,
+.zui-scope .zorem-brain__grid .zui-select-wrap {
+	flex: 1 1 180px;
+}
+
+.zui-scope .zorem-brain__results {
+	display: grid;
+	gap: 6px;
+	margin-block: 8px 12px;
+	max-height: 280px;
+	overflow: auto;
+}
+
+.zui-scope .zorem-brain__check {
+	display: flex;
+	gap: 8px;
+	align-items: flex-start;
+	margin-block: 12px;
+	max-width: 75ch;
+}
+
+.zui-scope .zorem-brain__content {
+	white-space: pre-wrap;
+	word-break: break-word;
+	max-height: 360px;
+	overflow: auto;
+	margin: 0;
+	padding: 12px;
+	background: var(--zui-surface-muted, #f8f9fb);
+	border: 1px solid var(--zui-border, #e2e6ec);
+	border-radius: 6px;
+	font-size: 12px;
+}
+
+.zui-scope .zorem-brain__diff {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+/* Entries pagination: the ZUI component, with "Showing 1–25 of 61" on the left. */
+.zui-scope .zorem-brain__pages {
+	justify-content: space-between;
+	padding: 0;
+	gap: 12px;
+}
+
+.zui-scope .zorem-brain__pages-info {
+	color: var(--zui-text-muted, #64748b);
+	font-size: var(--zui-fs-body, 13px);
+}
+
+.zui-scope .zorem-brain__pages-list {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--zui-space-xs, 4px);
+}
+
+/* Links, not buttons: no admin underline or focus ring colour from WordPress. */
+.zui-scope .zorem-brain__pages a.zui-page-btn {
+	text-decoration: none;
+}
+
+.zui-scope .zorem-brain__pages a.zui-page-btn:focus-visible {
+	box-shadow: none;
+	outline: 2px solid var(--zui-primary, #4f46e5);
+	outline-offset: 1px;
+}
+
+.zui-scope .zorem-brain__pages .zui-page-btn[aria-disabled="true"] {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.zui-scope .zorem-brain__pages .zui-page-btn.is-active {
+	cursor: default;
+}
+
+/* ---- Overview: what your agents know. ---- */
+
+.zui-scope .zorem-brain__overview {
+	display: grid;
+	gap: 20px;
+}
+
+.zui-scope .zorem-brain__card,
+.zui-scope .zorem-brain__hero {
+	margin: 0;
+	border-radius: 12px;
+	overflow: hidden;
+}
+
+/* The headline card: sentence and button, then the figures. */
+.zui-scope .zorem-brain__hero {
+	padding: 24px;
+}
+
+.zui-scope .zorem-brain__head {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	align-items: flex-start;
+	justify-content: space-between;
+}
+
+.zui-scope .zorem-brain__headtext {
+	flex: 1 1 360px;
+}
+
+.zui-scope .zorem-brain__herotitle {
+	margin: 0 0 6px;
+	font-size: 20px;
+	line-height: 1.3;
+}
+
+.zui-scope .zorem-brain__headlede {
+	margin: 0 0 4px;
+	font-size: 14px;
+	font-weight: 500;
+}
+
+.zui-scope .zorem-brain__head .zorem-brain__meta {
+	margin: 0;
+}
+
+.zui-scope .zorem-brain__rebuild {
+	display: inline-flex;
+	gap: 6px;
+	align-items: center;
+	flex: 0 0 auto;
+}
+
+.zui-scope .zorem-brain__tiles {
+	display: grid;
+	grid-template-columns: repeat( 6, minmax( 0, 1fr ) );
+	gap: 12px;
+	margin-block-start: 20px;
+}
+
+.zui-scope .zorem-brain__tile {
+	display: grid;
+	gap: 4px;
+	padding: 14px 16px;
+	border: 1px solid var(--zui-border, #e2e6ec);
+	border-radius: 10px;
+	background: var(--zui-surface-muted, #f8f9fb);
+}
+
+.zui-scope .zorem-brain__tile.is-primary {
+	border-color: color-mix( in srgb, var(--zui-primary-600, #2563eb) 30%, transparent );
+	background: color-mix( in srgb, var(--zui-primary-600, #2563eb) 6%, var(--zui-surface, #fff) );
+}
+
+.zui-scope .zorem-brain__tilenum {
+	font-size: 22px;
+	font-weight: 700;
+	line-height: 1.2;
+	font-variant-numeric: tabular-nums;
+}
+
+.zui-scope .zorem-brain__tilelabel {
+	color: var(--zui-text-muted, #566074);
+	font-size: 12px;
+	line-height: 1.4;
+}
+
+/* Policies and pages side by side when there is room for both. */
+.zui-scope .zorem-brain__columns {
+	display: grid;
+	grid-template-columns: repeat( 2, minmax( 0, 1fr ) );
+	gap: 20px;
+	align-items: start;
+}
+
+.zui-scope .zorem-brain__cardhead {
+	display: flex;
+	gap: 16px;
+	align-items: flex-start;
+	justify-content: space-between;
+}
+
+.zui-scope .zorem-brain__cardhead > .zui-btn-primary {
+	flex: 0 0 auto;
+}
+
+.zui-scope .zorem-brain__cardsub {
+	margin: 4px 0 0;
+	max-width: 70ch;
+	color: var(--zui-text-muted, #566074);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.zui-scope .zorem-brain__subtitle {
+	margin: 20px 0 8px;
+	color: var(--zui-text-muted, #566074);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+/* Store policies: one row per policy, the badge beside its name. */
+.zui-scope .zorem-brain__policies {
+	display: grid;
+	border: 1px solid var(--zui-border, #e2e6ec);
+	border-radius: 10px;
+}
+
+.zui-scope .zorem-brain__policy-row {
+	display: grid;
+	grid-template-columns: minmax( 160px, 0.8fr ) 1.4fr;
+	gap: 16px;
+	align-items: center;
+	padding: 12px 16px;
+}
+
+.zui-scope .zorem-brain__policy-row + .zorem-brain__policy-row {
+	border-block-start: 1px solid var(--zui-border, #e2e6ec);
+}
+
+.zui-scope .zorem-brain__policy-name {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+.zui-scope .zorem-brain__policy-pick .zui-select-wrap,
+.zui-scope .zorem-brain__policy {
+	width: 100%;
+}
+
+.zui-scope .zorem-brain__policynote {
+	margin: 6px 0 0;
+}
+
+/* The store's own words: short previews, two lines each. */
+.zui-scope .zorem-brain__items {
+	display: grid;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.zui-scope .zorem-brain__item {
+	padding: 12px 14px;
+	border: 1px solid var(--zui-border, #e2e6ec);
+	border-radius: 10px;
+	background: var(--zui-surface-muted, #f8f9fb);
+}
+
+.zui-scope .zorem-brain__itemhead {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.zui-scope .zorem-brain__from {
+	padding: 1px 8px;
+	border-radius: 999px;
+	background: var(--zui-surface, #fff);
+	border: 1px solid var(--zui-border, #e2e6ec);
+	color: var(--zui-text-muted, #566074);
+	font-size: 11px;
+	white-space: nowrap;
+}
+
+.zui-scope .zorem-brain__itemtext {
+	display: -webkit-box;
+	margin: 6px 0 0;
+	overflow: hidden;
+	color: var(--zui-text-muted, #566074);
+	font-size: 12px;
+	line-height: 1.5;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+}
+
+/* Add another page. */
+.zui-scope .zorem-brain__allposts {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+	padding: 12px 14px;
+	margin-block-end: 16px;
+	border: 1px solid var(--zui-border, #e2e6ec);
+	border-radius: 10px;
+	background: var(--zui-surface-muted, #f8f9fb);
+	cursor: pointer;
+}
+
+.zui-scope .zorem-brain__allposts > input {
+	margin-block-start: 3px;
+}
+
+.zui-scope .zorem-brain__allposts > span {
+	display: grid;
+	gap: 2px;
+}
+
+.zui-scope .zorem-brain__allposts .zorem-brain__meta {
+	margin: 0;
+}
+
+.zui-scope .zorem-brain__checkbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	align-items: center;
+	margin-block-end: 10px;
+}
+
+.zui-scope .zorem-brain__checkbar .zui-input {
+	flex: 1 1 220px;
+	max-width: 340px;
+}
+
+.zui-scope .zorem-brain__count {
+	color: var(--zui-text-muted, #566074);
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Its natural width: ZUI's buttons grow to fill a flex row otherwise. */
+.zui-scope .zorem-brain__showselected {
+	flex: 0 0 auto;
+	margin-inline-start: auto;
+	width: auto;
+}
+
+.zui-scope .zorem-brain__checklist {
+	display: grid;
+	grid-template-columns: repeat( 2, minmax( 0, 1fr ) );
+	max-height: 360px;
+	overflow: auto;
+	border: 1px solid var(--zui-border, #e2e6ec);
+	border-radius: 10px;
+}
+
+.zui-scope .zorem-brain__checkrow {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	min-width: 0;
+	padding: 10px 14px;
+	border-block-end: 1px solid var(--zui-border, #e2e6ec);
+	cursor: pointer;
+}
+
+.zui-scope .zorem-brain__checkrow:hover {
+	background: var(--zui-surface-muted, #f8f9fb);
+}
+
+.zui-scope .zorem-brain__checkrow[hidden] {
+	display: none;
+}
+
+.zui-scope .zorem-brain__checktitle {
+	overflow: hidden;
+	font-weight: 500;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.zui-scope .zorem-brain__type {
+	flex: 0 0 auto;
+	margin-inline-start: auto;
+	padding: 0 6px;
+	border-radius: 4px;
+	background: var(--zui-surface-muted, #f1f3f6);
+	color: var(--zui-text-muted, #566074);
+	font-size: 11px;
+}
+
+/* Your plugins: the table runs edge to edge of its card. */
+.zui-scope .zorem-brain__flush {
+	padding: 0;
+}
+
+.zui-scope .zorem-brain__pad {
+	padding: 0 24px 20px;
+}
+
+.zui-scope .zorem-brain__pill {
+	flex: 0 0 auto;
+	padding: 2px 10px;
+	border-radius: 999px;
+	background: var(--zui-surface-muted, #f1f3f6);
+	color: var(--zui-text-muted, #566074);
+	font-size: 12px;
+	white-space: nowrap;
+}
+
+.zui-scope .zorem-brain__table {
+	margin: 0;
+}
+
+.zui-scope .zorem-brain__table th:first-child,
+.zui-scope .zorem-brain__table td:first-child {
+	padding-inline-start: 24px;
+}
+
+.zui-scope .zorem-brain__table th:last-child,
+.zui-scope .zorem-brain__table td:last-child {
+	padding-inline-end: 24px;
+}
+
+.zui-scope .zorem-brain__table td {
+	vertical-align: top;
+}
+
+.zui-scope .zorem-brain__plugin strong {
+	display: block;
+}
+
+.zui-scope .zorem-brain__tags {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	align-items: center;
+	margin-block-start: 4px;
+}
+
+.zui-scope .zorem-brain__version {
+	padding: 0 6px;
+	border-radius: 4px;
+	background: var(--zui-surface-muted, #f1f3f6);
+	font-size: 11px;
+}
+
+.zui-scope .zorem-brain__partial {
+	display: block;
+	margin-block-start: 4px;
+	color: #b54708;
+	font-size: 12px;
+}
+
+.zui-scope .zorem-brain__end {
+	text-align: end;
+	white-space: nowrap;
+}
+
+.zui-scope .zorem-brain__num {
+	font-size: 15px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.zui-scope .zorem-brain__ruled {
+	margin: 0;
+	padding-block-start: 14px;
+	border-block-start: 1px solid var(--zui-border, #e2e6ec);
+}
+
+/* The shared store in one strip of facts. */
+.zui-scope .zorem-brain__facts-strip {
+	display: grid;
+	grid-template-columns: repeat( 4, minmax( 0, 1fr ) );
+}
+
+.zui-scope .zorem-brain__factcell {
+	display: grid;
+	gap: 4px;
+	padding: 16px 24px;
+}
+
+.zui-scope .zorem-brain__factcell + .zorem-brain__factcell {
+	border-inline-start: 1px solid var(--zui-border, #e2e6ec);
+}
+
+.zui-scope .zorem-brain__factlabel {
+	color: var(--zui-text-muted, #566074);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.zui-scope .zorem-brain__factvalue {
+	font-size: 13px;
+	word-break: break-word;
+}
+
+
+/*
+ * Spacing, one scale for every screen: 4, 8, 12, 16, 20, 24, 32. Cards pad
+ * 24px; items inside a card sit 12–16px apart; cards sit 20px apart.
+ */
+
+/* A card with a heading and no body still closes with the card's padding. */
+.zui-scope.zorem-brain .zui-card > .zui-card__head:last-child,
+.zui-scope .zorem-brain--hosted .zui-card > .zui-card__head:last-child {
+	padding-block-end: 24px;
+}
+
+/* Empty states: centred, with an icon, a title and one line of help. */
+.zui-scope .zorem-brain__empty {
+	display: grid;
+	gap: 8px;
+	justify-items: center;
+	padding: 40px 24px;
+	text-align: center;
+}
+
+.zui-scope .zorem-brain__emptyicon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	margin-block-end: 4px;
+	border-radius: 50%;
+	background: var(--zui-surface-muted, #f1f3f6);
+	color: var(--zui-text-muted, #566074);
+	font-size: 22px;
+}
+
+.zui-scope .zorem-brain__emptytitle {
+	margin: 0;
+	color: var(--zui-text-strong, #1f2937);
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.zui-scope .zorem-brain__emptyhint {
+	margin: 0;
+	max-width: 52ch;
+	color: var(--zui-text-muted, #566074);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+/* ---- AI provider. ---- */
+
+.zui-scope .zorem-brain__ai {
+	display: grid;
+	gap: 20px;
+}
+
+.zui-scope .zorem-brain__status {
+	display: flex;
+	gap: 16px;
+	align-items: center;
+	margin: 0;
+	padding: 20px 24px;
+	border-radius: 12px;
+}
+
+.zui-scope .zorem-brain__status.is-ready {
+	border-color: #abefc6;
+	background: #f6fef9;
+}
+
+.zui-scope .zorem-brain__status.is-missing {
+	border-color: #fedf89;
+	background: #fffcf5;
+}
+
+.zui-scope .zorem-brain__statusicon {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	font-size: 24px;
+}
+
+.zui-scope .zorem-brain__status.is-ready .zorem-brain__statusicon {
+	background: #dcfae6;
+	color: #067647;
+}
+
+.zui-scope .zorem-brain__status.is-missing .zorem-brain__statusicon {
+	background: #fef0c7;
+	color: #b54708;
+}
+
+.zui-scope .zorem-brain__statustext {
+	flex: 1 1 auto;
+}
+
+.zui-scope .zorem-brain__statustitle {
+	margin: 0 0 2px;
+	font-size: 17px;
+}
+
+.zui-scope .zorem-brain__statustext .zorem-brain__meta {
+	margin: 0;
+}
+
+.zui-scope .zorem-brain__aicols {
+	display: grid;
+	grid-template-columns: minmax( 0, 1.6fr ) minmax( 0, 1fr );
+	gap: 20px;
+	align-items: start;
+}
+
+.zui-scope .zorem-brain__aiside {
+	display: grid;
+	gap: 20px;
+}
+
+/* Three ways to connect, numbered. */
+.zui-scope .zorem-brain__ways {
+	display: grid;
+	gap: 16px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.zui-scope .zorem-brain__way {
+	padding: 20px 24px;
+	border: 1px solid var(--zui-border, #e2e6ec);
+	border-radius: 10px;
+}
+
+.zui-scope .zorem-brain__wayhead {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	align-items: center;
+	margin-block-end: 8px;
+}
+
+.zui-scope .zorem-brain__waynum {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: var(--zui-primary-600, #2563eb);
+	color: #fff;
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.zui-scope .zorem-brain__way > .zorem-brain__meta {
+	margin: 0 0 12px;
+}
+
+.zui-scope .zorem-brain__snippet {
+	margin: 0 0 8px;
+	padding: 10px 14px;
+	overflow: auto;
+	border-radius: 8px;
+	background: #0f172a;
+	color: #e2e8f0;
+	font-size: 12px;
+}
+
+.zui-scope .zorem-brain__consts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	align-items: center;
+}
+
+.zui-scope .zorem-brain__consts code {
+	padding: 0 6px;
+	border-radius: 4px;
+	background: var(--zui-surface-muted, #f1f3f6);
+	font-size: 11px;
+}
+
+.zui-scope .zorem-brain__fineprint {
+	margin: 4px 0 20px;
+	padding: 12px 16px;
+	border-inline-start: 3px solid #f79009;
+	border-radius: 0 8px 8px 0;
+	background: #fffcf5;
+}
+
+.zui-scope .zorem-brain__fineprint summary {
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 13px;
+}
+
+.zui-scope .zorem-brain__fineprint p {
+	margin: 8px 0 0;
+	color: var(--zui-text-muted, #566074);
+	font-size: 12px;
+	line-height: 1.6;
+}
+
+/* Storing a key: two steps, each marked when done. */
+.zui-scope .zorem-brain__steps {
+	display: grid;
+	gap: 20px;
+}
+
+.zui-scope .zorem-brain__step {
+	display: flex;
+	gap: 16px;
+	align-items: flex-start;
+}
+
+.zui-scope .zorem-brain__step + .zorem-brain__step {
+	padding-block-start: 20px;
+	border-block-start: 1px dashed var(--zui-border, #e2e6ec);
+}
+
+.zui-scope .zorem-brain__stepmark {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	margin-block-start: 1px;
+	border: 1px solid var(--zui-border, #e2e6ec);
+	border-radius: 50%;
+	color: var(--zui-text-muted, #566074);
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.zui-scope .zorem-brain__step.is-done .zorem-brain__stepmark {
+	border-color: #abefc6;
+	background: #dcfae6;
+	color: #067647;
+}
+
+.zui-scope .zorem-brain__stepbody {
+	display: grid;
+	flex: 1 1 auto;
+	gap: 12px;
+	min-width: 0;
+	padding-block-start: 3px;
+}
+
+.zui-scope .zorem-brain__stepbody > .zorem-brain__meta {
+	margin: 0;
+}
+
+.zui-scope .zorem-brain__ackform {
+	display: grid;
+	gap: 16px;
+	justify-items: start;
+}
+
+.zui-scope .zorem-brain__ackform .zorem-brain__check {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	max-width: 72ch;
+	margin: 0;
+	padding: 14px 16px;
+	border: 1px solid var(--zui-border, #e2e6ec);
+	border-radius: 10px;
+	background: var(--zui-surface-muted, #f8f9fb);
+	font-size: 13px;
+	line-height: 1.6;
+	cursor: pointer;
+}
+
+.zui-scope .zorem-brain__ackform .zorem-brain__check > input {
+	flex: 0 0 auto;
+	margin: 3px 0 0;
+}
+
+.zui-scope .zorem-brain__keyform {
+	display: grid;
+	grid-template-columns: minmax( 140px, 0.8fr ) minmax( 180px, 2fr ) auto auto;
+	gap: 8px;
+	align-items: center;
+}
+
+.zui-scope .zorem-brain__keyform > .zui-btn-primary,
+.zui-scope .zorem-brain__keyform > .zui-btn-danger {
+	flex: 0 0 auto;
+	white-space: nowrap;
+}
+
+.zui-scope .zorem-brain__inline {
+	margin-inline-start: 6px;
+	padding: 2px 8px;
+}
+
+/* What the key pays for. */
+.zui-scope .zorem-brain__uses {
+	display: grid;
+	gap: 12px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.zui-scope .zorem-brain__use {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+}
+
+.zui-scope .zorem-brain__use > span:last-child {
+	display: grid;
+	gap: 2px;
+}
+
+.zui-scope .zorem-brain__use .zorem-brain__meta {
+	margin: 0;
+	font-size: 12px;
+}
+
+.zui-scope .zorem-brain__useicon {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 8px;
+	background: color-mix( in srgb, var(--zui-primary-600, #2563eb) 10%, var(--zui-surface, #fff) );
+	color: var(--zui-primary-600, #2563eb);
+	font-size: 18px;
+}
+
+.zui-scope .zorem-brain__cardhead > .zui-toggle {
+	flex: 0 0 auto;
+	margin-block-start: 4px;
+}
+
+@media ( max-width: 1200px ) {
+	.zui-scope .zorem-brain__aicols {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media ( max-width: 700px ) {
+	.zui-scope .zorem-brain__keyform {
+		grid-template-columns: 1fr;
+	}
+
+	.zui-scope .zorem-brain__status {
+		flex-wrap: wrap;
+	}
+}
+
+@media ( max-width: 1400px ) {
+	.zui-scope .zorem-brain__tiles {
+		grid-template-columns: repeat( 3, minmax( 0, 1fr ) );
+	}
+}
+
+@media ( max-width: 1200px ) {
+	.zui-scope .zorem-brain__columns {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media ( max-width: 900px ) {
+	.zui-scope .zorem-brain__facts-strip {
+		grid-template-columns: repeat( 2, minmax( 0, 1fr ) );
+	}
+
+	.zui-scope .zorem-brain__factcell + .zorem-brain__factcell {
+		border-inline-start: 0;
+	}
+
+	.zui-scope .zorem-brain__checklist {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media ( max-width: 600px ) {
+	.zui-scope .zorem-brain__tiles {
+		grid-template-columns: repeat( 2, minmax( 0, 1fr ) );
+	}
+
+	.zui-scope .zorem-brain__policy-row {
+		grid-template-columns: 1fr;
+		gap: 8px;
+	}
+
+	.zui-scope .zorem-brain__cardhead {
+		flex-wrap: wrap;
+	}
+
+	.zui-scope .zorem-brain__showselected {
+		margin-inline-start: 0;
+	}
+}
+
+@media ( max-width: 782px ) {
+	.zui-scope.zorem-brain {
+		margin-inline-start: -10px;
+	}
+
+
+	.zui-scope .zorem-brain__diff,
+	.zui-scope .zorem-brain__fact {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* → upstream: ZUI gives .zui-btn-primary `flex: 1 1 0` (sized for modal footers), so in an
+   ordinary toolbar it stretches across the row. Keep it its natural size in our toolbars. */
+.zui-scope .zorem-brain__grid > .zui-btn-primary,
+.zui-scope .zorem-brain__actions > .zui-btn-primary,
+.zui-scope.zorem-brain .zui-filter-actions > .zui-btn-primary {
+	flex: 0 0 auto;
+}
+
+/* Rows inside a card body: the body already pads, so the row only separates. */
+/* `--hosted`: a Brain panel on a host's screen (the AI provider settings). */
+.zui-scope.zorem-brain .zui-card__body .zui-row,
+.zui-scope .zorem-brain--hosted .zui-card__body .zui-row {
+	padding-inline: 0;
+	padding-block: 16px;
+}
+
+.zui-scope.zorem-brain .zui-row__control,
+.zui-scope .zorem-brain--hosted .zui-row__control {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.zui-scope.zorem-brain .zui-notice__text + .zui-notice__text,
+.zui-scope .zorem-brain--hosted .zui-notice__text + .zui-notice__text {
+	margin-block-start: 8px;
+}
+
+.zui-scope .zorem-brain__check {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+/* A row's three-dot action menu sits at the end of its row. */
+.zui-scope .zorem-brain__rowmenu {
+	text-align: end;
+	white-space: nowrap;
+}
+
+/*
+ * A table that fills a card has to be clipped by it.
+ *
+ * ZUI gives `.zui-card` `--zui-radius-2xl` (16px) and no `overflow`, so
+ * visible, while `.zui-table-scroll` carries `--zui-radius-lg` (8px) and
+ * `.zui-table` paints an opaque `--zui-surface` with square corners. Where the
+ * scroll box is the card's only child nothing pads them apart — measured at
+ * 184.83px against the card's 184px, the border and nothing else — so that
+ * square surface covers the card's 16px curve. The header row paints over the
+ * corner and over the top of the side border, and the card reads as a box
+ * whose border has been cut off.
+ *
+ * The card clips, and the wrapper stops asking for a corner it cannot own.
+ * Both are keyed off `:last-child`, so a card whose table is followed by a
+ * footer, or which pads its own contents, is untouched.
+ *
+ * Here as well as in the host plugin: a hosted Brain screen loads ZUI and this
+ * file alone, never the host's own stylesheet, so the host's correction does
+ * not reach these screens.
+ *
+ * → upstream: the library's own pairing of the two radii is the bug.
+ */
+.zui-scope .zui-card:has( > .zui-table-scroll:last-child ) {
+	overflow: hidden;
+}
+
+.zui-scope .zui-card > .zui-table-scroll:last-child {
+	border-radius: 0;
+}
+
+/*
+ * A table's scroll box would clip an open row menu, or grow a scrollbar for it
+ * when the table is short. So would the card above, now that it clips to keep
+ * its corners. While a menu is open, both let it overflow.
+ */
+.zui-scope .zui-table-scroll:has(.zui-actions-menu:not([hidden])),
+.zui-scope .zui-card:has( > .zui-table-scroll:last-child ):has(.zui-actions-menu:not([hidden])) {
+	overflow: visible;
+}
+
+/* A disabled button looks disabled: ZUI's primary keeps its colour otherwise. */
+.zui-scope .zui-btn-primary:disabled,
+.zui-scope .zui-btn-secondary:disabled,
+.zui-scope .zui-btn-danger:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* Model card: the dropdown takes the room, Save sits beside it. */
+.zui-scope .zorem-brain__modelform {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin-block-end: 8px;
+}
+
+.zui-scope .zorem-brain__modelform .zui-select-wrap {
+	flex: 1 1 200px;
+	max-width: none;
+}
+
+/* In your own words, as a card of its own (1.3.3): a grid of short previews, the rest behind "Show all". */
+.zui-scope .zorem-brain__items--grid {
+	grid-template-columns: repeat( auto-fill, minmax( 260px, 1fr ) );
+	gap: 12px;
+}
+
+.zui-scope .zorem-brain__items--grid .zorem-brain__item {
+	min-width: 0;
+}
+
+.zui-scope .zorem-brain__more {
+	margin-block-start: 12px;
+}
+
+.zui-scope .zorem-brain__more > summary {
+	display: inline-flex;
+	align-items: center;
+	padding: 6px 14px;
+	border: 1px solid var(--zui-border, #e2e6ec);
+	border-radius: 999px;
+	background: var(--zui-surface, #fff);
+	color: var(--zui-text, #1f2937);
+	font-size: 13px;
+	font-weight: 500;
+	list-style: none;
+	cursor: pointer;
+}
+
+.zui-scope .zorem-brain__more > summary::-webkit-details-marker {
+	display: none;
+}
+
+.zui-scope .zorem-brain__more > summary:hover,
+.zui-scope .zorem-brain__more > summary:focus-visible {
+	border-color: var(--zui-primary, #2563eb);
+	color: var(--zui-primary, #2563eb);
+}
+
+.zui-scope .zorem-brain__more[open] > summary {
+	margin-block-end: 12px;
+}
+
+.zui-scope .zorem-brain__more-hide,
+.zui-scope .zorem-brain__more[open] .zorem-brain__more-show {
+	display: none;
+}
+
+.zui-scope .zorem-brain__more[open] .zorem-brain__more-hide {
+	display: inline;
+}
+
+/* A ZUI help tip in a table row (Entries): its bubble opens upward, so the scroll box would cut it off on the first rows. While a tip is hovered or focused, the box lets it out. */
+.zui-scope .zorem-brain .zui-table-scroll:has(.zui-tooltip:hover),
+.zui-scope .zorem-brain .zui-table-scroll:has(.zui-tooltip:focus),
+.zui-scope .zui-table-scroll:has(.zorem-brain__entrytip:hover),
+.zui-scope .zui-table-scroll:has(.zorem-brain__entrytip:focus) {
+	overflow: visible;
+}

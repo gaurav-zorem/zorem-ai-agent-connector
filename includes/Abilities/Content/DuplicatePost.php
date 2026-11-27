@@ -14,6 +14,7 @@ defined( 'ABSPATH' ) || exit;
 use AiAgentOs\Abilities\Support\Access;
 
 use AiAgentOs\Abilities\Support\ContentTypes;
+use AiAgentOs\Abilities\Support\ItemAuthor;
 use AiAgentOs\Abilities\Support\PostProjection;
 use AiAgentOs\Abilities\Support\PostReader;
 use AiAgentOs\Abilities\Support\PostWriter;
@@ -94,24 +95,27 @@ final class DuplicatePost {
 			/* translators: %s: the original title */
 			: sprintf( __( '%s (copy)', 'zorem-ai-agent-connector' ), $original->post_title );
 
-		$id = wp_insert_post(
-			wp_slash(
-				array(
-					'post_type'      => $original->post_type,
-					'post_status'    => 'draft',
-					'post_title'     => $title,
-					'post_content'   => $original->post_content,
-					'post_excerpt'   => $original->post_excerpt,
-					'post_parent'    => $original->post_parent,
-					'menu_order'     => $original->menu_order,
-					'post_password'  => $original->post_password,
-					'comment_status' => $original->comment_status,
-					'ping_status'    => $original->ping_status,
-					'page_template'  => (string) get_page_template_slug( $original ),
-				)
-			),
-			true
+		$postarr = array(
+			'post_type'      => $original->post_type,
+			'post_status'    => 'draft',
+			'post_title'     => $title,
+			'post_content'   => $original->post_content,
+			'post_excerpt'   => $original->post_excerpt,
+			'post_parent'    => $original->post_parent,
+			'menu_order'     => $original->menu_order,
+			'post_password'  => $original->post_password,
+			'comment_status' => $original->comment_status,
+			'ping_status'    => $original->ping_status,
+			'page_template'  => (string) get_page_template_slug( $original ),
 		);
+
+		$author = ItemAuthor::for_new_item( $type );
+
+		if ( $author > 0 ) {
+			$postarr['post_author'] = $author;
+		}
+
+		$id = wp_insert_post( wp_slash( $postarr ), true );
 
 		if ( $id instanceof \WP_Error ) {
 			return $id;

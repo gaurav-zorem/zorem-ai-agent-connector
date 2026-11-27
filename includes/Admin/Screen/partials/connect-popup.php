@@ -7,7 +7,8 @@
  * all, three cards long. Now it is one card that fits the popup: which app,
  * which agent, three plain lines on what it can do, the rest behind "Show
  * details", and Approve. It is a complete HTML page, printed before the admin
- * header and ended with exit, so none of the admin chrome loads.
+ * header; ConsentScreen::load() ends the request after it, so none of the
+ * admin chrome loads.
  *
  * Who is asking: the app's name is its own claim, so the name shown comes from
  * the redirect address it cannot fake when that address is a known app's
@@ -82,7 +83,11 @@ $ai_agent_os_title = null !== $ai_agent_os_app
 	: __( 'Connect an app', 'zorem-ai-agent-connector' );
 
 nocache_headers();
-header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
+
+// Like nocache_headers(): once output has started a header cannot be sent, and trying raises a warning.
+if ( ! headers_sent() ) {
+	header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
+}
 ?><!doctype html>
 <html <?php language_attributes(); ?>>
 <head>
@@ -209,9 +214,14 @@ header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
 				?>
 				<div class="choice">
 					<<?php echo esc_html( $ai_agent_os_tag ); ?> class="agent">
-						<?php if ( $ai_agent_os_single ) : ?>
-							<input type="hidden" name="agent" value="<?php echo esc_attr( (string) (int) $ai_agent_os_card['id'] ); ?>">
-						<?php else : ?>
+						<?php
+						/*
+						 * One agent: nothing to pick and nothing posted. The address the
+						 * popup was opened at decides the agent, and handle() approves
+						 * the site's agent whatever a form sends.
+						 */
+						if ( ! $ai_agent_os_single ) :
+							?>
 							<input type="radio" name="agent" value="<?php echo esc_attr( (string) (int) $ai_agent_os_card['id'] ); ?>" required>
 						<?php endif; ?>
 						<span class="av" aria-hidden="true"><?php echo esc_html( mb_strtoupper( mb_substr( (string) $ai_agent_os_card['name'], 0, 1 ) ) ); ?></span>
@@ -342,5 +352,3 @@ header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
 </main>
 </body>
 </html>
-<?php
-exit;

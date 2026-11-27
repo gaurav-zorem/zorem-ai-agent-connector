@@ -53,6 +53,13 @@ final class ServerBuilder {
 	private TransportPermission $permission;
 
 	/**
+	 * Brain entries as resources.
+	 *
+	 * @var BrainResources
+	 */
+	private BrainResources $knowledge;
+
+	/**
 	 * The agent's MCP address.
 	 *
 	 * @var AgentAddress
@@ -64,15 +71,18 @@ final class ServerBuilder {
 	 *
 	 * @param PermissionResolver  $resolver   The permission authority.
 	 * @param TransportPermission $permission Transport-level gate.
+	 * @param BrainResources      $knowledge  Brain entries as resources.
 	 * @param AgentAddress        $addresses  The agent's MCP address.
 	 */
 	public function __construct(
 		PermissionResolver $resolver,
 		TransportPermission $permission,
+		BrainResources $knowledge,
 		AgentAddress $addresses
 	) {
 		$this->resolver   = $resolver;
 		$this->permission = $permission;
+		$this->knowledge  = $knowledge;
 		$this->addresses  = $addresses;
 	}
 
@@ -89,8 +99,8 @@ final class ServerBuilder {
 		$agent = AgentContext::get();
 
 		$tools = $agent instanceof Agent ? $this->resolver->granted_ability_names( $agent ) : array();
-		// Tools only: this plugin publishes no MCP resources.
-		$resources = array();
+		// Resources: the Brain entries the agent's reader may read.
+		$resources = $agent instanceof Agent ? $this->knowledge->resources_for( $agent ) : array();
 
 		/**
 		 * Filters the tools the agent's server lists. It may only remove: a tool

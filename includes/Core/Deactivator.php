@@ -32,6 +32,14 @@ final class Deactivator {
 
 		// User meta is shared by every site of a network, so once is enough.
 		self::drop_agent_application_passwords();
+
+		/*
+		 * The Brain's extraction tick is shared with the other Agent OS plugins;
+		 * the kit stops it only when no other host is still active.
+		 */
+		if ( class_exists( \ZoremAgentBrain\V1\Brain::class ) ) {
+			\ZoremAgentBrain\V1\Brain::deactivate_host( AI_AGENT_OS_BASENAME );
+		}
 	}
 
 	/**

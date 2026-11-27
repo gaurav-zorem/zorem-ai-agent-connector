@@ -125,6 +125,20 @@ final class Activator {
 		Capabilities::grant();
 		Installer::install();
 
+		/*
+		 * The shared Website Brain store. Activation runs after plugins_loaded,
+		 * often with no other Agent OS plugin active, so the kit may not be
+		 * loaded yet: load the best bundled copy now. Creating the store here,
+		 * not on first use, means a second plugin activated later always finds it.
+		 */
+		if ( function_exists( 'zorem_agent_brain_load' ) ) {
+			zorem_agent_brain_load();
+		}
+
+		if ( class_exists( \ZoremAgentBrain\V1\Brain::class ) && ! Coexistence::legacy_is_active() ) {
+			\ZoremAgentBrain\V1\Brain::activate_host( 'ai-agent-os', AI_AGENT_OS_VERSION, AI_AGENT_OS_BASENAME );
+		}
+
 		$first_install = false === get_option( self::INSTALL_TS_OPTION );
 
 		// The Admin Assistant agent a new site starts with; made on the next admin page.

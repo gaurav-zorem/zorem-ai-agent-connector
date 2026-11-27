@@ -20,6 +20,30 @@ require_once __DIR__ . '/../partials/services.php';
 
 $ai_agent_os_warnings = \AiAgentOs\Plugin::instance()->container()->get( \AiAgentOs\Core\SafetyChecks::class )->warnings();
 
+// The shared Website Brain store, and the plugins that host it.
+$ai_agent_os_store = \ZoremAgentBrain\V1\Brain::store_status();
+$ai_agent_os_hosts = array_keys( \ZoremAgentBrain\V1\Brain::hosts()->all() );
+
+if ( 'incomplete' === $ai_agent_os_store['state'] ) {
+	$ai_agent_os_store_value = __( 'Incomplete', 'zorem-ai-agent-connector' );
+	$ai_agent_os_store_note  = sprintf(
+		/* translators: 1: comma-separated table names, 2: the database's error message. */
+		__( 'The database refused to create: %1$s. It said: %2$s', 'zorem-ai-agent-connector' ),
+		implode( ', ', $ai_agent_os_store['missing'] ),
+		'' !== $ai_agent_os_store['db_error'] ? $ai_agent_os_store['db_error'] : __( 'no message', 'zorem-ai-agent-connector' )
+	);
+} elseif ( 'ok' === $ai_agent_os_store['state'] ) {
+	$ai_agent_os_store_value = __( 'Ready', 'zorem-ai-agent-connector' );
+	$ai_agent_os_store_note  = sprintf(
+		/* translators: %s: number of plugins. */
+		_n( 'Shared by %s plugin', 'Shared by %s plugins', count( $ai_agent_os_hosts ), 'zorem-ai-agent-connector' ),
+		number_format_i18n( count( $ai_agent_os_hosts ) )
+	);
+} else {
+	$ai_agent_os_store_value = __( 'Not created yet', 'zorem-ai-agent-connector' );
+	$ai_agent_os_store_note  = __( 'Reactivate the plugin to create it.', 'zorem-ai-agent-connector' );
+}
+
 /*
  * The admin routes need the nonce as well as the capability, internal
  * dispatch included; without it this read returns 403 and the panel would
@@ -32,6 +56,7 @@ $ai_agent_os_diagnostics   = $ai_agent_os_diag_response->is_error() ? array() : 
 
 // Everything that needs a look, counted once for the Health tile.
 $ai_agent_os_problems = count( $ai_agent_os_warnings )
+	+ ( 'ok' !== $ai_agent_os_store['state'] ? 1 : 0 )
 	+ ( empty( $ai_agent_os_diagnostics ) ? 1 : 0 )
 	+ ( ! empty( $ai_agent_os_diagnostics['salt_rotated'] ) ? 1 : 0 )
 	+ ( array() !== (array) ( $ai_agent_os_diagnostics['schema']['missing_tables'] ?? array() ) ? 1 : 0 )
@@ -97,9 +122,9 @@ $ai_agent_os_tiles = array(
 	),
 	array(
 		'label'  => __( 'Website Brain', 'zorem-ai-agent-connector' ),
-		'value'  => __( 'PRO', 'zorem-ai-agent-connector' ),
-		'note'   => __( 'In AI Agent OS PRO', 'zorem-ai-agent-connector' ),
-		'accent' => 'info',
+		'value'  => $ai_agent_os_store_value,
+		'note'   => 'ok' === $ai_agent_os_store['state'] ? $ai_agent_os_store_note : __( 'See below', 'zorem-ai-agent-connector' ),
+		'accent' => 'ok' === $ai_agent_os_store['state'] ? 'success' : 'danger',
 	),
 	array(
 		'label'  => __( 'Health', 'zorem-ai-agent-connector' ),
@@ -154,13 +179,21 @@ $ai_agent_os_tiles = array(
 		<?php endforeach; ?>
 	</div>
 
-	<?php if ( array() !== $ai_agent_os_warnings ) : ?>
+	<?php if ( array() !== $ai_agent_os_warnings || 'ok' !== $ai_agent_os_store['state'] ) : ?>
 		<section class="zui-card aaos-status__attention">
 			<div class="zui-card__head">
 				<h3 class="zui-card__title"><?php \Zorem\UI\icon( 'alert-circle' ); ?><span><?php esc_html_e( 'Needs attention', 'zorem-ai-agent-connector' ); ?></span></h3>
 			</div>
 			<div class="zui-card__body">
 				<ul class="aaos-warnings">
+					<?php if ( 'ok' !== $ai_agent_os_store['state'] ) : ?>
+						<li>
+							<?php
+							/* translators: 1: Website Brain state, 2: what it means. */
+							echo esc_html( sprintf( __( 'Website Brain store: %1$s. %2$s', 'zorem-ai-agent-connector' ), $ai_agent_os_store_value, $ai_agent_os_store_note ) );
+							?>
+						</li>
+					<?php endif; ?>
 					<?php foreach ( $ai_agent_os_warnings as $ai_agent_os_warning ) : ?>
 						<li><?php echo esc_html( $ai_agent_os_warning ); ?></li>
 					<?php endforeach; ?>

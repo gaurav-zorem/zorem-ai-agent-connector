@@ -204,6 +204,13 @@ $ai_agent_os_groups = array(
 				'note'  => array() === $ai_agent_os_missing ? array() : array( __( 'The database refused to create these tables. The agent cannot be governed until they exist; deactivating and reactivating the plugin retries.', 'zorem-ai-agent-connector' ) ),
 				'state' => array() === $ai_agent_os_missing ? 'ok' : 'danger',
 			),
+			array(
+				'label' => __( 'Website Brain', 'zorem-ai-agent-connector' ),
+				/* translators: %s: Website Brain Kit version. */
+				'value' => sprintf( __( 'Website Brain Kit %s', 'zorem-ai-agent-connector' ), (string) ( $ai_agent_os_diag['brain_version'] ?? '?' ) ),
+				'code'  => $ai_agent_os_hosts ?? array(),
+				'note'  => array( __( 'The plugins sharing it are listed above. The Website Brain reports its own health on its screens.', 'zorem-ai-agent-connector' ) ),
+			),
 		),
 	),
 	array(

@@ -9,7 +9,9 @@ declare( strict_types=1 );
 
 namespace AiAgentOs\Governance;
 
+use ZoremAgentBrain\V1\Brain;
 use AiAgentOs\Agents\Agent;
+use AiAgentOs\Brain\AgentReaders;
 use AiAgentOs\Core\Settings;
 
 defined( 'ABSPATH' ) || exit;
@@ -57,6 +59,13 @@ final class PermissionResolver {
 	private Settings $settings;
 
 	/**
+	 * The agent's Brain reader, for Brain entries exposed as MCP resources.
+	 *
+	 * @var AgentReaders
+	 */
+	private AgentReaders $readers;
+
+	/**
 	 * Which abilities the gate wrapped; null when nothing records it.
 	 *
 	 * @var GovernedAbilities|null
@@ -70,6 +79,7 @@ final class PermissionResolver {
 	 * @param RiskClassifier       $risk        Risk classification.
 	 * @param AbilityInventory     $inventory   Ability registry access.
 	 * @param Settings             $settings    Plugin settings.
+	 * @param AgentReaders         $readers     The agent's Brain reader.
 	 * @param GovernedAbilities    $governed    Which abilities the gate wrapped.
 	 */
 	public function __construct(
@@ -77,12 +87,14 @@ final class PermissionResolver {
 		RiskClassifier $risk,
 		AbilityInventory $inventory,
 		Settings $settings,
+		AgentReaders $readers,
 		?GovernedAbilities $governed = null
 	) {
 		$this->permissions = $permissions;
 		$this->risk        = $risk;
 		$this->inventory   = $inventory;
 		$this->settings    = $settings;
+		$this->readers     = $readers;
 		$this->governed    = $governed;
 	}
 
@@ -111,6 +123,19 @@ final class PermissionResolver {
 
 		if ( null !== $inactive ) {
 			return $this->filter( Decision::deny( $inactive ), $agent, $ability );
+		}
+
+		/*
+		 * A Brain entry exposed as an MCP resource is not granted per ability:
+		 * whether the agent may read it is the Brain's decision, made by the
+		 * gate for the agent's reader.
+		 */
+		$entry_key = $this->brain_entry_of( $ability );
+
+		if ( null !== $entry_key ) {
+			$readable = null !== Brain::gate()->get( $this->readers->for_agent( $agent ), $entry_key );
+
+			return $this->filter( $readable ? Decision::allow( PermissionRepository::LEVEL_READ ) : Decision::deny( Decision::NOT_GRANTED ), $agent, $ability );
 		}
 
 		// 3. There must be an affirmative grant. Absence is denial.
@@ -185,6 +210,39 @@ final class PermissionResolver {
 		}
 
 		return $granted;
+	}
+
+	/**
+	 * The entry key of a Brain resource ability, or null.
+	 *
+	 * @param \WP_Ability $ability The ability.
+	 */
+	private function brain_entry_of( \WP_Ability $ability ): ?string {
+		$mcp   = $ability->get_meta_item( 'mcp', array() );
+		$zorem = $ability->get_meta_item( 'zorem', array() );
+
+		if ( is_array( $mcp ) && 'resource' === ( $mcp['type'] ?? '' ) && is_array( $zorem ) && ! empty( $zorem['entry_key'] ) && 0 === strpos( $ability->get_name(), 'ai-agent-os/kb-' ) && self::registered_here( $ability->get_name() ) ) {
+			return (string) $zorem['entry_key'];
+		}
+
+		return null;
+	}
+
+	/**
+	 * Whether this plugin's own files registered an ability.
+	 *
+	 * Brain resources are allowed by derivation, with no grant, so their names
+	 * alone cannot be trusted: another plugin could register a predictable
+	 * `ai-agent-os/kb-*` name first and have its own callback run as derived
+	 * access. The Brain's
+	 * origin recorder saw which file registered it.
+	 *
+	 * @param string $name Ability name.
+	 */
+	private static function registered_here( string $name ): bool {
+		$origin = Brain::get( \ZoremAgentBrain\V1\Extraction\AbilityOriginRecorder::class )->origin_of( $name );
+
+		return null !== $origin && 0 === strpos( wp_normalize_path( $origin ), wp_normalize_path( AI_AGENT_OS_PATH . 'includes/' ) );
 	}
 
 	/**

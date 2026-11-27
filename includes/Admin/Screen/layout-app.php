@@ -50,11 +50,6 @@ $ai_agent_os_tabs = apply_filters(
 			'source' => __DIR__ . '/tabs/activity.php',
 			'pro'    => true,
 		),
-		'brain'    => array(
-			'label'  => __( 'Website Brain', 'zorem-ai-agent-connector' ),
-			'source' => __DIR__ . '/tabs/brain.php',
-			'pro'    => true,
-		),
 		'settings' => array(
 			'label'  => __( 'Settings', 'zorem-ai-agent-connector' ),
 			'source' => __DIR__ . '/tabs/settings.php',

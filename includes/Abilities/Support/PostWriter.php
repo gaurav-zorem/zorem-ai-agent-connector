@@ -14,6 +14,9 @@ defined( 'ABSPATH' ) || exit;
 /**
  * The one write path behind create/update post, page and CPT item.
  *
+ * A new item is credited to the administrator behind the agent (ItemAuthor),
+ * never to an author the agent names.
+ *
  * What it will not do: set an author, a password, a date, a slug of someone
  * else's choosing for another item, or a status other than draft, pending or
  * publish. Private and scheduled items stay a person's decision. Content is
@@ -129,6 +132,12 @@ final class PostWriter {
 		}
 
 		$postarr['post_type'] = $post_type;
+
+		$author = ItemAuthor::for_new_item( $type );
+
+		if ( $author > 0 ) {
+			$postarr['post_author'] = $author;
+		}
 
 		$id = wp_insert_post( wp_slash( $postarr ), true );
 

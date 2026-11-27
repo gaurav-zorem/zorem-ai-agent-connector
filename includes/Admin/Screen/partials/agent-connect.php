@@ -35,14 +35,27 @@ $ai_agent_os_codex_cmd = 'codex mcp add ' . $ai_agent_os_key . ' --url ' . $ai_a
 // The token is never rendered by PHP: it is stored only as a hash (agents.js shows a new one once).
 $ai_agent_os_has_token = '' !== (string) $ai_agent_os_agent->get_token_prefix();
 
-/**
- * Filters the docs page each app's "Full setup guide" link opens.
- *
- * @param string $url The page; `#<app>` is added for the app's own part.
- */
 $ai_agent_os_grok_on = ( new \AiAgentOs\OAuth\RegistrationPolicy( ai_agent_os_service( \AiAgentOs\Core\Settings::class ) ) )->is_enabled();
 
-$ai_agent_os_docs = (string) apply_filters( 'ai_agent_os_connect_docs_url', 'https://docs.zorem.com/docs/zorem-ai-agent-connector/connecting-claude-chatgpt-and-codex/' );
+/**
+ * Filters the docs page that holds each app's setup guide.
+ *
+ * Each app's "Full setup guide" link opens its own page below this one
+ * (`connect-claude/`, `connect-chatgpt/`, …). The page itself keeps an
+ * `#<app>` part for each, so links from older versions still land there.
+ *
+ * @param string $url The parent page, with a trailing slash.
+ */
+$ai_agent_os_docs = trailingslashit( (string) apply_filters( 'ai_agent_os_connect_docs_url', 'https://docs.zorem.com/docs/zorem-ai-agent-connector/connecting-claude-chatgpt-and-codex/' ) );
+
+// The guide page of each app tab, under the docs page above.
+$ai_agent_os_guides = array(
+	'claude'  => 'connect-claude/',
+	'chatgpt' => 'connect-chatgpt/',
+	'grok'    => 'connect-grok/',
+	'codex'   => 'connect-codex/',
+	'other'   => 'connect-other-apps/',
+);
 
 $ai_agent_os_strong = array(
 	'strong' => array(),
@@ -220,7 +233,7 @@ $ai_agent_os_auth_check = ai_agent_os_service( \AiAgentOs\Mcp\AuthorizationHeade
 				<?php endif; ?>
 				<div class="aaos-cx-panel__foot">
 					<span class="aaos-cx-panel__note"><?php echo esc_html( $ai_agent_os_app['note'] ); ?></span>
-					<a class="aaos-cx-panel__docs" href="<?php echo esc_url( $ai_agent_os_docs . '#' . $ai_agent_os_slug ); ?>" target="_blank" rel="noopener noreferrer">
+					<a class="aaos-cx-panel__docs" href="<?php echo esc_url( isset( $ai_agent_os_guides[ $ai_agent_os_slug ] ) ? $ai_agent_os_docs . $ai_agent_os_guides[ $ai_agent_os_slug ] : $ai_agent_os_docs . '#' . $ai_agent_os_slug ); ?>" target="_blank" rel="noopener noreferrer">
 						<?php
 						/* translators: %s: app name, e.g. Grok. */
 						printf( esc_html__( 'Full %s setup guide', 'zorem-ai-agent-connector' ), esc_html( $ai_agent_os_title ) );

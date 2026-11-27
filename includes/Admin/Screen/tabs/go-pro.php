@@ -73,11 +73,11 @@ $ai_agent_os_powers = array(
 		'desc'   => __( 'See every call your agents make and every one that was refused, what was asked and what came back, with a 30-day summary and CSV export.', 'zorem-ai-agent-connector' ),
 	),
 	array(
-		'icon'   => 'database',
+		'icon'   => 'layers',
 		'tint'   => '#fce7f3',
 		'accent' => '#db2777',
-		'title'  => __( 'Website Brain', 'zorem-ai-agent-connector' ),
-		'desc'   => __( 'Your policies, chosen pages, store settings and installed plugins, ready for your agents to read — and you decide which agent reads what.', 'zorem-ai-agent-connector' ),
+		'title'  => __( 'Plugins, publishing and SEO', 'zorem-ai-agent-connector' ),
+		'desc'   => __( 'Install, update and switch plugins, publish and schedule posts, and set SEO titles and descriptions — by asking.', 'zorem-ai-agent-connector' ),
 	),
 	array(
 		'icon'   => 'store',
@@ -104,7 +104,8 @@ $ai_agent_os_compare = array(
 	array( __( 'Agents', 'zorem-ai-agent-connector' ), __( '1', 'zorem-ai-agent-connector' ), __( 'Unlimited', 'zorem-ai-agent-connector' ) ),
 	array( __( 'Ready-made agent profiles', 'zorem-ai-agent-connector' ), false, true ),
 	array( __( 'Activity Log, 30-day summary and CSV export', 'zorem-ai-agent-connector' ), false, true ),
-	array( __( 'Website Brain', 'zorem-ai-agent-connector' ), false, true ),
+	array( __( 'Website Brain', 'zorem-ai-agent-connector' ), true, true ),
+	array( __( 'Plugin, publishing and SEO tools', 'zorem-ai-agent-connector' ), false, true ),
 	array( __( 'WooCommerce tools (orders, products and order notes)', 'zorem-ai-agent-connector' ), true, true ),
 	array( __( 'Tools from your other plugins', 'zorem-ai-agent-connector' ), true, true ),
 	array( __( 'Site-building tools', 'zorem-ai-agent-connector' ), false, true ),
@@ -123,7 +124,7 @@ $ai_agent_os_outcomes = array(
 			__( 'Every AI app shares the same agent and the same permissions', 'zorem-ai-agent-connector' ),
 			__( 'No record of what the agent did, or what it was refused', 'zorem-ai-agent-connector' ),
 			__( 'Every agent starts from scratch, with no ready-made profiles', 'zorem-ai-agent-connector' ),
-			__( 'Agents start with no knowledge of your policies or pages', 'zorem-ai-agent-connector' ),
+			__( 'No plugin, publishing or SEO tools', 'zorem-ai-agent-connector' ),
 		),
 	),
 	array(
@@ -135,7 +136,7 @@ $ai_agent_os_outcomes = array(
 			__( 'Each app or team gets its own agent and only the access it needs', 'zorem-ai-agent-connector' ),
 			__( 'Every call and refusal in the Activity Log, ready to export', 'zorem-ai-agent-connector' ),
 			__( 'Start agents as Store Admin, Support or Fulfillment in one click', 'zorem-ai-agent-connector' ),
-			__( 'The Website Brain gives agents your policies, pages and settings', 'zorem-ai-agent-connector' ),
+			__( 'Manage plugins, publish, schedule and set SEO by asking', 'zorem-ai-agent-connector' ),
 		),
 	),
 );
@@ -155,7 +156,7 @@ $ai_agent_os_outcomes = array(
 			</span>
 			<h1 class="aaos-gp-hero__title"><?php esc_html_e( 'Run AI agents across your whole site.', 'zorem-ai-agent-connector' ); ?></h1>
 			<p class="aaos-gp-hero__lead">
-				<?php esc_html_e( 'More agents, ready-made profiles, a full Activity Log, the Website Brain and site-building tools.', 'zorem-ai-agent-connector' ); ?>
+				<?php esc_html_e( 'More agents, ready-made profiles, a full Activity Log, and plugin, SEO and site-building tools.', 'zorem-ai-agent-connector' ); ?>
 			</p>
 
 			<div class="aaos-gp-hero__actions">

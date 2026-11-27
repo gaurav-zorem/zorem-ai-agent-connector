@@ -6,7 +6,7 @@ Tested up to: 7.1
 Requires PHP: 8.0
 WC requires at least: 5.0
 WC tested up to: 11.3.0
-Stable tag: 1.2
+Stable tag: 1.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,13 +35,25 @@ Every request goes through the agent. It runs as its own hidden WordPress accoun
 * **Token for apps that cannot sign in** — Codex and similar apps connect with a token you issue on the agent's Connection tab. It is shown once and stored only as a hash.
 * **43 WordPress tools** — Posts, pages, categories and tags; comments; the media library; the user list (read only); navigation menus; custom post types and their terms; and site tools such as statistics, post meta, active plugins, search and replace, and clearing the cache.
 * **WooCommerce tools** — With WooCommerce active, the agent can look up orders and products, read and add order notes, change an order's status, and create, update or delete products, using WooCommerce's own tools. Each is granted to nothing until you grant it and is lent only the access its own check needs, for that call only. Customer details in orders are masked when the agent does not act for the administrator.
-* **Exact permissions per tool** — Choose None, Read or Write for every tool, with Grant all, All read and Revoke for a whole section at once.
+* **Website Brain** — your store policies, chosen pages, WooCommerce settings and installed plugins, ready for the agent to answer from. See below.
+* **Exact permissions per tool** — Set each section to Off, View only or Full, or open it and grant permissions one at a time, each marked View, Change or Delete. "Show only what's on" hides everything you have not granted.
 * **Automatic risk ratings** — Every tool is rated Read, Write or Destructive, so you can see at a glance what each one can do.
 * **Destructive switch** — Tools that move content to the trash work only after you turn on the agent's own destructive switch. It is off by default.
 * **Personal-data masking** — Names, emails, phone numbers and addresses are replaced with [masked] when the agent does not act for the administrator.
 * **Safe defaults** — New content is saved as a draft unless the agent asks to publish, and deleting only moves to the trash.
 * **Status screen** — Versions, database tables, the MCP Adapter and anything that needs a look, with diagnostics you can copy into a support ticket.
 * **Private by default** — No tracking, no telemetry and no call to a Zorem server.
+
+= Website Brain: What Your Agent Knows =
+
+Without your own content, an AI app guesses. The **Website Brain** (**AI Agent Connector > Website Brain**) gives your agent what your site knows, so it answers from what you wrote:
+
+* **Your pages and posts** — only the ones you tick, never drafts or password-protected pages.
+* **Store policies and settings** — with WooCommerce, the policy pages you chose and your store settings. Never prices, stock, orders or customers.
+* **Your installed plugins** — what each one does, read from its files without running its code.
+* **Bundled documentation** — ready-made notes for big plugins such as WooCommerce. Nothing is downloaded.
+
+The agent reads a plugin's knowledge only while it holds one of that plugin's tools, reads nothing while revoked, and never sees keys or passwords. It reads through three read-only knowledge tools you can switch off on its Permissions tab. The **Entries** tab shows exactly what it can read.
 
 = What It Keeps Safe =
 
@@ -56,15 +68,12 @@ Connecting an AI app with an administrator's password gives it everything. Zorem
 
 = Who Uses Zorem AI Agent Connector =
 
-Any WordPress site where someone would rather ask for a change than click through to make it:
-
-* **Bloggers and publishers** — draft a post, fix a category, tidy up tags, without leaving the chat you were already thinking in.
-* **Multi-author and editorial sites** — triage comments, check what is scheduled and move a draft forward, from one place.
-* **Agencies managing client sites** — connect one agent per site, give each a different set of tools, and revoke any of them in a click.
-* **Membership sites and online courses** — keep lesson pages, categories and menus in order without handing anyone an administrator password.
-* **Site owners who are not developers** — "add the About page to the main menu", instead of finding the menu screen.
-* **Developers** — connect Cursor, VS Code or Claude Code with the agent's token and work against the site's real content.
-* **Sites running plugins that register abilities** — any plugin that exposes its own tools through the WordPress Abilities API appears on the Permissions tab, rated like the rest and granted to nothing until you grant it. Once granted, a tool that needs store or settings access (such as `manage_woocommerce` or `manage_options`) works for an agent that acts for the administrator, lent that access for the call only; users, roles, plugins, themes, site code and personal-data erasure stay out of reach.
+* **Bloggers and publishers** — draft a post, fix a category or tidy tags from the chat.
+* **Editorial sites** — triage comments and move drafts forward from one place.
+* **Agencies** — one agent per client site, each with its own tools, revoked in a click.
+* **Membership and course sites** — keep lessons, categories and menus in order without sharing an administrator password.
+* **Developers** — connect Cursor, VS Code or Claude Code with the agent's token.
+* **Sites with plugins that register abilities** — their tools appear on the Permissions tab, granted to nothing until you grant them.
 
 **Please note:** this plugin controls what an AI app may do on your site. It cannot control what that app does with what it reads. Grant the smallest set of tools that does the job, leave the destructive switch off unless you need it, and treat the agent's address and token like a password.
 
@@ -72,6 +81,7 @@ Any WordPress site where someone would rather ask for a change than click throug
 
 * **Claude** — claude.ai and Claude Desktop, by signing in
 * **ChatGPT** — with developer mode turned on, by signing in
+* **Grok** — grok.com, by signing in (Settings → Connect Apps)
 * **Codex** — with the agent's token
 * **Cursor, VS Code, Claude Code** and other MCP clients — by signing in, or with the agent's token
 
@@ -84,7 +94,7 @@ Zorem AI Agent Connector gives you one fully featured agent, free. When AI does 
 * **Unlimited agents** — give Claude, ChatGPT, Codex or each team its own agent, with its own permissions, token and MCP address. Revoke one without touching the others.
 * **Ready-made profiles** — start an agent as Store Admin, Support, Fulfillment, Supplier or Shopping Agent, with the right permissions already set.
 * **Activity Log** — every call your agents make and every one that was refused, what was asked and what came back, kept for up to 365 days, with a 30-day summary and CSV export.
-* **Website Brain** — your policies, chosen pages, store settings and installed plugins, ready for your agents to read, and you decide which agent reads what.
+* **Plugin, publishing and SEO tools** — install, update and switch plugins, publish and schedule posts, and set SEO titles and descriptions, by asking.
 * **Site-building tools** — 15 tools for the site title and tagline, homepage, logo, site icon, header menus, templates, colours and fonts, changed by asking.
 * **Shopping agents** — approve the agents AI Shopping Assistant proposes for your customers, each with its own permissions and customer data masked.
 * **Priority email support.**
@@ -115,11 +125,15 @@ This plugin sends no data anywhere by default.
 
 **The agent you connect.** The agent reaches your site only through its MCP address, after you approve its sign-in or with the token you issued. What it receives is exactly what its permissions allow, and it goes to the app the agent runs in, such as Claude Desktop, and to that app's AI provider. Names, emails, phone numbers and addresses are masked when the agent does not act for the administrator, unless you turn masking off. Revoke the agent and nothing more is sent. The plugin keeps no log of the agent's calls.
 
+**The Website Brain.** What the Website Brain knows is stored in its own tables in your database: copies of the pages and posts you choose, your WooCommerce settings (never prices, stock or orders), and facts read from your installed plugins' files. Secrets such as keys and passwords are redacted before an agent sees an entry. It is read only by the agent, within its permissions, and leaves your site only in the answers the agent receives. It is deleted on uninstall when "Delete all data when uninstalling" is on in Settings, unless AI Agent OS PRO or AI Shopping Assistant is still installed and using it.
+
 == External services ==
 
 **An MCP client's own address (only while a client is signing in).** When a client starts connecting by sign-in and identifies itself by a web address (a "client ID metadata document", as claude.ai does), the site fetches that one document, over https only, to learn the client's name and where to send the person back; nothing about your site or its users is sent, and private, local and non-standard addresses are refused. The sign-in itself only works on an https site.
 
 That document belongs to the AI app's own publisher, not to Zorem, so the terms that apply to it are theirs.
+
+**An AI provider you set up yourself (Website Brain AI drafts, off by default).** Only if you configure an AI provider in WordPress (for example an Anthropic or OpenAI key) and turn on AI drafts, offered alongside AI Shopping Assistant, does the Website Brain send a chosen plugin's documentation to that provider to draft a summary, which waits for your approval. That provider's terms apply, for example [Anthropic](https://www.anthropic.com/legal) or [OpenAI](https://openai.com/policies/).
 
 No other external service is contacted. There is no tracking and no telemetry, and no call to a Zorem server.
 
@@ -145,7 +159,7 @@ Alternatively, upload the `zorem-ai-agent-connector` folder to `/wp-content/plug
 
 1. The Admin Assistant agent, set up the moment you activate the plugin — the WordPress tools it holds, with delete tools switched off by default.
 2. The Connection tab: copy the agent's MCP address straight into your AI app, or issue a token for apps that cannot sign in.
-3. The Permissions tab — None, Read or Write for every tool, each one rated Read, Write or Destructive so you can see at a glance what it can do.
+3. The Permissions tab — set a whole section to Off, View only or Full, or grant permissions one at a time, each marked View, Change or Delete so you can see at a glance what it can do.
 4. The Status screen: versions, database tables, the MCP Adapter and anything that needs a look, with diagnostics you can copy into a support ticket.
 
 == Frequently Asked Questions ==
@@ -156,7 +170,7 @@ MCP (Model Context Protocol) is the open standard AI apps use to call tools on o
 
 = Which AI apps can I connect? =
 
-Claude (claude.ai and Claude Desktop) and ChatGPT connect by signing in. Codex connects with a token. Cursor, VS Code, Claude Code and other MCP clients connect by signing in or with a token.
+Claude (claude.ai and Claude Desktop), ChatGPT and Grok connect by signing in. Codex connects with a token. Cursor, VS Code, Claude Code and other MCP clients connect by signing in or with a token. Grok sign-in can be switched off under "Let Grok sign in" in Settings.
 
 = Why does sign-in say my site is not served over HTTPS? =
 
@@ -184,7 +198,7 @@ No. Those capabilities are never lent to the agent, and the user list is read on
 
 = Can I limit which tools the agent uses? =
 
-Yes. Open the agent's Permissions tab and set None, Read or Write for every tool, one at a time or a whole section at once. The Admin Assistant starts with the WordPress tools this plugin adds, and delete tools stay off until you turn on its destructive switch.
+Yes. Open the agent's Permissions tab and set a whole section to Off, View only or Full, or grant permissions one at a time — each is marked View, Change or Delete, and "Show only what's on" hides the rest. The Admin Assistant starts with the WordPress tools this plugin adds, and delete tools stay off until you turn on its destructive switch.
 
 = Can I connect more than one AI app? =
 
@@ -197,6 +211,22 @@ This plugin keeps no log of the agent's calls — nothing is written to your dat
 = How do I disconnect an AI app? =
 
 Remove the connector in the app, or revoke the agent on its Connection tab. Revoking stops its token and sign-ins at once; its permissions are kept, so you can reactivate it later.
+
+= What is the Website Brain? =
+
+The knowledge your agent answers from: store policies, the pages you choose, WooCommerce settings and what your installed plugins do. Open **AI Agent Connector > Website Brain** to choose what it reads. Nothing is read until you tick it, installed plugins are read from their files without running them, and nothing is sent anywhere.
+
+= Does the Website Brain read my whole site? =
+
+No. It reads only the pages and posts you tick, your WooCommerce policy pages and settings, and your installed plugins' files. It never reads orders, customers, prices or stock, and it never runs plugin code.
+
+= How do I stop the agent reading something? =
+
+Untick the page on the Website Brain Overview, or switch off a source on the Sources tab. To stop the agent using the Website Brain at all, switch off its three knowledge tools on the agent's Permissions tab.
+
+= Do I need an AI key for the Website Brain? =
+
+No. What it reads is stored as written, so no AI provider is needed or contacted. The app you connect (for example Claude or ChatGPT) does the answering.
 
 = Does it work without WooCommerce? =
 
@@ -216,13 +246,37 @@ Yes. Any plugin that registers abilities with the WordPress Abilities API appear
 
 = Is there a PRO version? =
 
-Yes. [AI Agent OS PRO](https://www.zorem.com/product/ai-agent-os/?utm_source=ai-agent-connector&utm_medium=wp-org-readme&utm_campaign=go-pro) adds unlimited agents, ready-made agent profiles, the Activity Log, the Website Brain, site-building tools and priority email support. Your agent, token and permissions carry over when you upgrade.
+Yes. [AI Agent OS PRO](https://www.zorem.com/product/ai-agent-os/?utm_source=ai-agent-connector&utm_medium=wp-org-readme&utm_campaign=go-pro) adds unlimited agents, ready-made agent profiles, the Activity Log, plugin, publishing, SEO and site-building tools, and priority email support. Your agent, token and permissions carry over when you upgrade.
 
 = Why does this need WordPress 6.9 or newer? =
 
 The plugin is built on the WordPress Abilities API, which is what lets tools be registered and permissioned in a standard way. It is available from WordPress 6.9, so earlier versions cannot run the plugin.
 
+== Upgrade Notice ==
+
+= 1.4 =
+Adds the Website Brain: your agent can now answer from your store policies, the pages you choose, your WooCommerce settings and what your installed plugins do. Your agent, token, MCP address and permissions are unchanged.
+
+= 1.3 =
+Fixes a connection problem that could stop AI apps such as ChatGPT from loading the tool list after signing in. Your agent, token, MCP address and permissions are unchanged.
+
+= 1.2 =
+Grok can now connect, approval happens in a short popup instead of a full admin screen, and permissions are simpler (Off, View only or Full per section). Your agent, token, MCP address and existing permissions are unchanged.
+
 == Changelog ==
+
+= 1.4 =
+* New: Website Brain, now included free. Give your agent your store policies, the pages you choose, WooCommerce settings and what your installed plugins do. Find it under AI Agent Connector → Website Brain.
+* New: your agent gets three read-only knowledge tools (search, topics and one article) and can read Website Brain articles as MCP resources. Existing agents get the knowledge tools once, at View; turn them off any time on the Permissions tab.
+* Improvement: posts and pages the agent creates or duplicates are credited to the administrator who connected the app, not to the agent's hidden account.
+* Improvement: the "See this agent's own permissions" tool also answers on another plugin's MCP connection, saying which user is signed in.
+* Improvement: the Status screen shows the Website Brain's state and version.
+* Fix: the approval popup no longer raises a PHP warning when headers were already sent.
+* "Delete all data when uninstalling" also deletes the Website Brain's data, unless AI Agent OS PRO or AI Shopping Assistant still uses it.
+
+= 1.3 =
+* Fix: after signing in, some AI apps could not load the tool list, because the connection refused the way they number their requests. Every app's requests are now answered the way the MCP standard expects.
+* Fix: deleting this plugin after upgrading to AI Agent OS PRO no longer removes the agents, permissions, app connections or settings that PRO now uses.
 
 = 1.2 =
 * New: Grok can connect. Add the agent's address in Grok (Settings → Connect Apps), approve, done. Only Grok's own addresses (grok.com, x.ai) may register, and every connection still needs your approval. Turn it off with "Let Grok sign in" in Settings.

@@ -34,6 +34,17 @@ if ( (bool) apply_filters( 'ai_agent_os_preserve_data_on_uninstall', false ) ) {
 	return;
 }
 
+/*
+ * A customer who upgraded to AI Agent OS PRO keeps their agents, tokens, app
+ * sign-ins and settings: PRO reads the same rows. So when another plugin is
+ * running this code (it defined AI_AGENT_OS_FILE first), or PRO is installed
+ * at all, even switched off, nothing below runs. Older PRO versions do not
+ * set the filter above, and a switched-off PRO cannot.
+ */
+if ( ( defined( 'AI_AGENT_OS_FILE' ) && wp_normalize_path( (string) AI_AGENT_OS_FILE ) !== wp_normalize_path( __DIR__ . '/zorem-ai-agent-connector.php' ) ) || file_exists( WP_PLUGIN_DIR . '/ai-agent-os-pro/ai-agent-os-pro.php' ) ) {
+	return;
+}
+
 /**
  * Uninstall from the current site.
  */
@@ -54,6 +65,30 @@ function ai_agent_os_uninstall_site(): void {
 	 */
 	if ( ! (bool) apply_filters( 'ai_agent_os_keep_manage_capability', false ) ) {
 		\AiAgentOs\Core\Capabilities::revoke();
+	}
+
+	/*
+	 * The shared Website Brain: this plugin leaves, and the Brain's data is
+	 * removed only if no other Agent OS plugin is installed and the Brain's own
+	 * "delete data on uninstall" setting is on (decision D-11). Uninstall runs
+	 * after plugins_loaded, so the kit is loaded on demand.
+	 *
+	 * This plugin's own "Delete all data when uninstalling" switch also turns
+	 * the Brain's on, so "all data" includes what the Brain stored. The kit
+	 * still keeps everything while another Agent OS plugin is installed.
+	 */
+	if ( function_exists( 'zorem_agent_brain_load' ) ) {
+		zorem_agent_brain_load();
+	}
+
+	if ( class_exists( \ZoremAgentBrain\V1\Brain::class ) ) {
+		$ai_agent_os_own_settings = get_option( \AiAgentOs\Core\Settings::OPTION, array() );
+
+		if ( is_array( $ai_agent_os_own_settings ) && ! empty( $ai_agent_os_own_settings['delete_data_on_uninstall'] ) ) {
+			\ZoremAgentBrain\V1\Settings::update( array( 'delete_data_on_uninstall' => true ) );
+		}
+
+		\ZoremAgentBrain\V1\Brain::uninstall_host( 'ai-agent-os' );
 	}
 
 	// Credentials go even when the data stays: an access or refresh token outliving the plugin is a door left open.

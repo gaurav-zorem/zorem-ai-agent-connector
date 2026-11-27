@@ -21,6 +21,7 @@ use AiAgentOs\Audit\ActivityRecorder;
 use AiAgentOs\Audit\CallAnnotations;
 use AiAgentOs\Auth\AgentAuthenticator;
 use AiAgentOs\Auth\BearerTokenResolver;
+use AiAgentOs\Brain\AgentReaders;
 use AiAgentOs\Bridge\BridgeRegistration;
 use AiAgentOs\Bridge\CoreAgentContext;
 use AiAgentOs\Bridge\CoreAgentDirectory;
@@ -39,6 +40,7 @@ use AiAgentOs\Governance\CapMaps\CapMapLoader;
 use AiAgentOs\Governance\PermissionRepository;
 use AiAgentOs\Governance\PermissionResolver;
 use AiAgentOs\Governance\RiskClassifier;
+use AiAgentOs\Mcp\BrainResources;
 use AiAgentOs\Mcp\McpBootstrap;
 use AiAgentOs\Mcp\ServerBuilder;
 use AiAgentOs\Mcp\TransportPermission;
@@ -121,6 +123,15 @@ final class Plugin {
 		$this->booted = true;
 
 		add_action( 'admin_init', array( Installer::class, 'maybe_upgrade' ) );
+		add_action( 'admin_init', array( $this, 'ensure_brain_host' ) );
+
+		/*
+		 * Start the shared Website Brain: its abilities, and its pipeline
+		 * (extraction tick, content sources, curated registry). Runs once even
+		 * when another Agent OS plugin boots too; only a booting host starts it,
+		 * so a site that stood this plugin down for the legacy plugin runs none of it.
+		 */
+		\ZoremAgentBrain\V1\Brain::start();
 
 		/*
 		 * Governance. The gate wraps every ability as it registers, so it is
@@ -128,6 +139,8 @@ final class Plugin {
 		 * agent acting, every one of them is transparent.
 		 */
 		$this->container->get( AbilityGate::class )->register();
+		$this->container->get( AgentReaders::class )->register();
+		$this->container->get( BrainResources::class )->register();
 		( new \AiAgentOs\Abilities\WhoAmI() )->register();
 		$this->container->get( CoreAbilities::class )->register();
 		$this->container->get( \AiAgentOs\Agents\SiteAgent::class )->register();
@@ -176,6 +189,9 @@ final class Plugin {
 			$menu = $this->container->get( AdminMenu::class );
 			$menu->register();
 
+			// The Website Brain screens: under this menu, or once under AI Agent OS's when both run (D-10).
+			\ZoremAgentBrain\V1\Brain::screens()->mount( 'ai-agent-os', AdminMenu::MENU_SLUG, AI_AGENT_OS_PATH . 'assets/zui/', AI_AGENT_OS_URL . 'assets/zui/' );
+
 			// The Black Friday offer: hooks itself only between its start and end dates.
 			$this->container->get( Admin\SeasonalOffer::class )->register();
 		}
@@ -197,6 +213,16 @@ final class Plugin {
 		foreach ( $controllers as $controller ) {
 			$this->container->get( $controller )->register_routes();
 		}
+	}
+
+	/**
+	 * Keep this plugin recorded as a host of the shared Website Brain.
+	 *
+	 * Activation records it; this also covers activation paths that skip the
+	 * hook and refreshes the recorded version after an update.
+	 */
+	public function ensure_brain_host(): void {
+		\ZoremAgentBrain\V1\Brain::ensure_host( 'ai-agent-os', AI_AGENT_OS_VERSION, AI_AGENT_OS_BASENAME );
 	}
 
 	/**
@@ -276,12 +302,16 @@ final class Plugin {
 		$c->set( \AiAgentOs\Agents\SiteAgent::class, static fn ( Container $c ): \AiAgentOs\Agents\SiteAgent => new \AiAgentOs\Agents\SiteAgent( $c->get( AgentRepository::class ), $c->get( ShadowUserManager::class ), $c->get( AbilityInventory::class ), $c->get( PermissionRepository::class ) ) );
 		$c->set(
 			PermissionResolver::class,
-			static fn ( Container $c ): PermissionResolver => new PermissionResolver( $c->get( PermissionRepository::class ), $c->get( RiskClassifier::class ), $c->get( AbilityInventory::class ), $c->get( Settings::class ), $c->get( GovernedAbilities::class ) )
+			static fn ( Container $c ): PermissionResolver => new PermissionResolver( $c->get( PermissionRepository::class ), $c->get( RiskClassifier::class ), $c->get( AbilityInventory::class ), $c->get( Settings::class ), $c->get( AgentReaders::class ), $c->get( GovernedAbilities::class ) )
 		);
 		$c->set(
 			AbilityGate::class,
 			static fn ( Container $c ): AbilityGate => new AbilityGate( $c->get( PermissionResolver::class ), $c->get( CapabilityBridge::class ), $c->get( ActivityRecorder::class ), $c->get( PiiRedactor::class ), $c->get( CallAnnotations::class ), $c->get( RiskClassifier::class ), $c->get( GovernedAbilities::class ) )
 		);
+
+		// The Website Brain: the agent as a reader, and its entries as MCP resources.
+		$c->set( AgentReaders::class, static fn ( Container $c ): AgentReaders => new AgentReaders( $c->get( AgentRepository::class ), $c->get( PermissionRepository::class ) ) );
+		$c->set( BrainResources::class, static fn ( Container $c ): BrainResources => new BrainResources( $c->get( AgentReaders::class ) ) );
 
 		// Activity and privacy.
 		$c->set( ActivityRecorder::class, static fn (): ActivityRecorder => new ActivityRecorder() );
@@ -299,7 +329,7 @@ final class Plugin {
 		$c->set( Mcp\SessionNotFound::class, static fn (): Mcp\SessionNotFound => new Mcp\SessionNotFound() );
 		$c->set( Mcp\ToolSchemaNormalizer::class, static fn (): Mcp\ToolSchemaNormalizer => new Mcp\ToolSchemaNormalizer() );
 		$c->set( Mcp\BatchRefusal::class, static fn ( Container $c ): Mcp\BatchRefusal => new Mcp\BatchRefusal( $c->get( ActivityRecorder::class ) ) );
-		$c->set( ServerBuilder::class, static fn ( Container $c ): ServerBuilder => new ServerBuilder( $c->get( PermissionResolver::class ), $c->get( TransportPermission::class ), $c->get( Mcp\AgentAddress::class ) ) );
+		$c->set( ServerBuilder::class, static fn ( Container $c ): ServerBuilder => new ServerBuilder( $c->get( PermissionResolver::class ), $c->get( TransportPermission::class ), $c->get( BrainResources::class ), $c->get( Mcp\AgentAddress::class ) ) );
 		$c->set( McpBootstrap::class, static fn ( Container $c ): McpBootstrap => new McpBootstrap( $c->get( Requirements::class ), $c->get( Settings::class ), $c->get( ServerBuilder::class ) ) );
 
 		// What Core provides to other plugins through the bridge.

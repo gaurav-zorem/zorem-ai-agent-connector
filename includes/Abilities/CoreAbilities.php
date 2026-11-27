@@ -192,10 +192,10 @@ final class CoreAbilities {
 	 */
 	public static function categories(): array {
 		return array(
-			// Who-am-I: the agent asking about itself.
+			// Who-am-I: the agent asking about itself; also the Website Brain entries it may read (Mcp\BrainResources).
 			'ai-agent-os'          => array(
 				'label'       => __( 'Zorem AI Agent Connector', 'zorem-ai-agent-connector' ),
-				'description' => __( 'The agent asking about itself.', 'zorem-ai-agent-connector' ),
+				'description' => __( 'The agent asking about itself, and the Website Brain entries it may read.', 'zorem-ai-agent-connector' ),
 			),
 			'ai-agent-os-content'  => array(
 				'label'       => __( 'Posts', 'zorem-ai-agent-connector' ),

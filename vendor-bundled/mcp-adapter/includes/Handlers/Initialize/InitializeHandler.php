@@ -35,11 +35,11 @@ class InitializeHandler {
 	/**
 	 * Handle the initialize request.
 	 *
-	 * @param int $request_id The request ID for JSON-RPC.
+	 * @param int|string $request_id The request ID for JSON-RPC.
 	 *
 	 * @return array
 	 */
-	public function handle( int $request_id = 0 ): array {
+	public function handle( $request_id = 0 ): array {
 		$server_info = array(
 			'name'    => $this->mcp->get_server_name(),
 			'version' => $this->mcp->get_server_version(),

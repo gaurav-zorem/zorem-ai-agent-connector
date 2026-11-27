@@ -17,6 +17,7 @@ use AiAgentOs\Core\Capabilities;
 use AiAgentOs\Governance\AbilityInventory;
 use AiAgentOs\Governance\PermissionRepository;
 use AiAgentOs\Governance\RiskClassifier;
+use ZoremAgentBrain\V1\Abilities\Registrar as BrainAbilities;
 
 /**
  * The site's agent, the "Admin Assistant", and its one-time setup.
@@ -44,6 +45,15 @@ final class SiteAgent {
 	 * "done" is not set up a second time on upgrade.
 	 */
 	public const OPTION = 'ai_agent_os_first_agent';
+
+	/**
+	 * Option: "done" once the agent holds the Website Brain's read tools.
+	 *
+	 * The Website Brain arrived after the agent was first set up on existing
+	 * sites, so they are granted once, on the next admin page, and never again:
+	 * an administrator who sets them to None later keeps None.
+	 */
+	public const BRAIN_GRANTS_OPTION = 'ai_agent_os_brain_grants';
 
 	/**
 	 * Agent storage.
@@ -104,6 +114,7 @@ final class SiteAgent {
 	 */
 	public function register(): void {
 		add_action( 'admin_init', array( $this, 'maybe_set_up' ) );
+		add_action( 'admin_init', array( $this, 'maybe_grant_brain' ), 11 );
 	}
 
 	/**
@@ -128,11 +139,57 @@ final class SiteAgent {
 			}
 
 			$this->permissions->set_grants( $agent->get_id(), $this->every_grant(), get_current_user_id() );
+
+			// The opening grants already hold the Website Brain's read tools.
+			update_option( self::BRAIN_GRANTS_OPTION, 'done', false );
 		}
 
 		update_option( self::OPTION, 'done', false );
 
 		return $agent;
+	}
+
+	/**
+	 * Grant an existing agent the Website Brain's read tools, once.
+	 *
+	 * For a site whose agent was set up before the Website Brain was part of
+	 * this plugin. Only a tool still at None is raised, to Read; nothing is
+	 * lowered. Runs when an administrator is here to own the grants and the
+	 * tools are registered, and is then marked done.
+	 *
+	 * @return int Grants written.
+	 */
+	public function maybe_grant_brain(): int {
+		if ( 'done' === get_option( self::BRAIN_GRANTS_OPTION ) || ! current_user_can( Capabilities::MANAGE ) ) {
+			return 0;
+		}
+
+		$agent = $this->agents->get();
+
+		// No agent yet: its opening grants will include them.
+		if ( ! $agent instanceof Agent ) {
+			return 0;
+		}
+
+		$descriptors = $this->inventory->descriptors();
+		$grants      = array();
+
+		foreach ( self::brain_tools() as $name ) {
+			if ( isset( $descriptors[ $name ] ) && PermissionRepository::LEVEL_NONE === $this->permissions->get_grant( $agent->get_id(), $name ) ) {
+				$grants[ $name ] = PermissionRepository::LEVEL_READ;
+			}
+		}
+
+		// Left pending while the tools are not registered, so a later page tries again.
+		if ( array() === $grants && ! isset( $descriptors[ self::brain_tools()[0] ] ) ) {
+			return 0;
+		}
+
+		$written = array() === $grants ? 0 : $this->permissions->set_grants( $agent->get_id(), $grants, get_current_user_id() );
+
+		update_option( self::BRAIN_GRANTS_OPTION, 'done', false );
+
+		return $written;
 	}
 
 	/**
@@ -229,7 +286,7 @@ final class SiteAgent {
 
 	/**
 	 * Whether an ability is one this plugin ships: its own WordPress tools, the
-	 * who-am-I tool, or WordPress's own `core/*`.
+	 * who-am-I tool, the Website Brain's read tools, or WordPress's own `core/*`.
 	 *
 	 * Used for the opening grants only. It decides nothing about what may be
 	 * granted, listed or run.
@@ -239,6 +296,16 @@ final class SiteAgent {
 	private static function is_shipped_tool( string $name ): bool {
 		return 0 === strpos( $name, 'core/' )
 			|| WhoAmI::NAME === $name
+			|| in_array( $name, self::brain_tools(), true )
 			|| null !== CoreAbilities::class_for( $name );
+	}
+
+	/**
+	 * The Website Brain's read tools: search, topics, and one entry.
+	 *
+	 * @return array<int, string>
+	 */
+	private static function brain_tools(): array {
+		return class_exists( BrainAbilities::class ) ? BrainAbilities::names() : array( 'agent-brain/knowledge-list-topics', 'agent-brain/knowledge-search', 'agent-brain/knowledge-get-entry' );
 	}
 }

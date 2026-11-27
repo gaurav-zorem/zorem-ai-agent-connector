@@ -39,11 +39,11 @@ class ToolsHandler {
 	/**
 	 * Handle the tools/list request.
 	 *
-	 * @param int $request_id The request ID for JSON-RPC.
+	 * @param int|string $request_id The request ID for JSON-RPC.
 	 *
 	 * @return array
 	 */
-	public function list_tools( int $request_id = 0 ): array {
+	public function list_tools( $request_id = 0 ): array {
 		$tools      = $this->mcp->get_tools();
 		$safe_tools = array();
 
@@ -63,11 +63,11 @@ class ToolsHandler {
 	/**
 	 * Handle the tools/list/all request.
 	 *
-	 * @param int $request_id The request ID for JSON-RPC.
+	 * @param int|string $request_id The request ID for JSON-RPC.
 	 *
 	 * @return array
 	 */
-	public function list_all_tools( int $request_id = 0 ): array {
+	public function list_all_tools( $request_id = 0 ): array {
 		// Return all tools with additional details.
 		$tools      = $this->mcp->get_tools();
 		$safe_tools = array();
@@ -91,11 +91,11 @@ class ToolsHandler {
 	 * Handle the tools/call request.
 	 *
 	 * @param array $message    Request message.
-	 * @param int   $request_id The request ID for JSON-RPC.
+	 * @param int|string $request_id The request ID for JSON-RPC.
 	 *
 	 * @return array
 	 */
-	public function call_tool( array $message, int $request_id = 0 ): array {
+	public function call_tool( array $message, $request_id = 0 ): array {
 		// Extract parameters using helper method.
 		$request_params = $this->extract_params( $message );
 
@@ -244,11 +244,11 @@ class ToolsHandler {
 	 * Handle tool call request.
 	 *
 	 * @param array $params     The request parameters.
-	 * @param int   $request_id The request ID for JSON-RPC.
+	 * @param int|string $request_id The request ID for JSON-RPC.
 	 *
 	 * @return array
 	 */
-	public function handle_tool_call( array $params, int $request_id = 0 ): array {
+	public function handle_tool_call( array $params, $request_id = 0 ): array {
 		$tool_name = $params['name'];
 		$args      = $params['arguments'] ?? array();
 
